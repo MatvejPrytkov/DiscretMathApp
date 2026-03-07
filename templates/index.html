@@ -1,10 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>{% block title %}Тестирование ЭУМК{% endblock %}</title>
+    <style>
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            text-decoration: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .user-info {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
 </head>
 <body>
-$END$
+    <nav>
+        <!-- Меню сайта -->
+    </nav>
+
+    <main>
+        {% block content %}
+
+        <!-- Отображение информации о пользователе -->
+        {% if user.is_authenticated %}
+        <div class="user-info">
+            <strong>Вы вошли как:</strong> {{ user.profile.full_name }} ({{ user.profile.group }}, {{ user.profile.course }} курс)
+            <br>
+            <small>Email: {{ user.email }}</small>
+        </div>
+        {% endif %}
+
+        <h2>Добро пожаловать в систему тестирования</h2>
+
+        <div class="button-container">
+            {% if not user.is_authenticated %}
+            <a href="/register/" class="btn">Регистрация</a>
+            <a href="/login/" class="btn">Вход</a>
+            {% else %}
+            <a href="/logout/" class="btn">Выйти</a>
+            {% endif %}
+            {% if user.is_authenticated %}
+            <a href="/start/" class="btn">Прохождение входного теста</a>
+            <a href="/finish/" class="btn">Прохождение итогового теста</a>
+            {% endif %}
+        </div>
+        {% endblock %}
+    </main>
 </body>
 </html>

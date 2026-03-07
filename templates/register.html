@@ -1,10 +1,171 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 40px 16px;
+            background: #f5f6f8;
+        }
+        .card {
+            max-width: 420px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+        h1 {
+            margin: 0 0 16px;
+            font-size: 22px;
+        }
+        label {
+            display: block;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 6px;
+            padding: 10px 12px;
+            border: 1px solid #d7dbe0;
+            border-radius: 8px;
+            outline: none;
+        }
+        input:focus {
+            border-color: #6c8cff;
+            box-shadow: 0 0 0 3px rgba(108,140,255,0.15);
+        }
+        .hint {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        button {
+            width: 100%;
+            margin-top: 16px;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 8px;
+            background: #2f66ff;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #2553d6;
+        }
+        .row {
+            display: flex;
+            gap: 12px;
+        }
+        .row > div {
+            flex: 1;
+        }
+        .footer {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #374151;
+        }
+        .footer a {
+            color: #2f66ff;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-$END$
+    <main class="card">
+        <h1>Регистрация</h1>
+
+        <!-- ОДНА форма, которая отправляет данные на обработку регистрации -->
+        <form method="post" autocomplete="on">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div style="color: red; margin-bottom: 15px;">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if messages %}
+            <div style="margin-bottom: 15px;">
+                {% for message in messages %}
+                    <p style="color: {% if message.tags == 'error' %}red{% else %}green{% endif %}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <label>ФИО</label>
+            {{ form.name }}
+
+            <label>Группа</label>
+            {{ form.group }}
+
+            <label>Курс</label>
+            {{ form.course }}
+
+            <label>Email</label>
+            {{ form.email }}
+
+            <label>Имя пользователя</label>
+            {{ form.username }}
+
+            <div class="row">
+                <div>
+                    <label>Пароль</label>
+                    {{ form.password1 }}
+                </div>
+                <div>
+                    <label>Повтор пароля</label>
+                    {{ form.password2 }}
+                </div>
+            </div>
+
+            <label>
+                <input type="checkbox" name="agree" required style="width:auto; margin-right:8px;">
+                Согласен(на) с условиями
+            </label>
+
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+
+        <div class="hint">Подсказка: на сервере всё равно нужно проверить email и совпадение паролей.</div>
+        <div class="footer">Уже есть аккаунт? <a href="/login">Войти</a></div>
+    </main>
+
+    <script>
+        // Простая проверка совпадения паролей на клиенте
+        const form = document.querySelector('form');
+        const p1 = document.getElementById('id_password1');
+        const p2 = document.getElementById('id_password2');
+
+        form.addEventListener('submit', (e) => {
+            if (p1 && p2 && p1.value !== p2.value) {
+                e.preventDefault();
+                p2.setCustomValidity('Пароли не совпадают');
+                p2.reportValidity();
+            } else if (p2) {
+                p2.setCustomValidity('');
+            }
+        });
+
+        if (p2) {
+            p2.addEventListener('input', () => p2.setCustomValidity(''));
+        }
+    </script>
 </body>
 </html>
