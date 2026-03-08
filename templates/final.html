@@ -3,13 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <title>Итоговое тестирование</title>
+    <style>
+        .question-block { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        .question-number {
+            background: #007bff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 50%;
+            font-weight: bold;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .btn { padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
 </head>
 <body>
+<h1>Итоговое тестирование </h1>
     <form method="post">
         {% csrf_token %}
         {% for q in questions %}
+
             <div class="question-block">
-                <p>{{ q.question }}</p>
+                <h3>
+                    <span class="question-number">№{{ forloop.counter }}</span>
+                    <strong>Вопрос:</strong> {{q.question}}
+                </h3>
                 <input type="hidden" name="question_ids" value="{{ q.id }}">
 
                 <label><input type="radio" name="q_{{ q.id }}" value="a"> {{ q.answer1 }}</label><br>

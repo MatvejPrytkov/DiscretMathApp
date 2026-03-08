@@ -2,15 +2,17 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from .forms import RegistrationForm
+from .models import TestResult
 from django.contrib.auth.forms import AuthenticationForm
 import pandas as pd
 import random
+from django.contrib.auth.decorators import login_required
 import openpyxl
 def index(request):
     return render(request, 'index.html')
 # Create your views here.
-def start (request):
-    # Список файлов и их названия для отчета
+@login_required
+def start(request):
     files = {
         'graphs': 'graphs.xlsx',
         'logic': 'logic.xlsx',
@@ -22,51 +24,64 @@ def start (request):
         total_correct = 0
 
         for key, filename in files.items():
-            df = pd.read_excel(filename)
-            correct_count = 0
+            try:
+                df = pd.read_excel(filename)
+                id_col = df.columns[0]  # первая колонка = ID
 
-            # Получаем ID вопросов, которые были заданы пользователю (скрытые поля в форме)
-            question_ids = request.POST.getlist(f'ids_{key}')
+                # 🎯 Получаем ID вопросов этой категории
+                question_ids = request.POST.getlist(f'ids_{key}')
+                correct_count = 0
 
-            for q_id in question_ids:
-                user_answer = request.POST.get(f'q_{key}_{q_id}')
-                # Ищем правильный ответ в Excel по ID
-                # В ваших файлах колонки называются по-разному (id, question_id, question_number)
-                id_col = df.columns[0]
-                actual_correct = df[df[id_col] == int(q_id)]['correct_answer'].values[0]
+                for q_id in question_ids:
+                    user_answer = request.POST.get(f'q_{key}_{q_id}')
+                    if user_answer:  # проверяем, что ответ выбран
+                        actual_row = df[df[id_col] == int(q_id)]
+                        if not actual_row.empty:
+                            actual_correct = str(actual_row['correct_answer'].values[0]).strip()
+                            if user_answer == actual_correct:
+                                correct_count += 1
 
-                if user_answer == str(actual_correct).strip():
-                    correct_count += 1
+                results[key] = {
+                    'name': filename,
+                    'correct': correct_count,
+                    'total': len(question_ids)
+                }
+                total_correct += correct_count
+            except Exception as e:
+                results[key] = {'name': filename, 'correct': 0, 'total': 0}
 
-            results[key] = {
-                'name': filename,
-                'correct': correct_count,
-                'total': len(question_ids)
-            }
-            total_correct += correct_count
+        TestResult.objects.create(
+            user=request.user,
+            test_type='start',
+            score=total_correct,
+            total_questions=15,
+            percent=round((total_correct / 15) * 100, 2)
+        )
 
-        return render(request, 'results.html', {'results': results, 'total': total_correct})
+        return render(request, 'results.html', {
+            'results': results,
+            'total': total_correct,
+            'saved': True
+        })
 
-    # GET запрос: Выбираем случайные вопросы
+    # GET запрос остается БЕЗ ИЗМЕНЕНИЙ
     questions_to_render = []
-
     for key, filename in files.items():
-        df = pd.read_excel(filename)
-        # Выбираем 5 случайных строк
-        sample = df.sample(n=min(5, len(df))).to_dict('records')
+        try:
+            df = pd.read_excel(filename)
+            sample = df.sample(n=min(5, len(df))).to_dict('records')
+            id_col = df.columns[0]
 
-        # Определяем имя колонки с ID (они разные в ваших файлах)
-        id_col = df.columns[0]
+            for item in sample:
+                item['category'] = key
+                item['id_val'] = item[id_col]
+                questions_to_render.append(item)
+        except:
+            continue
 
-        for item in sample:
-            item['category'] = key
-            item['id_val'] = item[id_col]
-            questions_to_render.append(item)
-
-    # Перемешиваем все 15 вопросов между собой
     random.shuffle(questions_to_render)
-
     return render(request, 'start.html', {'questions': questions_to_render})
+@login_required
 def finish (request):
     filename = 'final_test.xlsx'
 
@@ -94,10 +109,19 @@ def finish (request):
                 if user_answer == actual_correct:
                     correct_count += 1
 
+        TestResult.objects.create(
+            user=request.user,
+            test_type='final',
+            score=correct_count,
+            total_questions=total_questions,
+            percent=round((correct_count / total_questions) * 100, 2) if total_questions > 0 else 0
+        )
+
         return render(request, 'results_final.html', {
             'correct': correct_count,
             'total': total_questions,
-            'percent': round((correct_count / total_questions) * 100, 2) if total_questions > 0 else 0
+            'percent': round((correct_count / total_questions) * 100, 2),
+            'saved': True
         })
 
     # GET запрос: Загружаем все вопросы из итогового теста
@@ -111,44 +135,6 @@ def finish (request):
 
     return render(request, 'final.html', {'questions': questions})
 
-
-
-# def register(request):
-#     if request.method == 'POST':
-#         form = RegistrationForm(request.POST)
-#         if form.is_valid():
-#             user = form.save()
-#             login(request, user)  # Автоматически логиним пользователя
-#             messages.success(request, f'Регистрация успешна! Добро пожаловать, {user.profile.full_name}!')
-#             return redirect('initial')  # Перенаправляем на главную
-#         else:
-#             form = RegistrationForm()
-#             messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
-#     else:
-#         form = RegistrationForm()
-#
-#     return render(request, 'register.html', {'form': form})
-#
-#
-# def login_view(request):
-#     if request.method == 'POST':
-#         form = AuthenticationForm(request, data=request.POST)
-#         if form.is_valid():
-#             user = form.get_user()
-#             login(request, user)
-#             messages.success(request, f'Добро пожаловать, {user.profile.full_name}!')
-#             return redirect('initial')
-#     else:
-#         form = AuthenticationForm()
-#
-#     return render(request, 'login.html', {'form': form})
-#
-#
-# def logout_view(request):
-#     logout(request)
-#     messages.success(request, 'Вы успешно вышли из системы.')
-#     return redirect('initial')
-
 def register(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
@@ -159,14 +145,14 @@ def register(request):
             full_name = getattr(getattr(user, 'profile', None), 'full_name', user.get_username())
             messages.success(request, f'Регистрация успешна! Добро пожаловать, {full_name}!')
 
-            return redirect('initial')  # на главную
+            return redirect('profile')
         else:
             # ВАЖНО: не перезатираем form, иначе пропадут ошибки в форме
             messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
     else:
         form = RegistrationForm()
 
-    return render(request, 'register.html', {'form': form})
+    return render(request, 'profile', {'form': form})
 
 def login_view(request):
     if request.method == 'POST':
@@ -178,7 +164,7 @@ def login_view(request):
             full_name = getattr(getattr(user, 'profile', None), 'full_name', user.get_username())
             messages.success(request, f'Добро пожаловать, {full_name}!')
 
-            return redirect('initial')
+            return redirect('profile')
         else:
             messages.error(request, 'Неверный логин или пароль.')
     else:
@@ -190,3 +176,9 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'Вы успешно вышли из системы.')
     return redirect('initial')
+@login_required
+def profile(request):
+    results = TestResult.objects.filter(user=request.user).order_by('-date_completed')
+    return render(request, 'profile.html', {'results': results})
+
+

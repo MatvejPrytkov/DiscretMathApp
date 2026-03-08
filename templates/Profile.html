@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Личный кабинет</title>
+    <style>
+        .result-card { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .success { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Личный кабинет пользователя: {{ user.username }}</h1>
+
+    <h2>История ваших тестов</h2>
+    {% if results %}
+        {% for res in results %}
+            <div class="result-card">
+                <p>Дата: {{ res.date_completed|date:"d.m.Y H:i" }}</p>
+                <p>Результат: <span class="success">{{ res.score }}</span> из {{ res.total_questions }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>Вы еще не проходили тесты.</p>
+    {% endif %}
+
+    <a href="{% url 'start' %}">Пройти входной тест</a>
+    <br>
+    <a href="{% url 'finish' %}">Пройти итоговый тест</a>
+    <br>
+    <a href="{% url 'logout' %}">Выйти</a>
+</body>
+</html>
