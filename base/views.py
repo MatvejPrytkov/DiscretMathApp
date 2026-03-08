@@ -68,26 +68,105 @@ def start (request):
 
     return render(request, 'start.html', {'questions': questions_to_render})
 def finish (request):
-    return render(request, 'final.html')
+    filename = 'final_test.xlsx'
+
+    if request.method == 'POST':
+        try:
+            df = pd.read_excel(filename)
+        except Exception as e:
+            return render(request, 'results_final.html', {'error': 'Файл с тестом не найден.'})
+
+        correct_count = 0
+        total_questions = 0
+
+        # Получаем список ID вопросов, которые были в форме
+        question_ids = request.POST.getlist('question_ids')
+        total_questions = len(question_ids)
+
+        for q_id in question_ids:
+            user_answer = request.POST.get(f'q_{q_id}')
+            # Находим строку с нужным ID
+            # В вашем файле колонка называется "id"
+            actual_row = df[df['id'] == int(q_id)]
+
+            if not actual_row.empty:
+                actual_correct = str(actual_row['correct_answer'].values[0]).strip()
+                if user_answer == actual_correct:
+                    correct_count += 1
+
+        return render(request, 'results_final.html', {
+            'correct': correct_count,
+            'total': total_questions,
+            'percent': round((correct_count / total_questions) * 100, 2) if total_questions > 0 else 0
+        })
+
+    # GET запрос: Загружаем все вопросы из итогового теста
+    try:
+        df = pd.read_excel(filename)
+        # Превращаем в список словарей и перемешиваем (опционально)
+        questions = df.to_dict('records')
+        random.shuffle(questions)
+    except Exception as e:
+        questions = []
+
+    return render(request, 'final.html', {'questions': questions})
 
 
+
+# def register(request):
+#     if request.method == 'POST':
+#         form = RegistrationForm(request.POST)
+#         if form.is_valid():
+#             user = form.save()
+#             login(request, user)  # Автоматически логиним пользователя
+#             messages.success(request, f'Регистрация успешна! Добро пожаловать, {user.profile.full_name}!')
+#             return redirect('initial')  # Перенаправляем на главную
+#         else:
+#             form = RegistrationForm()
+#             messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
+#     else:
+#         form = RegistrationForm()
+#
+#     return render(request, 'register.html', {'form': form})
+#
+#
+# def login_view(request):
+#     if request.method == 'POST':
+#         form = AuthenticationForm(request, data=request.POST)
+#         if form.is_valid():
+#             user = form.get_user()
+#             login(request, user)
+#             messages.success(request, f'Добро пожаловать, {user.profile.full_name}!')
+#             return redirect('initial')
+#     else:
+#         form = AuthenticationForm()
+#
+#     return render(request, 'login.html', {'form': form})
+#
+#
+# def logout_view(request):
+#     logout(request)
+#     messages.success(request, 'Вы успешно вышли из системы.')
+#     return redirect('initial')
 
 def register(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)  # Автоматически логиним пользователя
-            messages.success(request, f'Регистрация успешна! Добро пожаловать, {user.profile.full_name}!')
-            return redirect('initial')  # Перенаправляем на главную
+            login(request, user)
+
+            full_name = getattr(getattr(user, 'profile', None), 'full_name', user.get_username())
+            messages.success(request, f'Регистрация успешна! Добро пожаловать, {full_name}!')
+
+            return redirect('initial')  # на главную
         else:
-            form = RegistrationForm()
+            # ВАЖНО: не перезатираем form, иначе пропадут ошибки в форме
             messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
     else:
         form = RegistrationForm()
 
     return render(request, 'register.html', {'form': form})
-
 
 def login_view(request):
     if request.method == 'POST':
@@ -95,13 +174,17 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            messages.success(request, f'Добро пожаловать, {user.profile.full_name}!')
+
+            full_name = getattr(getattr(user, 'profile', None), 'full_name', user.get_username())
+            messages.success(request, f'Добро пожаловать, {full_name}!')
+
             return redirect('initial')
+        else:
+            messages.error(request, 'Неверный логин или пароль.')
     else:
         form = AuthenticationForm()
 
     return render(request, 'login.html', {'form': form})
-
 
 def logout_view(request):
     logout(request)

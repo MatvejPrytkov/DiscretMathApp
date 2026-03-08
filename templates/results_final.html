@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Результаты итогового тестирования</title>
+</head>
+<body>
+    <h2>Результаты итогового теста</h2>
+    <p>Правильных ответов: {{ correct }} из {{ total }}</p>
+    <p>Процент выполнения: {{ percent }}%</p>
+    <a href="{% url 'initial' %}" class="btn">На главную</a>
+</body>
+</html>
