@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Результаты</title>
+</head>
+<body>
+    <h1>Ваши результаты:</h1>
+    <ul>
+    {% for key, val in results.items%}
+        <li><strong>{{val.name}}</strong>: {{val.correct}} из {{val.total}} правильных</li>
+    {% endfor %}
+    </ul>
+    <h2>Всего правильных ответов: {{total}} из 15</h2>
+    <a href="{% url 'start' %}">Пройти еще раз</a><br>
+    <a href="{% url 'initial' %}">Вернуться на главную</a>
+</body>
+</html>

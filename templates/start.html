@@ -1,10 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Тестирование</title>
+    <style>
+        .question-block { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        .category-tag { font-size: 0.8em; color: gray; }
+    </style>
 </head>
 <body>
+    <h1>Тестирование (15 вопросов)</h1>
+    <form method="post">
+        {% csrf_token %}
 
+        {% for q in questions %}
+            <div class="question-block">
+                <p><strong>Вопрос:</strong> {{q.question}}</p>
+
+                <!-- Скрытое поле, чтобы знать, какие ID вопросов были в тесте -->
+                <input type="hidden" name="ids_{{ q.category }}" value="{{ q.id_val }}">
+
+                <label><input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="a" required> {{ q.answer1 }}</label><br>
+                <label><input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="b"> {{ q.answer2 }}</label><br>
+                <label><input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="c"> {{ q.answer3 }}</label><br>
+                <label><input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="d"> {{ q.answer4 }}</label><br>
+            </div>
+        {% endfor %}
+
+        <button type="submit">Завершить тест и узнать результат</button>
+    </form>
 </body>
 </html>

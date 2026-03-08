@@ -40,6 +40,13 @@
 
         <!-- Отображение информации о пользователе -->
         {% if user.is_authenticated %}
+        {% if messages %}
+             {% for message in messages %}
+            <div class="alert {{ message.tags }}">
+               {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
         <div class="user-info">
             <strong>Вы вошли как:</strong> {{ user.profile.full_name }} ({{ user.profile.group }}, {{ user.profile.course }} курс)
             <br>
