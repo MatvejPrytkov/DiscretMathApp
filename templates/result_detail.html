@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Просмотр результата</title>
+    <style>
+        .ok { color: green; }
+        .no { color: red; }
+        .card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>{{ result.get_test_type_display }}</h1>
+    <p>Дата: {{ result.date_completed|date:"d.m.Y H:i" }}</p>
+    <p>Результат: {{ result.score }} из {{ result.total_questions }} ({{ result.percent }}%)</p>
+
+    <h2>Ответы</h2>
+    {% for a in answers %}
+        <div class="card">
+            <p><strong>Вопрос №</strong> {{ forloop.counter }}</p>
+            {% if a.question_text %}
+                <p><strong>Вопрос:</strong> {{ a.question_text }}</p>
+            {% endif %}
+
+            <p><strong>Ваш ответ:</strong> {{ a.user_answer }}{% if a.user_answer_text %} — {{ a.user_answer_text }}{% endif %}</p>
+    <p><strong>Правильный ответ:</strong> {{ a.correct_answer }}{% if a.correct_answer_text %} — {{ a.correct_answer_text }}{% endif %}</p>
+
+            {% if a.is_correct %}
+                <p class="ok"><strong>Верно</strong></p>
+            {% else %}
+                <p class="no"><strong>Неверно</strong></p>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>Нет сохранённых ответов для этой попытки.</p>
+    {% endfor %}
+
+    <a href="{% url 'profile' %}">Назад в профиль</a>
+</body>
+</html>

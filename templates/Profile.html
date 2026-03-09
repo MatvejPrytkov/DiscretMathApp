@@ -14,8 +14,17 @@
     {% if results %}
         {% for res in results %}
             <div class="result-card">
+                {% if res.test_type == 'start' %}
+                <p><strong>Входное тестирование</strong> </p>
+                 {% else %}
+                <p><strong>Итоговое тестирование</strong> </p>
+                 {% endif %}
+
                 <p>Дата: {{ res.date_completed|date:"d.m.Y H:i" }}</p>
-                <p>Результат: <span class="success">{{ res.score }}</span> из {{ res.total_questions }}</p>
+                <p>Результат: <span class="success">{{ res.score }}</span> из {{ res.total_questions }}
+                <a href="{% url 'result_detail' res.id %}">Открыть попытку</a>
+                </p>
+
             </div>
         {% endfor %}
     {% else %}
