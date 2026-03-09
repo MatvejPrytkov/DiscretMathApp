@@ -1,72 +1,23 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Тестирование ЭУМК{% endblock %}</title>
-    <style>
-        .button-container {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        .btn {
-            padding: 10px 20px;
-            text-decoration: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background-color: #0056b3;
-        }
-        .user-info {
-            background-color: #f8f9fa;
-            padding: 10px 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 4px solid #007bff;
-        }
-    </style>
-</head>
-<body>
-    <nav>
-        <!-- Меню сайта -->
-    </nav>
+{% extends 'base.html' %}
 
-    <main>
-    {% block content %}
+{% block title %}Главная — Тестирование ЭУМК{% endblock %}
 
-    <!-- 1. Переносим сообщения СЮДА (вне условия user.is_authenticated) -->
-
-
-    <!-- 2. Отображение информации о пользователе остается как было -->
+{% block content %}
     {% if user.is_authenticated %}
-    <div class="user-info">
-        <strong>Вы вошли как:</strong> {{ user.profile.full_name }} ({{ user.profile.group }}, {{ user.profile.course }} курс)
-        <br>
-        <small>Email: {{ user.email }}</small>
+    <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom:20px;">
+        <strong>Вы вошли как:</strong> {{ user.username }}
     </div>
     {% endif %}
 
     <h2>Добро пожаловать в систему тестирования</h2>
 
-    <div class="button-container">
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
         {% if not user.is_authenticated %}
-            <a href="/register/" class="btn">Регистрация</a>
-            <a href="/login/" class="btn">Вход</a>
+            <a href="{% url 'register' %}" class="btn btn-primary">Регистрация</a>
+            <a href="{% url 'login' %}" class="btn btn-success">Вход</a>
         {% else %}
-            <a href="/logout/" class="btn">Выйти</a>
-        {% endif %}
-
-        {% if user.is_authenticated %}
-            <a href="/start/" class="btn">Прохождение входного теста</a>
-            <a href="/finish/" class="btn">Прохождение итогового теста</a>
-
+            <a href="{% url 'profile' %}" class="btn btn-primary">Личный кабинет</a>
+            <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
         {% endif %}
     </div>
-    {% endblock %}
-</main>
-</body>
-</html>
+{% endblock %}

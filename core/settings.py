@@ -27,7 +27,8 @@ SECRET_KEY = 'django-insecure-#pmi-66aws71b7^(-%li9-4zy(-mv239$%u4o6z5pdu!@vvdnb
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
+# USE_TZ = True
+# TIME_ZONE = 'Asia/Yekaterinburg'
 # Application definition
 
 INSTALLED_APPS = [

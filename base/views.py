@@ -271,6 +271,7 @@ def login_view(request):
             return redirect('profile')
         else:
             messages.error(request, 'Неверный логин или пароль.')
+
     else:
         form = AuthenticationForm()
 

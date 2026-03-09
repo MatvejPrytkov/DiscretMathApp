@@ -1,48 +1,49 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Личный кабинет</title>
-    <style>
-        .btn { padding: 8px 16px; margin: 5px; border-radius: 4px; text-decoration: none; }
-        .btn-primary { background: #007bff; color: white; }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .result-card { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 5px; }
-        .success { color: green; font-weight: bold; }
-        .profile-actions { background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-{% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}" style="padding: 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; margin-bottom: 20px; text-align: center;">
-                {{ message }}
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}
-    <h1>Личный кабинет: {{ user.username }}</h1>
+{% extends 'base.html' %}
+{% load tz %}
+{% block title %}Личный кабинет{% endblock %}
 
-    <div class="profile-actions">
+{% block content %}
+    <h1>Личный кабинет: {{ user.username }}</h1>
+    <style>
+  .result-list{
+    display: flex;
+    flex-wrap: wrap;   /* чтобы переносились на новую строку */
+    gap: 10px;         /* расстояние между карточками */
+    align-items: flex-start;
+  }
+
+  .result-card{
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 5px;
+    width: 250px;
+    margin: 0;         /* убираем вертикальные отступы, gap их заменит */
+    box-sizing: border-box;
+  }
+</style>
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 5px;">
         <h3>Управление аккаунтом</h3>
-        <a href="{% url 'profile_update' %}" class="btn btn-primary">✏️ Редактировать профиль</a>
+        <a href="{% url 'profile_update' %}" class="btn btn-primary">✏️ Редактировать</a>
         <a href="{% url 'change_password' %}" class="btn btn-success">🔐 Сменить пароль</a>
-        <a href="{% url 'delete_account' %}" class="btn btn-danger"
+         <a href="{% url 'delete_account' %}" class="btn btn-danger"
            onclick="return confirm('Вы уверены? Это действие нельзя отменить!')">🗑️ Удалить аккаунт</a>
         <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
     </div>
 
+    <!-- Остальной код истории тестов... -->
     <h2>История тестов</h2>
     {% if results %}
-        {% for res in results %}
-            <div class="result-card">
+        <div class="result-list">
+    {% for res in results %}
+      <div class="result-card">
                 {% if res.test_type == 'start' %}
                     <p><strong>📥 Входное тестирование</strong></p>
                 {% else %}
                     <p><strong>📤 Итоговое тестирование</strong></p>
                 {% endif %}
-                <p>Дата: {{ res.date_completed|date:"d.m.Y H:i" }}</p>
+                {% timezone "Asia/Yekaterinburg" %}
+  <p>Дата: {{ res.date_completed|date:"d.m.Y H:i" }}</p>
+{% endtimezone %}
                 <p>Результат: <span class="success">{{ res.score }}</span> из {{ res.total_questions }}</p>
                 <a href="{% url 'result_detail' res.id %}">📋 Подробности</a>
             </div>
@@ -50,10 +51,8 @@
     {% else %}
         <p>У вас пока нет результатов тестов.</p>
     {% endif %}
-
-    <div style="margin-top: 20px;">
-        <a href="{% url 'start' %}" class="btn btn-primary">▶️ Пройти входной тест</a>
-        <a href="{% url 'finish' %}" class="btn btn-success">🎯 Пройти итоговый тест</a>
-    </div>
-</body>
-</html>
+<div style="position: fixed; left: 0; bottom: 0; width: 100%; background: white; padding: 15px; text-align: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000;">
+    <a href="{% url 'start' %}" class="btn btn-primary">▶️ Пройти входной тест</a>
+    <a href="{% url 'finish' %}" class="btn btn-success">🎯 Пройти итоговый тест</a>
+</div>
+{% endblock %}
