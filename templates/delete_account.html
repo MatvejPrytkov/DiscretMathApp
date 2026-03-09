@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h2 style="color: red;">Удаление аккаунта</h2>
+<p><strong>Внимание!</strong> Это действие <u>необратимо</u>. Все ваши результаты тестов будут удалены.</p>
+<form method="post">
+    {% csrf_token %}
+
+    <p>Вы уверены, что хотите удалить аккаунт <strong>{{ user.username }}</strong>?</p>
+    <button type="submit" class="btn btn-danger">Да, удалить</button>
+    <a href="{% url 'profile' %}" class="btn btn-primary">Отмена</a>
+</form>
+</body>
+</html>

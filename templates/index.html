@@ -39,13 +39,7 @@
     {% block content %}
 
     <!-- 1. Переносим сообщения СЮДА (вне условия user.is_authenticated) -->
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert {{ message.tags }}" style="padding: 10px; margin-bottom: 10px; border: 1px solid transparent; border-radius: 4px; color: #3c763d; background-color: #dff0d8; border-color: #d6e9c6;">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
+
 
     <!-- 2. Отображение информации о пользователе остается как было -->
     {% if user.is_authenticated %}

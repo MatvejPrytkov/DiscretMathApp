@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib import messages
 from .forms import RegistrationForm
 from .models import TestResult
@@ -7,15 +7,9 @@ from django.contrib.auth.forms import AuthenticationForm
 import pandas as pd
 import random
 from django.contrib.auth.decorators import login_required
-from django.conf import settings
-from django.core.mail import send_mail
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.contrib.auth import get_user_model
-import openpyxl
 from django.shortcuts import get_object_or_404
 from .models import TestAnswer
+from .forms import UserUpdateForm, PasswordChangeForm
 LETTER_TO_COL = {
     'a': 'answer1',
     'b': 'answer2',
@@ -296,3 +290,51 @@ def result_detail(request, pk):
     answers = result.answers.all().order_by('question_id')
     return render(request, 'result_detail.html', {'result': result, 'answers': answers})
 
+
+@login_required
+def profile_update(request):
+    """Редактирование профиля"""
+    if request.method == 'POST':
+        form = UserUpdateForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Профиль успешно обновлён!')
+            return redirect('profile')
+    else:
+        form = UserUpdateForm(instance=request.user)
+
+    return render(request, 'profile_update.html', {'form': form})
+
+
+@login_required
+def change_password(request):
+    """Смена пароля"""
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.POST)
+        if form.is_valid():
+            user = request.user
+            if user.check_password(form.cleaned_data['old_password']):
+                user.set_password(form.cleaned_data['new_password1'])
+                user.save()
+                update_session_auth_hash(request, user)  # не выкидывает из сессии
+                messages.success(request, 'Пароль успешно изменён!')
+                return redirect('profile')
+            else:
+                form.add_error('old_password', 'Неверный текущий пароль')
+    else:
+        form = PasswordChangeForm()
+
+    return render(request, 'change_password.html', {'form': form})
+
+
+@login_required
+def delete_account(request):
+    """Удаление аккаунта"""
+    if request.method == 'POST':
+        user = request.user
+        username = user.username
+        user.delete()
+        messages.success(request, f'Аккаунт {username} удалён.')
+        return redirect('initial')
+
+    return render(request, 'delete_account.html')

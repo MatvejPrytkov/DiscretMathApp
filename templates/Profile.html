@@ -3,38 +3,57 @@
 <head>
     <title>Личный кабинет</title>
     <style>
-        .result-card { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .btn { padding: 8px 16px; margin: 5px; border-radius: 4px; text-decoration: none; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .result-card { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 5px; }
         .success { color: green; font-weight: bold; }
+        .profile-actions { background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <h1>Личный кабинет пользователя: {{ user.username }}</h1>
+{% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" style="padding: 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; margin-bottom: 20px; text-align: center;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+    <h1>Личный кабинет: {{ user.username }}</h1>
 
-    <h2>История ваших тестов</h2>
+    <div class="profile-actions">
+        <h3>Управление аккаунтом</h3>
+        <a href="{% url 'profile_update' %}" class="btn btn-primary">✏️ Редактировать профиль</a>
+        <a href="{% url 'change_password' %}" class="btn btn-success">🔐 Сменить пароль</a>
+        <a href="{% url 'delete_account' %}" class="btn btn-danger"
+           onclick="return confirm('Вы уверены? Это действие нельзя отменить!')">🗑️ Удалить аккаунт</a>
+        <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
+    </div>
+
+    <h2>История тестов</h2>
     {% if results %}
         {% for res in results %}
             <div class="result-card">
                 {% if res.test_type == 'start' %}
-                <p><strong>Входное тестирование</strong> </p>
-                 {% else %}
-                <p><strong>Итоговое тестирование</strong> </p>
-                 {% endif %}
-
+                    <p><strong>📥 Входное тестирование</strong></p>
+                {% else %}
+                    <p><strong>📤 Итоговое тестирование</strong></p>
+                {% endif %}
                 <p>Дата: {{ res.date_completed|date:"d.m.Y H:i" }}</p>
-                <p>Результат: <span class="success">{{ res.score }}</span> из {{ res.total_questions }}
-                <a href="{% url 'result_detail' res.id %}">Открыть попытку</a>
-                </p>
-
+                <p>Результат: <span class="success">{{ res.score }}</span> из {{ res.total_questions }}</p>
+                <a href="{% url 'result_detail' res.id %}">📋 Подробности</a>
             </div>
         {% endfor %}
     {% else %}
-        <p>Вы еще не проходили тесты.</p>
+        <p>У вас пока нет результатов тестов.</p>
     {% endif %}
 
-    <a href="{% url 'start' %}">Пройти входной тест</a>
-    <br>
-    <a href="{% url 'finish' %}">Пройти итоговый тест</a>
-    <br>
-    <a href="{% url 'logout' %}">Выйти</a>
+    <div style="margin-top: 20px;">
+        <a href="{% url 'start' %}" class="btn btn-primary">▶️ Пройти входной тест</a>
+        <a href="{% url 'finish' %}" class="btn btn-success">🎯 Пройти итоговый тест</a>
+    </div>
 </body>
 </html>
