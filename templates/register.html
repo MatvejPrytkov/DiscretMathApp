@@ -103,15 +103,28 @@
             <label>ФИО</label>
             {{ form.name }}
 
-            <label>Группа</label>
-            {{ form.group }}
-
-            <label>Курс</label>
-            {{ form.course }}
-
             <label>Email</label>
             {{ form.email }}
+            <label>Роль</label>
+<div style="margin: 10px 0;">
+    <label style="display: inline-block; margin-right: 20px;">
+        <input type="radio" name="role" value="student" checked> Ученик
+    </label>
+    <label style="display: inline-block;">
+        <input type="radio" name="role" value="teacher"> Учитель
+    </label>
+</div>
 
+<!-- Поля группы и курса сделайте условными с помощью JavaScript -->
+<div id="student-fields" style="display: block;">
+    <label>Группа</label>
+    {{ form.group }}
+
+    <label>Курс</label>
+    {{ form.course }}
+    <label>Преподаватель</label>
+    {{ form.teacher }}
+</div>
             <label>Имя пользователя</label>
             {{ form.username }}
 
@@ -157,6 +170,52 @@
         if (p2) {
             p2.addEventListener('input', () => p2.setCustomValidity(''));
         }
+        const roleRadios = document.querySelectorAll('input[name="role"]');
+    const studentFields = document.getElementById('student-fields');
+
+    function toggleStudentFields() {
+        const selectedRole = document.querySelector('input[name="role"]:checked').value;
+        studentFields.style.display = selectedRole === 'student' ? 'block' : 'none';
+
+        // Делаем поля обязательными только для учеников
+        const groupField = document.getElementById('id_group');
+        const courseField = document.getElementById('id_course');
+
+        if (selectedRole === 'student') {
+            groupField.required = true;
+            courseField.required = true;
+        } else {
+            groupField.required = false;
+            courseField.required = false;
+        }
+    }
+
+    roleRadios.forEach(radio => {
+        radio.addEventListener('change', toggleStudentFields);
+    });
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', toggleStudentFields);
+
+    function toggleStudentFields() {
+    const selectedRole = document.querySelector('input[name="role"]:checked').value;
+    studentFields.style.display = selectedRole === 'student' ? 'block' : 'none';
+
+    // Делаем поля обязательными только для учеников
+    const groupField = document.getElementById('id_group');
+    const courseField = document.getElementById('id_course');
+    const teacherField = document.getElementById('id_teacher');
+
+    if (selectedRole === 'student') {
+        groupField.required = true;
+        courseField.required = true;
+        teacherField.required = true;
+    } else {
+        groupField.required = false;
+        courseField.required = false;
+        teacherField.required = false;
+    }
+}
     </script>
 </body>
 </html>

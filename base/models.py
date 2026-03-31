@@ -5,14 +5,32 @@ from django.dispatch import receiver
 from django.db import migrations, models
 from django.contrib.auth.models import User
 
+
 class UserProfile(models.Model):
+    ROLE_CHOICES = [
+        ('student', 'Ученик'),
+        ('teacher', 'Учитель'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     full_name = models.CharField(max_length=100, verbose_name="ФИО")
-    group = models.CharField(max_length=20, verbose_name="Группа")
-    course = models.PositiveSmallIntegerField(verbose_name="Курс")
+    group = models.CharField(max_length=20, verbose_name="Группа", blank=True, null=True)
+    course = models.PositiveSmallIntegerField(verbose_name="Курс", blank=True, null=True)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='student', verbose_name="Роль")
+
+    # Добавляем связь ученик-учитель
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students',
+        verbose_name="Преподаватель",
+        limit_choices_to={'profile__role': 'teacher'}  # только учителя
+    )
 
     def __str__(self):
-        return f"{self.full_name} ({self.group})"
+        return f"{self.full_name} ({self.get_role_display()})"
 
 
 class TestResult(models.Model):
@@ -26,6 +44,12 @@ class TestResult(models.Model):
     total_questions = models.IntegerField()
     percent = models.FloatField()
     date_completed = models.DateTimeField(auto_now_add=True)
+    correct_answers = models.IntegerField(default=0)
+    percentage = models.FloatField(default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # новое поле для хранения результатов по темам
+    category_results = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.get_test_type_display()} ({self.score}/{self.total_questions})"

@@ -6,6 +6,8 @@
     {% if user.is_authenticated %}
     <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom:20px;">
         <strong>Вы вошли как:</strong> {{ user.username }}
+        <br>
+        <strong>Роль:</strong> {{ user.profile.get_role_display }}
     </div>
     {% endif %}
 
@@ -16,7 +18,12 @@
             <a href="{% url 'register' %}" class="btn btn-primary">Регистрация</a>
             <a href="{% url 'login' %}" class="btn btn-success">Вход</a>
         {% else %}
-            <a href="{% url 'profile' %}" class="btn btn-primary">Личный кабинет</a>
+            {% if user.profile.role == 'student' %}
+                <a href="{% url 'profile' %}" class="btn btn-primary">Личный кабинет</a>
+
+            {% else %}
+                <a href="{% url 'teacher_dashboard' %}" class="btn btn-primary">Панель учителя</a>
+            {% endif %}
             <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
         {% endif %}
     </div>

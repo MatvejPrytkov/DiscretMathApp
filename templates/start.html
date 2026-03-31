@@ -1,56 +1,34 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Входное тестирование</title>
-    <style>
-        .question-block { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
-        .category-tag { font-size: 0.8em; color: gray; }
-        .question-number {
-            background: #007bff;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 50%;
-            font-weight: bold;
-            display: inline-block;
-            margin-right: 10px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Тестирование (15 вопросов)</h1>
+{% extends 'base.html' %}
+{% block title %}Входное тестирование{% endblock %}
+{% block content %}
+    <h1>Входное тестирование (15 вопросов)</h1>
     <form method="post">
         {% csrf_token %}
-
-        <!-- 🎯 ГРУППЫ ID ВОПРОСОВ ПО КАТЕГОРИЯМ -->
-        <input type="hidden" name="ids_graphs" value="">
-        <input type="hidden" name="ids_logic" value="">
-        <input type="hidden" name="ids_plenty" value="">
 
         {% for q in questions %}
             <div class="question-block">
                 <h3>
                     <span class="question-number">{{ forloop.counter }}</span>
                     {{ q.question }}
-                    <span class="category-tag">({{ q.category|upper }})</span>
+                    <span class="category-tag">{{ q.category }}</span>
                 </h3>
 
-                <!-- 🎯 СКРЫТОЕ ПОЛЕ ID ВОПРОСА ПО КАТЕГОРИИ -->
+                <!-- Скрытое поле ID (без дубликатов в начале формы) -->
                 <input type="hidden" name="ids_{{ q.category }}" value="{{ q.id_val }}">
 
                 <div class="options">
                     <label>
                         <input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="a" required>
                         {{ q.answer1 }}
-                    </label><br>
+                    </label>
                     <label>
                         <input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="b">
                         {{ q.answer2 }}
-                    </label><br>
+                    </label>
                     <label>
                         <input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="c">
                         {{ q.answer3 }}
-                    </label><br>
+                    </label>
                     <label>
                         <input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="d">
                         {{ q.answer4 }}
@@ -60,10 +38,9 @@
         {% endfor %}
 
         <div style="margin-top: 30px;">
-            <button type="submit" class="btn" style="padding: 10px 20px; cursor: pointer;">
+            <button type="submit" class="btn btn-primary btn-lg" style="padding: 12px 30px;">
                 Отправить ответы
             </button>
         </div>
     </form>
-</body>
-</html>
+{% endblock %}

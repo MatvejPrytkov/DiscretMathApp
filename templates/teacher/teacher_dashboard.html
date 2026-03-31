@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1>Панель управления учителя</h1>
+            <p class="page-subtitle">{{ request.user.profile.full_name }}</p>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>📊 Статистика</h3>
+            <p class="stat-number">Всего учеников: {{ students.count }}</p>
+            <p class="stat-number">Всего тестов пройдено: {{ total_tests_passed }}</p>
+        </div>
+    </div>
+
+    <!-- 📈 НОВЫЕ ГРАФИКИ -->
+    <div class="charts-section">
+        <h2>📈 Аналитика результатов</h2>
+
+        <!-- График 1: Типы тестов -->
+        <div class="chart-card">
+            <h4>Типы тестов</h4>
+            <canvas id="testTypesChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- График 2: Распределение оценок -->
+        <div class="chart-card">
+            <h4>Успеваемость</h4>
+            <canvas id="gradesChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- График 3: Результаты по темам -->
+        <div class="chart-card">
+            <h4>Результаты по темам</h4>
+            <canvas id="themesChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+
+        <a href="{% url 'student_results' %}" class="btn btn-success">📊 Результаты тестов</a>
+        <a href="#" class="btn btn-success">📥 Выгрузить отчет</a>
+        <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Выйти</a>
+    </div>
+
+    <!-- Остальной контент (таблица учеников) -->
+    <div class="panel">
+        <div class="panel-body">
+            <h3>Мои ученики ({{ student_count }})</h3>
+            <div class="table-wrap">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>ФИО Ученика</th>
+                            <th>Email</th>
+                            <th>Тестов пройдено</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.profile.full_name }}</td>
+                            <td>{{ student.email }}</td>
+                            <td>
+                                <a href="{% url 'student_results' %}?student_id={{ student.id }}" class="btn-simple">
+                                    {{ student.test_count }}
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: #6b7280;">У вас пока нет прикрепленных учеников</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Подключение Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // График 1: Типы тестов
+    const testCtx = document.getElementById('testTypesChart').getContext('2d');
+    new Chart(testCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for stat in test_stats %}'{{ stat.test_type|title }}',{% endfor %}],
+            datasets: [{
+                data: [{% for stat in test_stats %}{{ stat.count }},{% endfor %}],
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    // График 2: Распределение оценок
+    const gradesCtx = document.getElementById('gradesChart').getContext('2d');
+    new Chart(gradesCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for grade in grade_distribution %}'{{ grade.grade }}',{% endfor %}],
+            datasets: [{
+                label: 'Количество учеников',
+                data: [{% for grade in grade_distribution %}{{ grade.count }},{% endfor %}],
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+   // График 3: Результаты по темам
+const themesCtx = document.getElementById('themesChart').getContext('2d');
+
+// Формируем названия (напр. "Графы", "Логика")
+const themeLabels = [
+    {% for theme_item in theme_stats %}
+        "{{ theme_item.1.name|default:theme_item.0 }}",
+    {% endfor %}
+];
+
+// Формируем проценты
+const themeData = [
+    {% for theme_item in theme_stats %}
+        {% if theme_item.1.total > 0 %}
+            {{ theme_item.1.correct }} / {{ theme_item.1.total }} * 100,
+        {% else %}
+            0,
+        {% endif %}
+    {% endfor %}
+];
+
+new Chart(themesCtx, {
+    type: 'radar',
+    data: {
+        labels: themeLabels,
+        datasets: [{
+            label: 'Средний % правильных ответов',
+            data: themeData,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            r: {
+                angleLines: { display: true },
+                suggestedMin: 0,
+                suggestedMax: 100,
+                ticks: {
+                    stepSize: 20,
+                    callback: function(value) { return value + '%'; }
+                }
+            }
+        },
+        plugins: {
+            legend: { position: 'top' }
+        }
+    }
+  });
+});
+</script>
+
+
+
+{% endblock %}

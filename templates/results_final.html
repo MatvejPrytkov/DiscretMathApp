@@ -9,6 +9,6 @@
     <h2>Результаты итогового теста</h2>
     <p>Правильных ответов: {{ correct }} из {{ total }}</p>
     <p>Процент выполнения: {{ percent }}%</p>
-    <a href="{% url 'profile' %}" class="btn">Вернуться в профиль</a>
+    <a href="{% url back_url %}" class="btn btn-primary">{{ back_text }}</a>
 </body>
 </html>

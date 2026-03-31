@@ -1,43 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Итоговое тестирование</title>
-    <style>
-        .question-block { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
-        .question-number {
-            background: #007bff;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 50%;
-            font-weight: bold;
-            display: inline-block;
-            margin-right: 10px;
-        }
-        .btn { padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    </style>
-</head>
-<body>
-<h1>Итоговое тестирование </h1>
-    <form method="post">
-        {% csrf_token %}
-        {% for q in questions %}
+{% extends 'base.html' %}
 
-            <div class="question-block">
-                <h3>
-                    <span class="question-number">№{{ forloop.counter }}</span>
-                    <strong>Вопрос:</strong> {{q.question}}
-                </h3>
-                <input type="hidden" name="question_ids" value="{{ q.id }}">
+{% block title %}Итоговое тестирование{% endblock %}
 
-                <label><input type="radio" name="q_{{ q.id }}" value="a"> {{ q.answer1 }}</label><br>
-                <label><input type="radio" name="q_{{ q.id }}" value="b"> {{ q.answer2 }}</label><br>
-                <label><input type="radio" name="q_{{ q.id }}" value="c"> {{ q.answer3 }}</label><br>
-                <label><input type="radio" name="q_{{ q.id }}" value="d"> {{ q.answer4 }}</label>
+{% block content %}
+<h1>Итоговое тестирование</h1>
+<form method="post">
+    {% csrf_token %}
+    {% for q in questions %}
+        <div class="question-block">
+            <h3>
+                <span class="question-number">№{{ forloop.counter }}</span>
+                {{ q.question }}
+            </h3>
+
+            <input type="hidden" name="ids_final" value="{{ q.id }}">
+
+            <div class="options">
+                <label>
+                    <input type="radio" name="q_final_{{ q.id }}" value="a" required>
+                    {{ q.answer1 }}
+                </label>
+                <label>
+                    <input type="radio" name="q_final_{{ q.id }}" value="b">
+                    {{ q.answer2 }}
+                </label>
+                <label>
+                    <input type="radio" name="q_final_{{ q.id }}" value="c">
+                    {{ q.answer3 }}
+                </label>
+                <label>
+                    <input type="radio" name="q_final_{{ q.id }}" value="d">
+                    {{ q.answer4 }}
+                </label>
             </div>
-            <hr>
-        {% endfor %}
-        <button type="submit" class="btn">Завершить тест</button>
-    </form>
-</body>
-</html>
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-success btn-lg" style="width: 100%; margin-top: 20px;">
+        Завершить тест
+    </button>
+</form>
+{% endblock %}
