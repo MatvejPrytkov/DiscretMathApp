@@ -4,47 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="be9a2357-744f-40ee-abdc-3c06ce9324fa" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/base/decorators.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/migrations/0008_userprofile_role_alter_userprofile_course_and_more.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/migrations/0009_userprofile_teacher.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/migrations/0010_testresult_category_results_and_more.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/migrations/0011_alter_testresult_correct_answers_and_more.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/migrations/0012_alter_testresult_percent_alter_testresult_percentage_and_more.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/migrations/0013_alter_testresult_total_questions.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/migrations/0014_alter_testresult_percent_alter_testresult_score.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/static/Plenty.xlsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/static/css/style.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/static/~$Plenty.xlsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/static/~$graphs.xlsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/static/~$logic.xlsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/dashboard.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/manage_tests.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/student_results.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/students_answers.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/teacher_dashboard.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/Plenty.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/final_test.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/core/static/final_test.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/graphs.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/core/static/graphs.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/logic.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/core/static/logic.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/Profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/Profile.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/final.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/final.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/login.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/register.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/register.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/result_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/result_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/results_final.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/results_final.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/start.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/start.html" afterDir="false" />
-    </list>
+    <list default="true" id="be9a2357-744f-40ee-abdc-3c06ce9324fa" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
