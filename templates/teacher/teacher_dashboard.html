@@ -18,33 +18,43 @@
     </div>
 
     <!-- 📈 НОВЫЕ ГРАФИКИ -->
-    <div class="charts-section">
+   <div class="charts-section">
         <h2>📈 Аналитика результатов</h2>
 
-        <!-- График 1: Типы тестов -->
-        <div class="chart-card">
-            <h4>Типы тестов</h4>
-            <canvas id="testTypesChart" width="400" height="200"></canvas>
-        </div>
+        <div class="charts-container">
+            <!-- График 1: Типы тестов -->
+            <div class="chart-card">
+                <h4>Типы тестов</h4>
+                <canvas id="testTypesChart"></canvas>
+            </div>
 
-        <!-- График 2: Распределение оценок -->
-        <div class="chart-card">
-            <h4>Успеваемость</h4>
-            <canvas id="gradesChart" width="400" height="200"></canvas>
-        </div>
+            <!-- График 2: Распределение оценок -->
+            <div class="chart-card">
+                <h4>Успеваемость</h4>
+                <canvas id="gradesChart"></canvas>
+            </div>
 
-        <!-- График 3: Результаты по темам -->
-        <div class="chart-card">
-            <h4>Результаты по темам</h4>
-            <canvas id="themesChart" width="400" height="200"></canvas>
+            <!-- График 3: Результаты по темам -->
+            <div class="chart-card">
+                <h4>Результаты по темам</h4>
+                <canvas id="themesChart"></canvas>
+            </div>
         </div>
     </div>
 
     <div class="action-buttons">
 
         <a href="{% url 'student_results' %}" class="btn btn-success">📊 Результаты тестов</a>
-        <a href="#" class="btn btn-success">📥 Выгрузить отчет</a>
-        <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Выйти</a>
+        <a href="{% url 'download_report' %}" class="btn btn-success">📥 Выгрузить отчет</a>
+<!--        <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Выйти</a>-->
+         <a href="{% url 'delete_account' %}" class="btn btn-danger"
+               onclick="return confirm('Вы уверены?')">🗑️ Удалить аккаунт</a>
+            <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
+        <div class="action-buttons">
+
+    <a href="{% url 'teacher_labs' %}" class="btn btn-info">🧪 Лабораторные</a>
+
+</div>
     </div>
 
     <!-- Остальной контент (таблица учеников) -->
@@ -93,7 +103,14 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(testCtx, {
         type: 'doughnut',
         data: {
-            labels: [{% for stat in test_stats %}'{{ stat.test_type|title }}',{% endfor %}],
+            labels: [
+    {% for stat in test_stats %}
+        {% if stat.test_type == 'start' %}'Входной'
+        {% elif stat.test_type == 'final' %}'Итоговый'
+        {% else %}'{{ stat.test_type|title }}'
+        {% endif %},
+    {% endfor %}
+],
             datasets: [{
                 data: [{% for stat in test_stats %}{{ stat.count }},{% endfor %}],
                 backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
@@ -128,16 +145,16 @@ const themesCtx = document.getElementById('themesChart').getContext('2d');
 
 // Формируем названия (напр. "Графы", "Логика")
 const themeLabels = [
-    {% for theme_item in theme_stats %}
-        "{{ theme_item.1.name|default:theme_item.0 }}",
+    {% for theme_key, theme_data in theme_stats %}
+        "{{ theme_data.name }}",
     {% endfor %}
 ];
 
-// Формируем проценты
+// Формируем проценты (исправьте обращение к данным, так как theme_stats теперь список кортежей .items())
 const themeData = [
-    {% for theme_item in theme_stats %}
-        {% if theme_item.1.total > 0 %}
-            {{ theme_item.1.correct }} / {{ theme_item.1.total }} * 100,
+    {% for theme_key, theme_data in theme_stats %}
+        {% if theme_data.total > 0 %}
+            {{ theme_data.correct }} / {{ theme_data.total }} * 100,
         {% else %}
             0,
         {% endif %}
@@ -176,6 +193,7 @@ new Chart(themesCtx, {
     }
   });
 });
+
 </script>
 
 

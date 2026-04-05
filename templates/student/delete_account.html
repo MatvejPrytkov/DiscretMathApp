@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление аккаунта{% endblock %}
+
+{% block content %}
+<div class="card" style="border-top: 4px solid #dc3545;">
+    <h1 style="color: #dc3545;">Удаление аккаунта</h1>
+    
+    <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
+        <strong>Внимание!</strong> Это действие <u>необратимо</u>. 
+        Все ваши результаты тестов и личные данные будут удалены навсегда.
+    </div>
+
+    <p style="text-align: center; margin-bottom: 24px;">
+        Вы уверены, что хотите удалить аккаунт <strong>{{ user.username }}</strong>?
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+    <button type="submit" class="btn btn-danger" style="margin-top: 0;">Да, удалить мой аккаунт</button>
+    <a href="{% url 'profile' %}" class="btn-cancel">Нет, я передумал</a>
+</div>
+    </form>
+</div>
+{% endblock %}

@@ -1,7 +1,7 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from .models import UserProfile
+from .models import UserProfile, TestResult
 
 
 class RegistrationForm(UserCreationForm):
@@ -104,3 +104,34 @@ class PasswordChangeForm(forms.Form):
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError("Пароли не совпадают")
         return password2
+class MyLoginForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Переопределяем стандартную ошибку
+        self.error_messages['invalid_login'] = (
+            "Пожалуйста, введите правильные имя пользователя и пароль. "
+            "Оба поля могут быть чувствительны к регистру."
+        )
+
+
+class GradeTestForm(forms.ModelForm):
+    """Форма для выставления оценки за тест"""
+
+    class Meta:
+        model = TestResult
+        fields = ['grade', 'teacher_comment']
+        widgets = {
+            'grade': forms.Select(attrs={'class': 'form-control'}),
+            'teacher_comment': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Комментарий учителя...'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Настраиваем поле grade
+        self.fields['grade'].required = True
+        self.fields['grade'].label = 'Оценка'
+        self.fields['teacher_comment'].required = False

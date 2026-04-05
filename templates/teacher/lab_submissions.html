@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Сдачи: {{ lab.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>{{ lab.title }}</h3>
+        <a href="{% url 'teacher_labs' %}" class="btn btn-secondary">← Назад</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <strong>📊 Сдачи по лабораторной ({{ submissions|length }} шт.)</strong>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Ученик</th>
+                            <th>Дата сдачи</th>
+                            <th>Файл</th>
+                            <th>Статус</th>
+                            <th>Оценка</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in submissions %}
+                        <tr>
+                            <td>{{ sub.student.user.username }}</td>
+                            <td>{{ sub.submitted_at|date:"d.m.Y H:i" }}</td>
+                            <td>
+                                {% if sub.submitted_file %}
+                                <a href="{{ sub.submitted_file.url }}" download class="btn btn-sm btn-outline-primary">📥</a>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ sub.get_status_display|lower }}">
+                                    {{ sub.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if sub.grade %}
+                                <span class="badge bg-success">{{ sub.grade }}/{{ lab.max_grade }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not sub.grade %}
+                                <form method="post" class="d-inline" style="min-width: 120px;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="submission_id" value="{{ sub.id }}">
+                                    <input type="number" name="grade" min="0" max="{{ lab.max_grade }}" 
+                                           class="form-control form-control-sm d-inline-block w-auto" 
+                                           placeholder="Оценка" required style="width: 80px;">
+                                    <button type="submit" class="btn btn-sm btn-success">✓</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">Никто не сдал эту лабораторную</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

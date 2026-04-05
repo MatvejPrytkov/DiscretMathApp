@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h1> Мои лабораторные работы 🧪</h1>
+    
+    <h3> Доступные работы ({{ labs.count }})</h3>
+    <div class="cards-grid">
+{% for lab in labs %}
+<div class="card mb-3 {% if lab.id in submitted_lab_ids %}submitted-lab{% endif %}">
+    <div class="card-body">
+        <h5>
+            {{ lab.title }}
+            {% if lab.id in submitted_lab_ids %}
+                <span class="submitted-badge">Сдано</span>
+            {% endif %}
+        </h5>
+        <p>{{ lab.description|truncatewords:20 }}</p>
+        <div class="d-flex gap-2">
+            <a href="{% url 'lab' lab.id %}" class="btn btn-sm btn-success">Открыть лабораторную работу</a>
+        </div>
+    </div>
+</div>
+{% empty %}
+<p>Лабораторных работ пока нет.</p>
+{% endfor %}
+</div>
+    <h3>📋 Мои сдачи</h3>
+    <div class="submissions-grid">
+    {% for submission in my_submissions %}
+<div class="card mb-3">
+    <div class="card-body">
+        <h5>{{ submission.lab_work.title }}</h5>
+        <p>Статус:
+            <span class="badge badge-{{ submission.status }}">
+                {{ submission.get_status_display }}
+            </span>
+        </p>
+
+        {% if submission.grade %}
+            <p><strong>Оценка: {{ submission.grade }}</strong></p>
+            {% if submission.comment %}
+                <p>Комментарий преподавателя: {{ submission.comment }}</p>
+            {% endif %}
+            <p>Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}</p>
+        {% endif %}
+
+        <a href="{{ submission.submitted_file.url }}" class="btn btn-sm btn-info" download>
+            Скачать мою работу
+        </a>
+    </div>
+</div>
+{% endfor %}
+        </div>
+</div>
+{% endblock %}

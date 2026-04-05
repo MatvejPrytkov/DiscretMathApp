@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Лабораторная: {{ lab.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1>{{ lab.title }}</h1>
+            <p class="page-subtitle">
+                <strong>Тема:</strong> {{ lab.theme }} | 
+                <strong>Сложность:</strong> {{ lab.get_difficulty_display }}
+            </p>
+        </div>
+        <a href="{% url 'teacher_labs' %}" class="btn btn-secondary">← Назад к списку</a>
+    </div>
+
+    <div class="panel">
+        <div class="panel-body">
+            <h3>📄 Описание лабораторной</h3>
+            <p>{{ lab.description|linebreaks }}</p>
+            <div class="action-buttons">
+                <a href="{{ lab.docx_file.url }}" class="btn btn-info" download>📥 Скачать файл (.docx)</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h3>📊 Сдачи лабораторной ({{ submissions|length }})</h3>
+        </div>
+        <div class="panel-body">
+            {% if submissions %}
+            <div class="table-wrap">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Ученик</th>
+                            <th>Дата сдачи</th>
+                            <th>Файл</th>
+                            <th>Статус</th>
+                            <th>Оценка</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                       {% for submission in submissions %}
+<div class="card mb-3">
+    <div class="card-body">
+        <h5>{{ submission.student.profile.full_name }}</h5>
+        <p>Статус: {{ submission.get_status_display }}</p>
+
+        {% if submission.grade %}
+            <p>Оценка: <strong>{{ submission.grade }}</strong></p>
+            <p>Комментарий: {{ submission.comment }}</p>
+        {% endif %}
+
+        <form method="POST" style="margin-top: 15px;">
+            {% csrf_token %}
+            <input type="hidden" name="submission_id" value="{{ submission.id }}">
+
+            <div class="form-group">
+                <label>Оценка:</label>
+                <select name="grade" class="form-control" style="width: auto;">
+                    <option value="">-- Выберите оценку --</option>
+                    <option value="5" {% if submission.grade == "5" %}selected{% endif %}>5</option>
+                    <option value="4" {% if submission.grade == "4" %}selected{% endif %}>4</option>
+                    <option value="3" {% if submission.grade == "3" %}selected{% endif %}>3</option>
+                    <option value="2" {% if submission.grade == "2" %}selected{% endif %}>2</option>
+                    <option value="н" {% if submission.grade == "н" %}selected{% endif %}>Незачет</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Комментарий:</label>
+                <textarea name="comment" class="form-control" rows="2">{{ submission.comment|default:'' }}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Оценить</button>
+        </form>
+    </div>
+</div>
+{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center text-muted">Пока никто не сдал эту лабораторную работу.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Автофокус на первом поле оценки
+    const firstGradeSelect = document.querySelector('select[name="grade"]');
+    if (firstGradeSelect) firstGradeSelect.focus();
+
+    // Подтверждение при оценке
+    const forms = document.querySelectorAll('.inline-form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const grade = this.querySelector('select[name="grade"]').value;
+            if (!grade) {
+                e.preventDefault();
+                alert('Выберите оценку');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

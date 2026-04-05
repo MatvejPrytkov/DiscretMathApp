@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load tz %}
+{% block title %}Личный кабинет{% endblock %}
+
+{% block content %}
+
+    <h1>Личный кабинет: {{ user.username }}</h1>
+
+    <div class="profile-actions">
+        <h3>Управление аккаунтом</h3>
+        <div style="width: 100%; display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'profile_update' %}" class="btn btn-primary">✏️ Редактировать</a>
+            <a href="{% url 'change_password' %}" class="btn btn-success">🔐 Сменить пароль</a>
+            <a href="{% url 'delete_account' %}" class="btn btn-danger"
+               onclick="return confirm('Вы уверены?')">🗑️ Удалить аккаунт</a>
+            <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
+        </div>
+    </div>
+
+    <div class="test-banners">
+        <h3>🎯 Пройти тестирование</h3>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <a href="{% url 'test_view' 'start' %}" class="btn btn-success">📥 Входное тестирование</a>
+            <a href="{% url 'test_view' 'final' %}" class="btn btn-primary">📤 Итоговое тестирование</a>
+        </div>
+    </div>
+    <div class="lab_works">
+
+         <a href="{% url 'student_labs' %}" class="btn btn-success"> Посмотреть список доступных лабораторных работ 🧪</a>
+
+    </div>
+    <h2>История тестов</h2>
+    {% if results %}
+        <div class="result-list">
+            {% for res in results %}
+                <div class="result-card">
+                    <p><strong>
+                        {% if res.test_type == 'start' %}📥 Входное{% else %}📤 Итоговое{% endif %}
+                    </strong></p>
+                    {% timezone "Asia/Yekaterinburg" %}
+                        <p style="font-size: 0.9em; color: #666;">{{ res.date_completed|date:"d.m.Y H:i" }}</p>
+                    {% endtimezone %}
+                    <p>Результат: <span class="badge badge-score">{{ res.score }} / {{ res.total_questions }}</span></p>
+                    <a href="{% url 'result_detail' res.id %}" class="btn-simple" style="margin-top: 10px;">📋 Подробности</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>У вас пока нет результатов тестов.</p>
+    {% endif %}
+<div class="mt-5">
+        <h2>📊 Все мои оценки</h2>
+
+        <div class="row">
+            <!-- Оценки за лабораторные -->
+            <div class="col-md-6">
+                <h4>🧪 Лабораторные работы</h4>
+                {% if lab_grades %}
+                    <div class="list-group">
+                    {% for submission in lab_grades %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ submission.lab_work.title }}</h6>
+                                <span class="badge badge-primary">{{ submission.grade }}</span>
+                            </div>
+                            <small class="text-muted">
+                                Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}
+                                {% if submission.comment %}
+                                    <br>Комментарий: {{ submission.comment }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Нет оценок за лабораторные работы</p>
+                {% endif %}
+            </div>
+
+            <!-- Оценки за тесты -->
+            <div class="col-md-6">
+                <h4>📝 Тесты</h4>
+                {% if test_grades %}
+                    <div class="list-group">
+                    {% for result in test_grades %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ result.get_test_type_display }}</h6>
+                                <span class="badge badge-success">{{ result.score }}%</span>
+                            </div>
+                            <small class="text-muted">
+                                Пройден: {{ result.date_completed|date:"d.m.Y H:i" }}
+
+                            </small>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Нет оценок за тесты</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Сводная таблица всех оценок -->
+        <div class="mt-4">
+            <h5>Сводная таблица</h5>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Тип</th>
+                        <th>Название</th>
+                        <th>Оценка</th>
+                        <th>Дата</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for submission in lab_grades %}
+                    <tr>
+                        <td>Лабораторная</td>
+                        <td>{{ submission.lab_work.title }}</td>
+                        <td>
+                            <span class="badge badge-primary">{{ submission.grade }}</span>
+                        </td>
+                        <td>{{ submission.graded_at|date:"d.m.Y" }}</td>
+                        <td>
+                            <span class="badge badge-{{ submission.status }}">
+                                {{ submission.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    {% for result in test_grades %}
+                    <tr>
+                        <td>Тестирование</td>
+                        <td>{% if result.test_type == 'start' %} Входное{% else %}  Итоговое{% endif %}</td>
+                        <td>
+                            <span class="badge badge-success">{{ result.grade }}</span>
+                        </td>
+                        <td>{{ result.date_completed|date:"d.m.Y" }}</td>
+                        <td>
+                            <span class="badge badge-success">Завершен</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

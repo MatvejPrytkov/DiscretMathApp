@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Просмотр результата</title>
+    <style>
+        .ok { color: green; }
+        .no { color: red; }
+        .card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .grade-form {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ result.get_test_type_display }}</h1>
+    <p>Дата: {{ result.date_completed|date:"d.m.Y H:i" }}</p>
+    <p>Результат: {{ result.score }} из {{ result.total_questions }} ({{ result.percent }}%)</p>
+
+    {% if results_by_category %}
+    <div style="margin-top: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
+        <h3>Результаты по темам:</h3>
+        <ul style="list-style: none; padding-left: 0;">
+            {% for key, val in results_by_category.items %}
+                <li style="margin-bottom: 10px; font-size: 1.1em;">
+                    <strong>{{ val.name }}:</strong>
+                    <span style="color: {% if val.correct > 0 %}green{% else %}black{% endif %}">
+                        {{ val.correct }}
+                    </span>
+                    из {{ val.total }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <h2>Детальные ответы</h2>
+    {% for a in answers %}
+        <div class="card">
+            <p><strong>Вопрос №</strong> {{ forloop.counter }}</p>
+            {% if a.question_text %}
+                <p><strong>Вопрос:</strong> {{ a.question_text }}</p>
+            {% endif %}
+
+            <p><strong>Ваш ответ:</strong> {{ a.user_answer_text|default_if_none:"" }}</p>
+            <p><strong>Правильный ответ:</strong> {{ a.correct_answer_text|default_if_none:"" }}</p>
+
+            {% if a.is_correct %}
+                <p class="ok"><strong>Верно</strong></p>
+            {% else %}
+                <p class="no"><strong>Неверно</strong></p>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>Нет сохранённых ответов для этой попытки.</p>
+    {% endfor %}
+
+    <!-- ФОРМА ВЫСТАВЛЕНИЯ ОЦЕНКИ (только для учителя) -->
+    {% if is_teacher %}
+    <div class="grade-form">
+        <h2>Выставление оценки</h2>
+
+        <!-- Показ текущей оценки, если уже выставлена -->
+        {% if result.grade %}
+        <div style="margin-bottom: 15px; padding: 10px; background-color: #e9ecef; border-radius: 5px;">
+            <strong>Текущая оценка:</strong>
+            <span style="color:
+                {% if result.grade == 5 %}#28a745
+                {% elif result.grade == 4 %}#17a2b8
+                {% elif result.grade == 3 %}#ffc107
+                {% else %}#dc3545
+                {% endif %}; font-weight: bold;">
+                {{ result.get_grade_display }}
+            </span>
+            {% if result.teacher_comment %}
+                <br><strong>Комментарий:</strong> {{ result.teacher_comment }}
+            {% endif %}
+            <br><small>Оценку выставил: {{ result.graded_by.profile.full_name|default:result.graded_by.username }}
+            ({{ result.graded_at|date:"d.m.Y H:i" }})</small>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">{{ form.grade.label }}</label>
+                {{ form.grade }}
+                {% if form.grade.errors %}
+                    <div style="color: red; font-size: 0.9em;">{{ form.grade.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">{{ form.teacher_comment.label }}</label>
+                {{ form.teacher_comment }}
+                {% if form.teacher_comment.errors %}
+                    <div style="color: red; font-size: 0.9em;">{{ form.teacher_comment.errors }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn" style="background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer;">
+                Сохранить оценку
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    <hr>
+    <div style="margin-top: 20px;">
+        <a href="{% url back_url %}" class="btn" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            {{ back_text }}
+        </a>
+    </div>
+</body>
+</html>

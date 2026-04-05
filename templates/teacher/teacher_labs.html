@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h1>🧪 Лабораторные работы</h1>
+    
+    <div style="margin-bottom: 30px;">
+        <a href="{% url 'create_lab' %}" class="btn btn-primary">➕ Новая лабораторная</a>
+    </div>
+
+    <h3>📋 Ваши лабораторные ({{ labs.count }})</h3>
+    {% for lab in labs %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>{{ lab.title }}</h5>
+            <p><strong>Тема:</strong> {{ lab.theme }} | <strong>Сложность:</strong> {{ lab.get_difficulty_display }}</p>
+            <a href="{{ lab.docx_file.url }}" class="btn btn-sm btn-info" download>📥 Скачать</a>
+            <a href="{% url 'lab_detail' lab.id %}" class="btn btn-sm btn-primary">📊 Сдачи</a>
+        </div>
+    </div>
+    {% empty %}
+    <p>У вас пока нет лабораторных работ.</p>
+    {% endfor %}
+
+    <h3>📥 Сдачи на проверку ({{ submissions|length }})</h3>
+    {% for submission in submissions %}
+    <div class="card mb-2">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>{{ submission.student.profile.full_name }}</strong><br>
+                    <small>{{ submission.lab_work.title }}</small>
+                </div>
+                <span class="badge badge-{{ submission.status }}">{{ submission.get_status_display }}</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

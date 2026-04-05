@@ -10,15 +10,18 @@
     {{ form.as_p }}
 
     <p><strong>Войти как:</strong></p>
-    <label>
-      <input type="radio" name="role" value="student" checked>
-      Ученик
-    </label>
-    <br>
-    <label>
-      <input type="radio" name="role" value="teacher">
-      Учитель
-    </label>
+    <div class="role-wrap">
+            <div class="role-selection">
+                <label>
+                    <input type="radio" name="role" value="student" checked>
+                    <span>Ученик</span>
+                </label>
+                <label>
+                    <input type="radio" name="role" value="teacher">
+                    <span>Учитель</span>
+                </label>
+            </div>
+        </div>
 
     <button type="submit" class="btn btn-primary">Войти</button>
   </form>

@@ -1,0 +1,7 @@
+.project
+db.sqlite3
+dump.sql
+key
+key.pub
+tasks.accdb
+sqlite3.exe

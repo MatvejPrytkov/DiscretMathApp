@@ -1,221 +1,128 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Регистрация</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 40px 16px;
-            background: #f5f6f8;
-        }
-        .card {
-            max-width: 420px;
-            margin: 0 auto;
-            background: #fff;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-        }
-        h1 {
-            margin: 0 0 16px;
-            font-size: 22px;
-        }
-        label {
-            display: block;
-            margin-top: 12px;
-            font-size: 14px;
-        }
-        input {
-            width: 100%;
-            box-sizing: border-box;
-            margin-top: 6px;
-            padding: 10px 12px;
-            border: 1px solid #d7dbe0;
-            border-radius: 8px;
-            outline: none;
-        }
-        input:focus {
-            border-color: #6c8cff;
-            box-shadow: 0 0 0 3px rgba(108,140,255,0.15);
-        }
-        .hint {
-            margin-top: 8px;
-            font-size: 12px;
-            color: #6b7280;
-        }
-        button {
-            width: 100%;
-            margin-top: 16px;
-            padding: 10px 12px;
-            border: none;
-            border-radius: 8px;
-            background: #2f66ff;
-            color: #fff;
-            font-size: 15px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #2553d6;
-        }
-        .row {
-            display: flex;
-            gap: 12px;
-        }
-        .row > div {
-            flex: 1;
-        }
-        .footer {
-            margin-top: 12px;
-            font-size: 13px;
-            color: #374151;
-        }
-        .footer a {
-            color: #2f66ff;
-            text-decoration: none;
-        }
-        .footer a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <main class="card">
-        <h1>Регистрация</h1>
+{% extends 'base.html' %}
 
-        <!-- ОДНА форма, которая отправляет данные на обработку регистрации -->
-        <form method="post" autocomplete="on">
-            {% csrf_token %}
+{% block title %}Регистрация{% endblock %}
 
-            {% if form.errors %}
-            <div style="color: red; margin-bottom: 15px;">
-                {% for field in form %}
-                    {% for error in field.errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<main class="card">
+    <h1>Регистрация</h1>
+
+    <form method="post" autocomplete="on">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div style="color: red; margin-bottom: 15px;">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <p>{{ error }}</p>
                 {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <label>ФИО</label>
+        {{ form.name }}
+
+        <label>Email</label>
+        {{ form.email }}
+
+        <label>Роль</label>
+        <div class="role-wrap">
+            <div class="role-selection">
+                <label>
+                    <input type="radio" name="role" value="student" checked>
+                    <span>Ученик</span>
+                </label>
+                <label>
+                    <input type="radio" name="role" value="teacher">
+                    <span>Учитель</span>
+                </label>
             </div>
-            {% endif %}
+        </div>
 
+        <div id="student-fields" style="display: block;">
+            <label>Группа</label>
+            {{ form.group }}
 
-            <label>ФИО</label>
-            {{ form.name }}
+            <label>Курс</label>
+            {{ form.course }}
 
-            <label>Email</label>
-            {{ form.email }}
-            <label>Роль</label>
-<div style="margin: 10px 0;">
-    <label style="display: inline-block; margin-right: 20px;">
-        <input type="radio" name="role" value="student" checked> Ученик
-    </label>
-    <label style="display: inline-block;">
-        <input type="radio" name="role" value="teacher"> Учитель
-    </label>
-</div>
+            <label>Преподаватель</label>
+            {{ form.teacher }}
+        </div>
 
-<!-- Поля группы и курса сделайте условными с помощью JavaScript -->
-<div id="student-fields" style="display: block;">
-    <label>Группа</label>
-    {{ form.group }}
+        <label>Имя пользователя</label>
+        {{ form.username }}
 
-    <label>Курс</label>
-    {{ form.course }}
-    <label>Преподаватель</label>
-    {{ form.teacher }}
-</div>
-            <label>Имя пользователя</label>
-            {{ form.username }}
-
-            <div class="row">
-                <div>
-                    <label>Пароль</label>
-                    {{ form.password1 }}
-                </div>
-                <div>
-                    <label>Повтор пароля</label>
-                    {{ form.password2 }}
-                </div>
+        <div class="row">
+            <div>
+                <label>Пароль</label>
+                {{ form.password1 }}
             </div>
+            <div>
+                <label>Повтор пароля</label>
+                {{ form.password2 }}
+            </div>
+        </div>
 
-            <label>
-                <input type="checkbox" name="agree" required style="width:auto; margin-right:8px;">
-                Согласен(на) с условиями
-            </label>
+        <label class="role-selection" style="margin-top: 16px;">
+            <input type="checkbox" name="agree" required>
+            <span>Согласен(на) с условиями</span>
+        </label>
 
-            <button type="submit">Зарегистрироваться</button>
-        </form>
+        <button type="submit">Зарегистрироваться</button>
+    </form>
 
-        <div class="hint">Подсказка: на сервере всё равно нужно проверить email и совпадение паролей.</div>
-        <div class="footer">Уже есть аккаунт? <a href="/login">Войти</a></div>
-    </main>
+    <div class="footer">Уже есть аккаунт? <a href="/login">Войти</a></div>
+</main>
 
-    <script>
-        // Простая проверка совпадения паролей на клиенте
-        const form = document.querySelector('form');
-        const p1 = document.getElementById('id_password1');
-        const p2 = document.getElementById('id_password2');
-
-        form.addEventListener('submit', (e) => {
-            if (p1 && p2 && p1.value !== p2.value) {
-                e.preventDefault();
-                p2.setCustomValidity('Пароли не совпадают');
-                p2.reportValidity();
-            } else if (p2) {
-                p2.setCustomValidity('');
-            }
-        });
-
-        if (p2) {
-            p2.addEventListener('input', () => p2.setCustomValidity(''));
-        }
-        const roleRadios = document.querySelectorAll('input[name="role"]');
+<script>
+    const form = document.querySelector('form');
+    const p1 = document.getElementById('id_password1');
+    const p2 = document.getElementById('id_password2');
+    const roleRadios = document.querySelectorAll('input[name="role"]');
     const studentFields = document.getElementById('student-fields');
 
+    // Одна функция обработки полей
     function toggleStudentFields() {
         const selectedRole = document.querySelector('input[name="role"]:checked').value;
         studentFields.style.display = selectedRole === 'student' ? 'block' : 'none';
 
-        // Делаем поля обязательными только для учеников
         const groupField = document.getElementById('id_group');
         const courseField = document.getElementById('id_course');
+        const teacherField = document.getElementById('id_teacher');
 
         if (selectedRole === 'student') {
-            groupField.required = true;
-            courseField.required = true;
+            if(groupField) groupField.required = true;
+            if(courseField) courseField.required = true;
+            if(teacherField) teacherField.required = true;
         } else {
-            groupField.required = false;
-            courseField.required = false;
+            if(groupField) groupField.required = false;
+            if(courseField) courseField.required = false;
+            if(teacherField) teacherField.required = false;
         }
+    }
+
+    // Обработка совпадения паролей
+    form.addEventListener('submit', (e) => {
+        if (p1 && p2 && p1.value !== p2.value) {
+            e.preventDefault();
+            p2.setCustomValidity('Пароли не совпадают');
+            p2.reportValidity();
+        }
+    });
+
+    if (p2) {
+        p2.addEventListener('input', () => p2.setCustomValidity(''));
     }
 
     roleRadios.forEach(radio => {
         radio.addEventListener('change', toggleStudentFields);
     });
 
-    // Инициализация при загрузке
     document.addEventListener('DOMContentLoaded', toggleStudentFields);
-
-    function toggleStudentFields() {
-    const selectedRole = document.querySelector('input[name="role"]:checked').value;
-    studentFields.style.display = selectedRole === 'student' ? 'block' : 'none';
-
-    // Делаем поля обязательными только для учеников
-    const groupField = document.getElementById('id_group');
-    const courseField = document.getElementById('id_course');
-    const teacherField = document.getElementById('id_teacher');
-
-    if (selectedRole === 'student') {
-        groupField.required = true;
-        courseField.required = true;
-        teacherField.required = true;
-    } else {
-        groupField.required = false;
-        courseField.required = false;
-        teacherField.required = false;
-    }
-}
-    </script>
-</body>
-</html>
+</script>
+{% endblock %}

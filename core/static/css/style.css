@@ -1,11 +1,176 @@
 /* Общие настройки базы */
+/* Базовые стили из вашего style.css */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 40px 16px;
     background: #f5f6f8;
+    color: #374151;
 }
 
+/* Стилизация карточки регистрации */
+.card {
+    max-width: 480px; /* Немного расширил для удобства полей в ряд */
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+h1 {
+    margin: 0 0 24px;
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    color: #111827;
+}
+
+/* Стилизация меток и полей ввода */
+label {
+    display: block;
+    margin-top: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+/* Селектор для всех текстовых полей, включая те, что генерирует Django {{ form.field }} */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 6px;
+    padding: 12px 14px;
+    border: 1px solid #d7dbe0;
+    border-radius: 8px;
+    outline: none;
+    font-size: 15px;
+    transition: all 0.2s;
+}
+
+input:focus, select:focus {
+    border-color: #2f66ff;
+    box-shadow: 0 0 0 3px rgba(47, 102, 255, 0.1);
+}
+
+/* Стилизация блока выбора роли (Радиокнопки) */
+.role-selection {
+    display: flex;
+    gap: 20px;
+    margin: 12px 0;
+    background: #f9fafb;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px dashed #d1d5db;
+}
+
+.role-selection label {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.role-selection input[type="radio"] {
+    width: auto;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+/* Группировка полей в одну строку (Пароли, Группа/Курс) */
+.row {
+    display: flex;
+    gap: 16px;
+    margin-top: 0;
+}
+
+.row > div {
+    flex: 1;
+}
+
+/* Кнопка регистрации */
+button[type="submit"] {
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    background: #2f66ff;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button[type="submit"]:hover {
+    background: #1d4ed8;
+}
+
+/* Согласие с условиями */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: normal;
+    margin-top: 20px;
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    width: auto;
+    margin: 0 10px 0 0;
+}
+
+/* Ошибки и подсказки */
+.error-list {
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #b91c1c;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.hint {
+    margin-top: 16px;
+    font-size: 12px;
+    color: #9ca3af;
+    text-align: center;
+}
+
+.footer {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #f3f4f6;
+    font-size: 14px;
+    text-align: center;
+    color: #4b5563;
+}
+
+.footer a {
+    color: #2f66ff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+/* Плавное скрытие/появление полей студента */
+#student-fields {
+    border-left: 3px solid #e5e7eb;
+    padding-left: 15px;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
 .container {
     max-width: 900px;
     margin: 0 auto;
@@ -190,12 +355,7 @@ input:focus {
     margin-bottom: 25px;
     border-left: 5px solid #28a745;
 }
-/* Стили для dashboard */
-.stats-grid {
-    display: flex;
-    gap: 20px;
-    margin: 30px 0;
-}
+
 
 .stat-card {
     flex: 1;
@@ -229,43 +389,720 @@ input:focus {
     border-top: 1px solid #eef2f7;
 }
 
+/* 1. Сначала удалите или исправьте конфликтующий блок в конце файла */
+.stats-grid, .charts-section {
+    display: block; /* Изменяем grid на block, так как управление будет внутри */
+}
+
+/* 2. Настройки секции заголовка */
+.charts-section {
+    width: 100%;
+    margin: 30px 0;
+}
+
+.charts-section h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    width: 100%;
+}
+
+/* 3. Контейнер, который выстраивает карточки в ряд */
+.charts-container {
+    display: flex;
+    flex-direction: row;     /* Строго в ряд */
+    flex-wrap: wrap;         /* Позволяет переноситься на узких экранах */
+    justify-content: center; /* Центрирует группу карточек */
+    gap: 20px;               /* Отступы между карточками */
+    width: 100%;
+    max-width: 1200px;       /* Чтобы на сверхшироких мониторах не разъезжались слишком сильно */
+    margin: 0 auto;          /* Центрирует сам контейнер на странице */
+}
+
+/* 4. Настройка самих карточек */
+.chart-card {
+    flex: 1;                 /* Растягиваются равномерно */
+    min-width: 280px;        /* Минимальная ширина для читаемости */
+    max-width: 350px;        /* Ограничиваем максимальную ширину, чтобы влезло три в ряд */
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.chart-card h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #374151;
+}
+
+/* 5. Исправление для холстов Chart.js */
+canvas {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 250px;       /* Ограничиваем высоту, чтобы графики не были огромными */
+}
+
+/* 6. Адаптивность: на мобилках в колонку */
+@media (max-width: 768px) {
+    .charts-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    .chart-card {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+.role-selection {
+    display: flex;
+    flex-direction: row; /* Выстраиваем элементы в строку */
+    gap: 24px;           /* Расстояние между вариантами */
+    margin: 12px 0;
+    background: #f9fafb;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px dashed #d1d5db;
+    align-items: center; /* Центрирование по вертикали */
+}
+
+.role-selection label {
+    display: inline-flex; /* Важно: заменяем block на inline-flex */
+    align-items: center;  /* Текст и кнопка на одном уровне */
+    margin-top: 0;        /* Убираем верхний отступ от обычных меток */
+    cursor: pointer;
+    font-weight: normal;
+    font-size: 15px;
+    line-height: 1;       /* Убираем лишнюю высоту строки */
+}
+
+.role-selection input[type="radio"] {
+    width: 18px;          /* Фиксированный размер */
+    height: 18px;
+    margin: 0 8px 0 0;    /* Отступ только справа до текста */
+    cursor: pointer;
+    flex-shrink: 0;       /* Чтобы кнопка не сжималась */
+}
+/* Специальный стиль для кнопок "Отмена" */
+.btn-cancel{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;              /* чтобы в паре с flex занимала всю доступную ширину */
+    box-sizing: border-box;
+
+    padding: 8px 16px;        /* ТОЧНО как у .btn */
+    min-height: auto;         /* убираем фиксированную высоту */
+    font-size: 1rem;
+    line-height: 1.5;
+    font-weight: 400;
+
+    border-radius: 4px;       /* как у .btn (было 0.375rem) */
+    border: 1px solid #dc3545;
+    background: #dc3545;
+    color: #fff;
+    text-decoration: none;
+
+    cursor: pointer;
+}
+
+.btn-cancel:hover{
+    background: #bb2d3b;
+    border-color: #b02a37;
+    color: #fff;
+}
+/* Основной контейнер */
+.mt-5 {
+    margin-top: 3rem !important;
+}
+
+/* Заголовок блока */
+.mt-5 h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    color: #111827;
+    border-bottom: 2px solid #2f66ff;
+    padding-bottom: 0.5rem;
+}
+
+/* Сетка с двумя колонками */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.col-md-6 {
+    flex: 1 1 45%;
+    min-width: 300px;
+}
+
+/* Заголовки внутри колонок */
+.col-md-6 h4 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: #374151;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Стили для списков оценок */
+.list-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.list-group-item {
+    background: #ffffff;
+    border: 1px solid #e0e4e8;
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.25s ease;
+}
+
+.list-group-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    border-color: #2f66ff;
+}
+
+/* Внутренняя структура элемента списка */
+.list-group-item .d-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.list-group-item h6 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Дополнительная информация */
+.list-group-item .text-muted {
+    font-size: 0.9rem;
+    color: #6b7280;
+    line-height: 1.4;
+    display: block;
+}
+
+/* Новые стили для бейджей оценок */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.badge-primary {
+    background: linear-gradient(135deg, rgba(47, 102, 255, 0.15) 0%, rgba(47, 102, 255, 0.08) 100%);
+    color: #1d4ed8;
+    border: 1px solid rgba(47, 102, 255, 0.2);
+}
+
+.badge-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Стили для сводной таблицы */
+.mt-4 h5 {
+    font-size: 1.3rem;
+    margin-bottom: 1.2rem;
+    color: #374151;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    margin-bottom: 2rem;
+}
+
+.table thead th {
+    background: #f8fafc;
+    color: #374151;
+    font-weight: 700;
+    padding: 1.2rem 1.5rem;
+    border-bottom: 2px solid #e5e7eb;
+    text-align: left;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table tbody td {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.95rem;
+    color: #4b5563;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Бейджи в таблице */
+.table .badge {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.7rem;
+    min-width: 60px;
+    justify-content: center;
+}
+
+/* Стили для различных статусов */
+.badge-pending {
+    background: rgba(245, 158, 11, 0.15);
+    color: #92400e;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-graded {
+    background: rgba(16, 185, 129, 0.15);
+    color: #047857;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badge-returned {
+    background: rgba(239, 68, 68, 0.15);
+    color: #b91c1c;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
-    .stats-grid {
+    .row {
         flex-direction: column;
+        gap: 1.5rem;
     }
 
-    .action-buttons {
-        flex-direction: column;
+    .col-md-6 {
+        flex: 1 1 100%;
+        min-width: 100%;
     }
 
-    .action-buttons .btn {
+    .table {
+        font-size: 0.9rem;
+    }
+
+    .table thead th,
+    .table tbody td {
+        padding: 0.9rem 1rem;
+    }
+
+    .mt-5 h2 {
+        font-size: 1.5rem;
+    }
+}
+.container h1:first-of-type {
+    color: #111827;
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 3px solid #6366f1;
+    position: relative;
+}
+
+.container h1:first-of-type::before {
+
+    margin-right: 12px;
+    font-size: 2rem;
+}
+
+/* Подзаголовки секций */
+.container h3 {
+    color: #374151;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 2.5rem 0 1.5rem 0;
+    padding-left: 15px;
+    border-left: 4px solid #10b981;
+}
+
+.container h3:first-of-type::before {
+    content: "📋 ";
+}
+
+/* Карточки лабораторных работ */
+.container .card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.container .card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Тело карточки */
+.container .card .card-body {
+    padding: 1.75rem;
+}
+
+/* Заголовок лабораторной работы */
+.container .card .card-body h5 {
+    color: #111827;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+}
+
+.container .card .card-body h5::before {
+    content: "🔬";
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+/* Описание лабораторной работы */
+.container .card .card-body p {
+    color: #6b7280;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    padding-left: 2px;
+}
+
+/* Контейнер для кнопок */
+.container .card .card-body .d-flex {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Кнопки действий */
+.container .card .card-body .btn {
+    padding: 0.6rem 1.4rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+}
+
+.container .card .card-body .btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.container .card .card-body .btn-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+}
+
+.container .card .card-body .btn-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.container .card .card-body .btn-info:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
+}
+
+.container .card .card-body .btn-info::before {
+    content: "📥 ";
+    margin-right: 6px;
+}
+
+/* Стили для статусов сдач */
+.container .card .card-body .badge {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    border: 2px solid transparent;
+}
+
+/* Дополнительные статусы для лабораторных работ */
+.badge-submitted {
+    background: rgba(59, 130, 246, 0.15);
+    color: #1d4ed8;
+    border-color: rgba(59, 130, 246, 0.25);
+}
+
+.badge-under_review {
+    background: rgba(245, 158, 11, 0.15);
+    color: #92400e;
+    border-color: rgba(245, 158, 11, 0.25);
+}
+
+/* Информация о проверке */
+.container .card .card-body p strong {
+    color: #111827;
+    font-weight: 700;
+}
+
+.container .card .card-body p:has(strong) {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0;
+    border-top: 1px dashed #e5e7eb;
+}
+
+/* Комментарий преподавателя */
+.container .card .card-body p:contains("Комментарий преподавателя") {
+    background: rgba(243, 244, 246, 0.5);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #6366f1;
+    font-style: italic;
+    margin-top: 1rem;
+}
+
+/* Пустое состояние (нет работ) */
+.container p:empty {
+    text-align: center;
+    padding: 3rem;
+    color: #9ca3af;
+    font-size: 1.1rem;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 2px dashed #d1d5db;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .container h1:first-of-type {
+        font-size: 1.8rem;
+    }
+
+    .container h3 {
+        font-size: 1.3rem;
+    }
+
+    .container .card .card-body {
+        padding: 1.25rem;
+    }
+
+    .container .card .card-body h5 {
+        font-size: 1.15rem;
+    }
+
+    .container .card .card-body .d-flex {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .container .card .card-body .btn {
         width: 100%;
         justify-content: center;
     }
 }
-.charts-section {
-    margin: 2rem 0;
+
+/* Анимация появления карточек */
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
-.chart-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    text-align: center;
+
+.container .card {
+    animation: cardAppear 0.4s ease-out forwards;
 }
-.chart-card h4 {
-    margin-bottom: 1rem;
-    color: #1f2937;
+
+.container .card:nth-child(1) { animation-delay: 0.1s; }
+.container .card:nth-child(2) { animation-delay: 0.2s; }
+.container .card:nth-child(3) { animation-delay: 0.3s; }
+.container .card:nth-child(4) { animation-delay: 0.4s; }
+.container .card:nth-child(5) { animation-delay: 0.5s; }
+.card.submitted-lab {
+    background-color: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    border-color: rgba(76, 175, 80, 0.3);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
 }
-.stats-grid, .charts-section {
+
+.submitted-badge {
+    background-color: #4caf50;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.submitted-badge::before {
+    content: "✓";
+    font-weight: bold;
+}
+.cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
 }
+
+.cards-grid > .card {
+    margin-bottom: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.cards-grid > .card .card-body {
+    flex-grow: 1;
+}
+.submissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.submissions-grid > .card {
+    margin-bottom: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.submissions-grid > .card .card-body {
+    flex-grow: 1;
+}
+
+/* Гарантируем, что карточки не наезжают на другие элементы */
+.cards-grid,
+.submissions-grid {
+    clear: both;
+    overflow: hidden;
+}
+
+/* Убираем лишние отступы у карточек внутри гридов */
+.cards-grid > .card,
+.submissions-grid > .card {
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Опционально: фиксируем минимальную высоту строки для равномерного вида */
+.cards-grid,
+.submissions-grid {
+    align-items: stretch;
+}
+.cards-grid,
+.submissions-grid {
+    width: 100%;
+    box-sizing: border-box;
+    clear: both;
+    overflow: visible; /* вместо hidden, чтобы не обрезались тени/рамки */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+    align-items: stretch;
+}
+
+/* Сбрасываем все внешние отступы у карточек внутри грида */
+.cards-grid > .card,
+.submissions-grid > .card {
+    margin: 0 !important; /* убираем mb-3 и любые другие отступы */
+    height: auto;
+    min-height: 0; /* разрешаем сжатие */
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box; /* учитываем padding и border в ширине */
+}
+
+/* Тело карточки растягивается на всю доступную высоту */
+.cards-grid > .card .card-body,
+.submissions-grid > .card .card-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* прижимаем кнопки к низу */
+}
+
+/* Убираем лишний отступ снизу у последней карточки в гриде */
+.cards-grid > .card:last-child,
+.submissions-grid > .card:last-child {
+    margin-bottom: 0;
+}
+
+/* Исправление для карточек с разным количеством текста –
+   гарантируем, что они не выходят за границы строки */
+.cards-grid::after,
+.submissions-grid::after {
+    content: '';
+    display: table;
+    clear: both;
+}
+
+/* Дополнительная страховка: если карточка всё-таки вылазит,
+   ограничиваем её максимальной высотой и добавляем прокрутку */
+.cards-grid > .card,
+.submissions-grid > .card {
+    max-height: 500px; /* можно изменить по необходимости */
+    overflow-y: auto;  /* если контента много – появится скролл внутри карточки */
+}
+
+/* На узких экранах уменьшаем минимальную ширину колонки */
 @media (max-width: 768px) {
-    .stats-grid, .charts-section {
+    .cards-grid,
+    .submissions-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+    }
+}
+
+/* На очень узких экранах – одна колонка */
+@media (max-width: 480px) {
+    .cards-grid,
+    .submissions-grid {
         grid-template-columns: 1fr;
     }
 }

@@ -12,44 +12,59 @@
 
     <div class="panel">
         <div class="panel-body table-wrap">
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>Ученик</th>
-                        <th>Тест</th>
-                        <th>Баллы</th>
-                        <th>Процент</th>
-                        <th>Дата</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for result in results %}
-                    <tr>
-                        <td class="col-student">
-                            {{ result.user.profile.full_name|default:result.user.username }}
-                        </td>
-                       <td>
-    <a href="{% url 'result_detail' result.pk %}" style="text-decoration: none;">
-        <span class="badge badge-test" style="cursor: pointer; hover: opacity 0.8;">
-            {{ result.get_test_type_display }} 🔍
-        </span>
-    </a>
-</td>
-                        <td>
-                            <span class="badge badge-score">{{ result.score }} / {{ result.total_questions }}</span>
-                        </td>
-                        <td>
-                            <span class="badge badge-percent">{{ result.percent|floatformat:1 }}%</span>
-                        </td>
-                        <td>{{ result.date_completed|date:"d.m.Y H:i" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="empty-row">Результатов пока нет</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+           <table class="results-table">
+    <thead>
+        <tr>
+            <th>Ученик</th>
+            <th>Тест</th>
+            <th>Баллы</th>
+            <th>Процент</th>
+            <th>Оценка</th>  <!-- Новая колонка -->
+            <th>Дата</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for result in results %}
+        <tr>
+            <td class="col-student">
+                {{ result.user.profile.full_name|default:result.user.username }}
+            </td>
+            <td>
+                <a href="{% url 'result_detail' result.pk %}" style="text-decoration: none;">
+                    <span class="badge badge-test" style="cursor: pointer; hover: opacity 0.8;">
+                        {{ result.get_test_type_display }} 🔍
+                    </span>
+                </a>
+            </td>
+            <td>
+                <span class="badge badge-score">{{ result.score }} / {{ result.total_questions }}</span>
+            </td>
+            <td>
+                <span class="badge badge-percent">{{ result.percent|floatformat:1 }}%</span>
+            </td>
+            <td>
+                {% if result.grade %}
+                    <span class="badge badge-grade" style="background-color:
+                        {% if result.grade == 5 %}#28a745
+                        {% elif result.grade == 4 %}#17a2b8
+                        {% elif result.grade == 3 %}#ffc107
+                        {% else %}#dc3545
+                        {% endif %}; color: white; padding: 4px 8px; border-radius: 4px;">
+                        {{ result.get_grade_display }}
+                    </span>
+                {% else %}
+                    <span style="color: #6c757d;">—</span>
+                {% endif %}
+            </td>
+            <td>{{ result.date_completed|date:"d.m.Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="empty-row">Результатов пока нет</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
         </div>
     </div>
 
