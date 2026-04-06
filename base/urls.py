@@ -33,6 +33,7 @@ urlpatterns = [
     path('student/lab/<int:lab_id>/submit/', views.submit_lab, name='submit_lab'),
 
     path('lab/<int:lab_id>/submit/', views.submit_lab, name='submit_lab'),
+    path('lab/delete/<int:lab_id>/', views.delete_lab_work, name='delete_lab_work'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

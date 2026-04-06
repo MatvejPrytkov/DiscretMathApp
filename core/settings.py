@@ -77,8 +77,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db_recovered.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'Testing_EUMK',
+        'USER': 'Testing_EUMK',
+        'PASSWORD': 'Testing_EUMK',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -121,5 +125,6 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "core/static",  # путь к твоей папке static
 ]
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

@@ -14,6 +14,7 @@
             <h3>📊 Статистика</h3>
             <p class="stat-number">Всего учеников: {{ students.count }}</p>
             <p class="stat-number">Всего тестов пройдено: {{ total_tests_passed }}</p>
+            <p class="stat-number">Всего лабораторных работ сдано: {{ total_labs_submitted }}</p>
         </div>
     </div>
 
@@ -46,7 +47,7 @@
 
         <a href="{% url 'student_results' %}" class="btn btn-success">📊 Результаты тестов</a>
         <a href="{% url 'download_report' %}" class="btn btn-success">📥 Выгрузить отчет</a>
-<!--        <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Выйти</a>-->
+
          <a href="{% url 'delete_account' %}" class="btn btn-danger"
                onclick="return confirm('Вы уверены?')">🗑️ Удалить аккаунт</a>
             <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
@@ -58,37 +59,40 @@
     </div>
 
     <!-- Остальной контент (таблица учеников) -->
-    <div class="panel">
-        <div class="panel-body">
-            <h3>Мои ученики ({{ student_count }})</h3>
-            <div class="table-wrap">
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>ФИО Ученика</th>
-                            <th>Email</th>
-                            <th>Тестов пройдено</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for student in students %}
-                        <tr>
-                            <td>{{ student.profile.full_name }}</td>
-                            <td>{{ student.email }}</td>
-                            <td>
-                                <a href="{% url 'student_results' %}?student_id={{ student.id }}" class="btn-simple">
-                                    {{ student.test_count }}
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" style="text-align: center; color: #6b7280;">У вас пока нет прикрепленных учеников</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+   <div class="panel">
+    <div class="panel-body">
+        <h3>Мои ученики ({{ student_count }})</h3>
+        <div class="table-wrap">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>ФИО Ученика</th>
+                        <th>Email</th>
+                        <th>Тестов пройдено</th>
+                        <th>Лабораторных работ сдано</th> <!-- Новая колонка -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.profile.full_name }}</td>
+                        <td>{{ student.email }}</td>
+                        <td>
+                            <a href="{% url 'student_results' %}?student_id={{ student.id }}" class="btn-simple">
+                                {{ student.test_count }}
+                            </a>
+                        </td>
+                        <td>{{ student.lab_submission_count }}</td> <!-- Новое поле -->
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #6b7280;">
+                            У вас пока нет прикрепленных учеников
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

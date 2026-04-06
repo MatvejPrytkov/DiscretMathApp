@@ -1,6 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'student/base_student.html' %}
 {% block title %}Входное тестирование{% endblock %}
-{% block content %}
+{% block student_content %}
+<!--<nav class="mb-4">-->
+<!--        <a href="{% url 'profile' %}" class="btn btn-outline-secondary btn-sm">← Личный кабинет</a>-->
+<!--        <a href="{% url 'student_labs' %}" class="btn btn-outline-secondary btn-sm">🧪 Лабораторные</a>-->
+<!--        <a href="{% url 'test_view' 'final' %}" class="btn btn-outline-secondary btn-sm">📤 Итоговый тест</a>-->
+<!--    </nav>-->
     <h1>Входное тестирование (15 вопросов)</h1>
     <form method="post">
         {% csrf_token %}
@@ -10,7 +15,7 @@
                 <h3>
                     <span class="question-number">{{ forloop.counter }}</span>
                     {{ q.question }}
-                    <span class="category-tag">{{ q.category }}</span>
+
                 </h3>
 
                 <!-- Скрытое поле ID (без дубликатов в начале формы) -->

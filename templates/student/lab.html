@@ -1,7 +1,12 @@
-{% extends 'base.html' %}
 
-{% block content %}
+{% extends 'student/base_student.html' %}
+{% block student_content %}
 <div class="container mt-4">
+<!--     <nav class="mb-4">-->
+<!--        <a href="{% url 'profile' %}" class="btn btn-outline-secondary btn-sm">← Личный кабинет</a>-->
+<!--        <a href="{% url 'test_view' 'start' %}" class="btn btn-outline-secondary btn-sm">📥 Входной тест</a>-->
+<!--        <a href="{% url 'test_view' 'final' %}" class="btn btn-outline-secondary btn-sm">📤 Итоговый тест</a>-->
+<!--    </nav>-->
     <!-- Заголовок лабораторной работы -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
@@ -15,23 +20,36 @@
                     {{ lab.description|linebreaks }}
                 </div>
             </div>
-
+  <!-- Инструкция -->
+    <div class="mt-4 alert alert-light">
+        <h6>📝 Инструкция:</h6>
+        <ol class="mb-0">
+            <li>Внимательно ознакомьтесь с заданием</li>
+            <li>Выполните лабораторную работу</li>
+            <li>Подготовьте файл с результатами</li>
+            <li>Загрузите файл через форму выше</li>
+            <li>Дождитесь проверки преподавателем</li>
+        </ol>
+    </div>
             <!-- Дополнительные материалы -->
-            {% if lab.docx_file %}
-            <div class="mb-4">
-                <h5>📎 Материалы для работы:</h5>
-                <a href="{{ lab.docx_file.url }}" class="btn btn-outline-info" download>
-                    📥 Скачать файл задания
-                </a>
-            </div>
-            {% endif %}
+           {% if lab.docx_file or lab.pptx_file %}
+<div class="mb-4">
+    <h5>📎 Материалы для работы:</h5>
+    <div class="d-flex flex-column gap-2">
+        {% if lab.docx_file %}
+        <a href="{{ lab.docx_file.url }}" class="btn btn-outline-info" download>
+            📥 Скачать файл задания (.docx)
+        </a>
+        {% endif %}
 
-            <!-- Сроки выполнения -->
-            {% if lab.deadline %}
-            <div class="alert alert-warning">
-                <strong>⏰ Срок сдачи:</strong> {{ lab.deadline|date:"d.m.Y H:i" }}
-            </div>
-            {% endif %}
+        {% if lab.pptx_file %}
+        <a href="{{ lab.pptx_file.url }}" class="btn btn-outline-secondary" download>
+            📊 Скачать презентацию (.pptx)
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
         </div>
     </div>
 
@@ -135,16 +153,6 @@
         </div>
     </div>
 
-    <!-- Инструкция -->
-    <div class="mt-4 alert alert-light">
-        <h6>📝 Инструкция:</h6>
-        <ol class="mb-0">
-            <li>Внимательно ознакомьтесь с заданием</li>
-            <li>Выполните лабораторную работу</li>
-            <li>Подготовьте файл с результатами</li>
-            <li>Загрузите файл через форму выше</li>
-            <li>Дождитесь проверки преподавателем</li>
-        </ol>
-    </div>
+
 </div>
 {% endblock %}

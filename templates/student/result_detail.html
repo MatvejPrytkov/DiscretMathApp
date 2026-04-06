@@ -1,25 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Просмотр результата</title>
-    <style>
-        .ok { color: green; }
-        .no { color: red; }
-        .card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 5px; }
-        .grade-form {
-            border: 1px solid #ddd;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-        }
-    </style>
-</head>
-<body>
-    <h1>{{ result.get_test_type_display }}</h1>
-    <p>Дата: {{ result.date_completed|date:"d.m.Y H:i" }}</p>
-    <p>Результат: {{ result.score }} из {{ result.total_questions }} ({{ result.percent }}%)</p>
+{% extends 'student/base_student.html' %}
+{% block title %}{{ result.get_test_type_display }}{% endblock %}
+{% block student_content %}
 
+    <div class="result-header">
+    <h1>{{ result.get_test_type_display }}</h1>
+    <div class="result-meta">
+        <div class="result-meta-item">
+            <i>📅</i>
+            <strong>Дата:</strong> {{ result.date_completed|date:"d.m.Y H:i" }}
+        </div>
+        <div class="result-meta-item">
+            <i>📊</i>
+            <strong>Результат:</strong>
+            <span class="percent-{% if result.percent >= 90 %}excellent{% elif result.percent >= 70 %}good{% elif result.percent >= 50 %}average{% else %}poor{% endif %}">
+                {{ result.score }} из {{ result.total_questions }} ({{ result.percent }}%)
+            </span>
+        </div>
+    </div>
+</div>
     {% if results_by_category %}
     <div style="margin-top: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
         <h3>Результаты по темам:</h3>
@@ -38,6 +36,7 @@
     {% endif %}
 
     <h2>Детальные ответы</h2>
+<div class="answers-grid">
     {% for a in answers %}
         <div class="card">
             <p><strong>Вопрос №</strong> {{ forloop.counter }}</p>
@@ -57,7 +56,7 @@
     {% empty %}
         <p>Нет сохранённых ответов для этой попытки.</p>
     {% endfor %}
-
+</div>
     <!-- ФОРМА ВЫСТАВЛЕНИЯ ОЦЕНКИ (только для учителя) -->
     {% if is_teacher %}
     <div class="grade-form">
@@ -115,5 +114,4 @@
             {{ back_text }}
         </a>
     </div>
-</body>
-</html>
+{% endblock %}

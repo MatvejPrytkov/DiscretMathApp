@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib import messages
 from .forms import RegistrationForm, GradeTestForm
-from .models import LabWork, LabSubmission, TestResult
+from .models import LabWork, LabSubmission, TestResult, TestKindCategory, TestKindConfig
 from django.contrib.auth.forms import AuthenticationForm
 import pandas as pd
 import random
@@ -17,196 +17,202 @@ from django.db.models import Count, Sum, Avg, Max, CharField, Case, When, FloatF
 from django.db.models.functions import Round, Cast
 from django.http import HttpResponse
 from django.utils import timezone
-from .forms import MyLoginForm
+from .forms import MyLoginForm, LabWorkForm
+from django.db.models import Q
+from django.core.paginator import Paginator
+from .models import TestCategory, TestQuestion
 def index(request):
     return render(request, 'index.html')
 @login_required
 @student_required
+@login_required
+@student_required
 def test_view(request, test_kind: str):
     """
-    test_kind: 'start' или 'final'
+    test_kind: 'start' или 'final' (код из TestKindConfig)
+    Полностью работает с данными из БД
     """
-
-    TESTS = {
-        'start': {
-            'title': 'Входное тестирование',
-            'template': 'student/start.html',
-            'result_template': 'student/result_detail.html',
-            'files': {
-                'graphs': 'core/static/graphs.xlsx',
-                'logic': 'core/static/logic.xlsx',
-                'plenty': 'core/static/Plenty.xlsx',
-            },
-            'per_file_sample': 5,   # как у вас сейчас: по 5 из каждой таблицы
-        },
-        'final': {
-            'title': 'Итоговое тестирование',
-            'template': 'student/final.html',
-            'result_template': 'student/result_detail.html',  # или results_final.html — как вам нужно
-            'files': {
-                'final': 'core/static/final_test.xlsx',
-            },
-            'per_file_sample': None,  # берём все вопросы, как сейчас в finish()
-        }
-    }
-
-    if test_kind not in TESTS:
+    # Получаем конфигурацию теста из БД
+    try:
+        test_config = TestKindConfig.objects.get(code=test_kind, is_active=True)
+    except TestKindConfig.DoesNotExist:
+        messages.error(request, f"Тест '{test_kind}' не найден или неактивен")
         return redirect('profile')
-
-    cfg = TESTS[test_kind]
-
-    def option_text(df, actual_row, letter: str) -> str:
-        """Преобразует 'a'/'b'/'c'/'d' в текст ответа из answer1..answer4."""
-        letter = (letter or '').strip().lower()
-        mapping = {'a': 'answer1', 'b': 'answer2', 'c': 'answer3', 'd': 'answer4'}
-        col = mapping.get(letter)
-        if not col or col not in df.columns:
-            return ''
-        val = actual_row[col].values[0]
-        return '' if pd.isna(val) else str(val).strip()
 
     # =============== POST (проверка и сохранение) ===============
     if request.method == 'POST':
         results = {}
         total_correct = 0
         total_questions_all = 0
-        THEME_NAMES = {
-            'graphs': 'Графы',
-            'logic': 'Логика',
-            'plenty': 'Множества',
-        }
 
-        # 1) сначала считаем результат
-        for key, filename in cfg['files'].items():
+        # Получаем все категории для этого типа теста
+        test_categories = test_config.categories.all()
+
+        for category in test_categories:
             try:
-                df = pd.read_excel(filename)
-                id_col = df.columns[0]
-                df[id_col] = df[id_col].astype(str)
+                # Получаем конфигурацию количества вопросов для этой категории
+                kind_category = TestKindCategory.objects.get(
+                    test_kind=test_config,
+                    category=category
+                )
+                questions_needed = kind_category.questions_count
 
-                question_ids = request.POST.getlist(f'ids_{key}')
+                # Получаем отправленные ID вопросов для этой категории
+                question_ids = request.POST.getlist(f'ids_{category.code}')
+
                 correct_count = 0
+                question_details = []
 
                 for q_id in question_ids:
-                    user_answer = (request.POST.get(f'q_{key}_{q_id}') or '').strip().lower()
-                    actual_row = df[df[id_col] == str(q_id)]
-                    if actual_row.empty:
+                    user_answer = (request.POST.get(f'q_{category.code}_{q_id}') or '').strip().lower()
+                    try:
+                        question = TestQuestion.objects.get(
+                            id=q_id,
+                            category=category,
+                            is_active=True
+                        )
+                        is_correct = (user_answer == question.correct_option)
+
+                        if is_correct:
+                            correct_count += 1
+
+                        # Сохраняем детали ответа
+                        question_details.append({
+                            'question_id': q_id,
+                            'user_answer': user_answer,
+                            'correct_answer': question.correct_option,
+                            'is_correct': is_correct,
+                            'question_text': question.question_text
+                        })
+
+                    except TestQuestion.DoesNotExist:
                         continue
 
-                    correct_letter = str(actual_row['correct_answer'].values[0]).strip().lower()
-                    if user_answer and user_answer == correct_letter:
-                        correct_count += 1
-
-                results[key] = {
-                    'name': THEME_NAMES.get(key, key),  # ← ЧЕЛОВЕКОЧИТАЕМОЕ НАЗВАНИЕ
+                results[category.code] = {
+                    'name': category.name,
                     'correct': correct_count,
-                    'total': len(question_ids)
+                    'total': len(question_ids),
+                    'config_questions': questions_needed,
+                    'questions': question_details
                 }
+
                 total_correct += correct_count
                 total_questions_all += len(question_ids)
 
+            except TestKindCategory.DoesNotExist:
+                results[category.code] = {'name': category.name, 'correct': 0, 'total': 0}
             except Exception as e:
-                results[key] = {'name': filename, 'correct': 0, 'total': 0}
+                results[category.code] = {'name': category.name, 'correct': 0, 'total': 0}
 
-        # 2) сохраняем TestResult
+        # Сохраняем результат теста
         test_result = TestResult.objects.create(
             user=request.user,
             test_type=test_kind,
             score=total_correct,
             total_questions=total_questions_all,
             percent=round((total_correct / total_questions_all) * 100, 2) if total_questions_all else 0,
-            correct_answers=total_correct,  # ← ДОБАВЬТЕ
+            correct_answers=total_correct,
             percentage=round((total_correct / total_questions_all) * 100, 2) if total_questions_all else 0,
-            # ← ДОБАВЬТЕ
             category_results=results
         )
 
-        # 3) сохраняем детализацию TestAnswer
-        for key, filename in cfg['files'].items():
-            try:
-                df = pd.read_excel(filename)
-                id_col = df.columns[0]
-                df[id_col] = df[id_col].astype(str)
+        # Сохраняем детальные ответы
+        for category_code, data in results.items():
+            for question_detail in data.get('questions', []):
+                question = TestQuestion.objects.get(id=question_detail['question_id'])
 
-                question_ids = request.POST.getlist(f'ids_{key}')
+                TestAnswer.objects.create(
+                    result=test_result,
+                    question_id=question.id,
+                    question_text=question.question_text,
+                    user_answer=question_detail['user_answer'],
+                    user_answer_text=_get_answer_text(question, question_detail['user_answer']),
+                    correct_answer=question.correct_option,
+                    correct_answer_text=_get_answer_text(question, question.correct_option),
+                    is_correct=question_detail['is_correct']
+                )
 
-                for q_id in question_ids:
-                    user_answer = (request.POST.get(f'q_{key}_{q_id}') or '').strip().lower()
-                    actual_row = df[df[id_col] == str(q_id)]
-                    if actual_row.empty:
-                        continue
-
-                    correct_letter = str(actual_row['correct_answer'].values[0]).strip().lower()
-                    q_text = str(actual_row['question'].values[0]) if 'question' in df.columns else ''
-
-                    TestAnswer.objects.create(
-                        result=test_result,
-                        question_id=int(q_id),
-                        question_text=q_text,
-                        user_answer=user_answer,
-                        user_answer_text=option_text(df, actual_row, user_answer),
-                        correct_answer=correct_letter,
-                        correct_answer_text=option_text(df, actual_row, correct_letter),
-                        is_correct=(user_answer == correct_letter)
-                    )
-
-            except Exception as e:
-                continue
-
-        # 4) рендер результатов (для start оставим вашу results.html, для final — result_detail.html)
-        if test_kind == 'start':
-            return render(request, cfg['result_template'], {
-                'result': test_result,
-                'answers': test_result.answers.all().order_by('question_id'),
-                'results_by_category': results,  # Переименуем для ясности в шаблоне
-                'total': total_correct,
-                'total_questions': total_questions_all,
-                'percent': test_result.percent,
-                'test_title': cfg['title'],
-                'back_url': 'profile',
-                'back_text': 'Вернуться в профиль'
-            })
-
-        # final: можно вести на детальную страницу по pk, но вы сейчас рендерите шаблон напрямую
-        return render(request, cfg['result_template'], {
+        # Рендерим результаты
+        return render(request, test_config.result_template, {
             'result': test_result,
             'answers': test_result.answers.all().order_by('question_id'),
-            'correct': total_correct,
-            'total': total_questions_all,
+            'results_by_category': results,
+            'total': total_correct,
+            'total_questions': total_questions_all,
             'percent': test_result.percent,
-            'saved': True,
-            'test_title': cfg['title'],
+            'test_title': test_config.title,
+            'test_config': test_config,
             'back_url': 'profile',
-            'back_text': 'Назад в профиль',
+            'back_text': 'Вернуться в профиль'
         })
 
     # =============== GET (показ вопросов) ===============
     questions_to_render = []
 
-    for key, filename in cfg['files'].items():
+    # Получаем все категории для этого типа теста
+    test_categories = test_config.categories.filter(is_active=True)
+
+    for category in test_categories:
         try:
-            df = pd.read_excel(filename)
-            id_col = df.columns[0]
+            # Получаем конфигурацию количества вопросов для этой категории
+            kind_category = TestKindCategory.objects.get(
+                test_kind=test_config,
+                category=category
+            )
+            questions_needed = kind_category.questions_count
 
-            if cfg['per_file_sample'] is None:
-                sample_df = df
+            # Получаем вопросы для категории
+            queryset = TestQuestion.objects.filter(
+                category=category,
+                is_active=True
+            )
+
+            # Выбираем вопросы в зависимости от конфигурации
+            if questions_needed > 0:
+                questions = list(queryset.order_by('?')[:questions_needed])
             else:
-                sample_df = df.sample(n=min(cfg['per_file_sample'], len(df)))
+                # 0 означает все вопросы
+                questions = list(queryset.order_by('?'))
 
-            for item in sample_df.to_dict('records'):
-                item['category'] = key
-                item['id_val'] = item[id_col]
-                questions_to_render.append(item)
+            # Форматируем для шаблона
+            for question in questions:
+                questions_to_render.append({
+                    'category': category.code,
+                    'id_val': question.id,
+                    'question': question.question_text,
+                    'answer1': question.option_a,
+                    'answer2': question.option_b,
+                    'answer3': question.option_c,
+                    'answer4': question.option_d,
+                    'correct_answer': question.correct_option,
+                    'difficulty': question.get_difficulty_display()
+                })
 
-        except Exception:
+        except TestKindCategory.DoesNotExist:
+            continue
+        except TestQuestion.DoesNotExist:
             continue
 
+    # Перемешиваем вопросы
     random.shuffle(questions_to_render)
 
-    return render(request, cfg['template'], {
+    return render(request, test_config.template, {
         'questions': questions_to_render,
-        'test_title': cfg['title'],
+        'test_title': test_config.title,
         'test_kind': test_kind,
+        'test_config': test_config,
+        'categories': test_categories
     })
+
+def _get_answer_text(question, option_letter):
+    """Получает текст ответа по букве варианта"""
+    mapping = {
+        'a': question.option_a,
+        'b': question.option_b,
+        'c': question.option_c,
+        'd': question.option_d,
+    }
+    return mapping.get(option_letter.lower(), '')
 
 def register(request):
     if request.method == 'POST':
@@ -279,9 +285,8 @@ def profile(request):
         user = request.user
 
         # Оценки за лабораторные
-        lab_grades = LabSubmission.objects.filter(
+        lab_submissions = LabSubmission.objects.filter(
             student=user,
-            grade__isnull=False
         ).select_related('lab_work')
 
         # Оценки за тесты
@@ -291,7 +296,7 @@ def profile(request):
 
         context = {
             'user': user,
-            'lab_grades': lab_grades,
+            'lab_grades': lab_submissions,
             'test_grades': test_grades,
             'results': test_grades,  # для блока "История тестов"
         }
@@ -426,7 +431,12 @@ def teacher_dashboard(request):
         profile__role='student',
         profile__teacher=request.user
     ).select_related('profile').annotate(
-        test_count=Count('testresult')
+        test_count=Count('testresult'),
+        lab_submission_count=Count(
+            'lab_submissions__lab_work',
+            filter=Q(lab_submissions__status__in=['submitted', 'under_review', 'graded']),
+            distinct=True
+        )
     )
 
     # 📊 ДАННЫЕ ДЛЯ ГРАФИКОВ
@@ -474,6 +484,7 @@ def teacher_dashboard(request):
                 theme_stats[theme]['total'] += data.get('total', 0)
 
     total_tests_passed = my_students.aggregate(total=Sum('test_count'))['total'] or 0
+    total_labs_submitted = my_students.aggregate(total=Sum('lab_submission_count'))['total'] or 0  # ← ДОБАВЛЕНО
     lab_count = LabWork.objects.filter(created_by=request.user).count()
     pending_submissions = LabSubmission.objects.filter(
         status='under_review',
@@ -489,6 +500,7 @@ def teacher_dashboard(request):
         'theme_stats': list(theme_stats.items()),  # Темы
         'lab_count': lab_count,
         'pending_submissions': pending_submissions,
+        'total_labs_submitted': total_labs_submitted,
     })
 
 @login_required
@@ -638,6 +650,27 @@ def teacher_labs(request):
 
 
 @login_required
+@teacher_required
+def delete_lab_work(request, lab_id):
+    """Удаление лабораторной работы (только для создавшего учителя)"""
+    lab = get_object_or_404(LabWork, id=lab_id)
+
+    # Проверяем, что текущий пользователь - создатель лабораторной
+    if lab.created_by != request.user:
+        messages.error(request, 'Вы не можете удалить чужую лабораторную работу')
+        return redirect('teacher_labs')
+
+    # Получаем название перед удалением для сообщения
+    lab_title = lab.title
+
+    # Удаляем лабораторную работу (все связанные submission удалятся каскадно)
+    lab.delete()
+
+    messages.success(request, f'Лабораторная работа "{lab_title}" успешно удалена')
+    return redirect('teacher_labs')
+
+
+@login_required
 @student_required
 def student_labs(request):
     teacher_labs = LabWork.objects.filter(
@@ -657,8 +690,6 @@ def student_labs(request):
         'my_submissions': my_submissions,
         'submitted_lab_ids': submitted_lab_ids  # Новый контекст
     })
-
-
 @login_required
 @teacher_required
 def create_lab_work(request):
@@ -667,6 +698,7 @@ def create_lab_work(request):
         description = request.POST.get('description')
         theme = request.POST.get('theme')
         docx_file = request.FILES.get('docx_file')
+        pptx_file = request.FILES.get('pptx_file')  # новое поле для презентации
 
         if not all([title, description, theme, docx_file]):
             messages.error(request, 'Заполните все обязательные поля')
@@ -677,6 +709,7 @@ def create_lab_work(request):
             description=description,
             theme=theme,
             docx_file=docx_file,
+            pptx_file=pptx_file,  # сохраняем pptx файл
             created_by=request.user,
             difficulty=request.POST.get('difficulty', 'medium')
         )
@@ -687,7 +720,10 @@ def create_lab_work(request):
 
 @login_required
 def lab_view(request, lab_id):
+
     lab = get_object_or_404(LabWork, id=lab_id)
+    if lab.created_by != request.user.profile.teacher:
+        raise PermissionDenied("У вас нет доступа к этой лабораторной")
     existing_submission = lab.submissions.filter(
         student=request.user,
         lab_work=lab

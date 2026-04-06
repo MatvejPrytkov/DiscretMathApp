@@ -1,8 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, TestResult
-
+from .models import UserProfile, TestResult, LabWork
 
 class RegistrationForm(UserCreationForm):
     name = forms.CharField(max_length=100, label="ФИО")
@@ -135,3 +134,10 @@ class GradeTestForm(forms.ModelForm):
         self.fields['grade'].required = True
         self.fields['grade'].label = 'Оценка'
         self.fields['teacher_comment'].required = False
+class LabWorkForm(forms.ModelForm):
+    class Meta:
+        model = LabWork
+        fields = ['title', 'description', 'pptx_file']  # Включите pptx_file
+        widgets = {
+            'pptx_file': forms.FileInput(attrs={'accept': '.pptx'}),
+        }

@@ -16,88 +16,108 @@
 
     <div class="panel">
         <div class="panel-body">
-            <h3>📄 Описание лабораторной</h3>
-            <p>{{ lab.description|linebreaks }}</p>
-            <div class="action-buttons">
-                <a href="{{ lab.docx_file.url }}" class="btn btn-info" download>📥 Скачать файл (.docx)</a>
+            <!-- Раздел с описанием лабораторной -->
+            <div class="description-section" style="margin-bottom: 30px;">
+                <h3>📄 Описание лабораторной</h3>
+                <div class="description-content" style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 15px 0;">
+                    {{ lab.description|linebreaks }}
+                </div>
+                <div class="action-buttons">
+                    <a href="{{ lab.docx_file.url }}" class="btn btn-info" download>📥 Скачать файл задания</a>
+                </div>
+                <div class="action-buttons">
+                    <a href="{{ lab.pptx_file.url }}" class="btn btn-info" download>📥 Скачать презентацию</a>
+                </div>
+            </div>
+
+            <!-- Разделитель -->
+            <hr style="margin: 40px 0; border: none; border-top: 1px solid #e5e7eb;">
+
+            <!-- Раздел со сдачами лабораторной -->
+            <div class="submissions-section">
+                <h3>📊 Сдачи лабораторной ({{ submissions|length }})</h3>
+
+                {% if submissions %}
+                <div class="submissions-grid">
+                    {% for submission in submissions %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5>{{ submission.student.profile.full_name }}</h5>
+                            <p>Статус: {{ submission.get_status_display }}</p>
+
+                            {% if submission.grade %}
+                                <p>Оценка: <strong>{{ submission.grade }}</strong></p>
+                                <p>Комментарий: {{ submission.comment }}</p>
+                            {% endif %}
+
+                            <div class="submission-actions" data-submission-id="{{ submission.id }}">
+                                {% if submission.grade %}
+                                    <!-- Для проверенных работ: кнопка "Редактировать" -->
+                                    <button type="button" class="btn btn-outline-primary edit-btn" onclick="toggleEditForm({{ submission.id }})">
+                                        ✏️ Редактировать
+                                    </button>
+                                {% endif %}
+
+                                <form method="POST" class="grade-form" id="form-{{ submission.id }}" {% if submission.grade %}style="display: none;"{% endif %}>
+                                    {% csrf_token %}
+                                    <input type="hidden" name="submission_id" value="{{ submission.id }}">
+
+                                    <div class="form-group">
+                                        <label>Оценка:</label>
+                                        <select name="grade" class="form-control" style="width: auto;">
+                                            <option value="">-- Выберите оценку --</option>
+                                            <option value="5" {% if submission.grade == "5" %}selected{% endif %}>5</option>
+                                            <option value="4" {% if submission.grade == "4" %}selected{% endif %}>4</option>
+                                            <option value="3" {% if submission.grade == "3" %}selected{% endif %}>3</option>
+                                            <option value="2" {% if submission.grade == "2" %}selected{% endif %}>2</option>
+                                            <option value="н" {% if submission.grade == "н" %}selected{% endif %}>Незачет</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        {% if submission.comment %}
+                                        <label>Комментарий:</label>
+                                        <textarea name="comment" class="form-control" rows="2">{{ submission.comment|default:'' }}</textarea>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary">Оценить</button>
+                                        {% if submission.grade %}
+                                            <button type="button" class="btn btn-secondary cancel-btn" onclick="toggleEditForm({{ submission.id }})" style="margin-left: 10px;">
+                                                Отмена
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center text-muted">Пока никто не сдал эту лабораторную работу.</p>
+                {% endif %}
             </div>
         </div>
     </div>
-
-    <div class="panel">
-        <div class="panel-header">
-            <h3>📊 Сдачи лабораторной ({{ submissions|length }})</h3>
-        </div>
-        <div class="panel-body">
-            {% if submissions %}
-            <div class="table-wrap">
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>Ученик</th>
-                            <th>Дата сдачи</th>
-                            <th>Файл</th>
-                            <th>Статус</th>
-                            <th>Оценка</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                       {% for submission in submissions %}
-<div class="card mb-3">
-    <div class="card-body">
-        <h5>{{ submission.student.profile.full_name }}</h5>
-        <p>Статус: {{ submission.get_status_display }}</p>
-
-        {% if submission.grade %}
-            <p>Оценка: <strong>{{ submission.grade }}</strong></p>
-            <p>Комментарий: {{ submission.comment }}</p>
-        {% endif %}
-
-        <form method="POST" style="margin-top: 15px;">
-            {% csrf_token %}
-            <input type="hidden" name="submission_id" value="{{ submission.id }}">
-
-            <div class="form-group">
-                <label>Оценка:</label>
-                <select name="grade" class="form-control" style="width: auto;">
-                    <option value="">-- Выберите оценку --</option>
-                    <option value="5" {% if submission.grade == "5" %}selected{% endif %}>5</option>
-                    <option value="4" {% if submission.grade == "4" %}selected{% endif %}>4</option>
-                    <option value="3" {% if submission.grade == "3" %}selected{% endif %}>3</option>
-                    <option value="2" {% if submission.grade == "2" %}selected{% endif %}>2</option>
-                    <option value="н" {% if submission.grade == "н" %}selected{% endif %}>Незачет</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Комментарий:</label>
-                <textarea name="comment" class="form-control" rows="2">{{ submission.comment|default:'' }}</textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Оценить</button>
-        </form>
-    </div>
-</div>
-{% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <p class="text-center text-muted">Пока никто не сдал эту лабораторную работу.</p>
-            {% endif %}
-        </div>
+    <div style="margin-top: 30px;">
+        <a href="{% url 'teacher_dashboard' %}" class="btn btn-success"> Вернуться на учительскую панель</a>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Автофокус на первом поле оценки
-    const firstGradeSelect = document.querySelector('select[name="grade"]');
-    if (firstGradeSelect) firstGradeSelect.focus();
+    // Автофокус на первом поле оценки (только для непроверенных работ)
+    const firstVisibleForm = document.querySelector('.grade-form[style*="display: none"]') ?
+        null : document.querySelector('.grade-form');
+    if (firstVisibleForm) {
+        const gradeSelect = firstVisibleForm.querySelector('select[name="grade"]');
+        if (gradeSelect) gradeSelect.focus();
+    }
 
     // Подтверждение при оценке
-    const forms = document.querySelectorAll('.inline-form');
+    const forms = document.querySelectorAll('.grade-form');
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
             const grade = this.querySelector('select[name="grade"]').value;
@@ -108,5 +128,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Функция переключения видимости формы редактирования
+function toggleEditForm(submissionId) {
+    const form = document.getElementById('form-' + submissionId);
+    const editBtn = document.querySelector(`button.edit-btn[onclick="toggleEditForm(${submissionId})"]`);
+
+    if (form.style.display === 'none') {
+        // Показываем форму, скрываем кнопку
+        form.style.display = 'block';
+        if (editBtn) editBtn.style.display = 'none';
+
+        // Фокус на поле оценки
+        const gradeSelect = form.querySelector('select[name="grade"]');
+        if (gradeSelect) gradeSelect.focus();
+    } else {
+        // Скрываем форму, показываем кнопку
+        form.style.display = 'none';
+        if (editBtn) editBtn.style.display = 'inline-block';
+    }
+}
 </script>
 {% endblock %}

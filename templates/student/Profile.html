@@ -29,77 +29,76 @@
          <a href="{% url 'student_labs' %}" class="btn btn-success"> Посмотреть список доступных лабораторных работ 🧪</a>
 
     </div>
-    <h2>История тестов</h2>
-    {% if results %}
-        <div class="result-list">
-            {% for res in results %}
-                <div class="result-card">
-                    <p><strong>
-                        {% if res.test_type == 'start' %}📥 Входное{% else %}📤 Итоговое{% endif %}
-                    </strong></p>
-                    {% timezone "Asia/Yekaterinburg" %}
-                        <p style="font-size: 0.9em; color: #666;">{{ res.date_completed|date:"d.m.Y H:i" }}</p>
-                    {% endtimezone %}
-                    <p>Результат: <span class="badge badge-score">{{ res.score }} / {{ res.total_questions }}</span></p>
-                    <a href="{% url 'result_detail' res.id %}" class="btn-simple" style="margin-top: 10px;">📋 Подробности</a>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p>У вас пока нет результатов тестов.</p>
-    {% endif %}
+
 <div class="mt-5">
-        <h2>📊 Все мои оценки</h2>
+        <h2>📊 Все мои работы</h2>
 
         <div class="row">
             <!-- Оценки за лабораторные -->
-            <div class="col-md-6">
-                <h4>🧪 Лабораторные работы</h4>
-                {% if lab_grades %}
-                    <div class="list-group">
-                    {% for submission in lab_grades %}
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ submission.lab_work.title }}</h6>
-                                <span class="badge badge-primary">{{ submission.grade }}</span>
-                            </div>
-                            <small class="text-muted">
-                                Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}
-                                {% if submission.comment %}
-                                    <br>Комментарий: {{ submission.comment }}
-                                {% endif %}
-                            </small>
-                        </div>
-                    {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted">Нет оценок за лабораторные работы</p>
-                {% endif %}
-            </div>
-
+           <div class="col-md-6">
+    <h4>🧪 Лабораторные </h4>
+    {% if lab_grades %}
+        <div class="list-group">
+        {% for submission in lab_grades %}
+            <a href="{% url 'lab' submission.lab_work.id %}"
+               class="list-group-item list-group-item-action text-decoration-none text-dark">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">{{ submission.lab_work.title }}</h6>
+                    <span class="badge
+                        {% if submission.status == 'graded' %}badge-primary
+                        {% elif submission.status == 'under_review' %}badge-warning
+                        {% elif submission.status == 'submitted' %}badge-info
+                        {% else %}badge-secondary{% endif %}">
+                        {% if submission.grade %}
+                            {{ submission.grade }}
+                        {% else %}
+                            {{ submission.get_status_display }}
+                        {% endif %}
+                    </span>
+                </div>
+                <small class="text-muted">
+                    {% if submission.status == 'graded' %}
+                        Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}
+                        {% if submission.comment %}
+                            <br>Комментарий: {{ submission.comment }}
+                        {% endif %}
+                    {% else %}
+                        Сдано: {{ submission.submitted_at|date:"d.m.Y H:i" }}
+                    {% endif %}
+                </small>
+            </a>
+        {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">Нет сданных лабораторных работ</p>
+    {% endif %}
+</div>
             <!-- Оценки за тесты -->
             <div class="col-md-6">
-                <h4>📝 Тесты</h4>
-                {% if test_grades %}
-                    <div class="list-group">
-                    {% for result in test_grades %}
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ result.get_test_type_display }}</h6>
-                                <span class="badge badge-success">{{ result.score }}%</span>
-                            </div>
-                            <small class="text-muted">
-                                Пройден: {{ result.date_completed|date:"d.m.Y H:i" }}
-
-                            </small>
-                        </div>
-                    {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted">Нет оценок за тесты</p>
-                {% endif %}
-            </div>
+    <h4>📝 Тесты</h4>
+    {% if test_grades %}
+        <div class="list-group">
+        {% for result in test_grades %}
+            <a href="{% url 'result_detail' result.id %}"
+               class="list-group-item list-group-item-action text-decoration-none text-dark">
+                <div class="d-flex w-100 justify-content-between">
+                     {% if result.get_test_type_display == 'Входное тестирование' %}
+                    <h6 class="mb-1">📥{{ result.get_test_type_display }}</h6>
+                    {% else %}
+                    <h6 class="mb-1">📤{{ result.get_test_type_display }}</h6>
+                    {% endif %}
+                    <span class="badge badge-success">{{ result.score }} / {{ result.total_questions }} ({{ result.percent|floatformat:0 }}%)</span>
+                </div>
+                <small class="text-muted">
+                    Пройден: {{ result.date_completed|date:"d.m.Y H:i" }}
+                </small>
+            </a>
+        {% endfor %}
         </div>
+    {% else %}
+        <p class="text-muted">Нет оценок за тесты</p>
+    {% endif %}
+</div>
 
         <!-- Сводная таблица всех оценок -->
         <div class="mt-4">
@@ -116,36 +115,65 @@
                 </thead>
                 <tbody>
                     {% for submission in lab_grades %}
-                    <tr>
-                        <td>Лабораторная</td>
-                        <td>{{ submission.lab_work.title }}</td>
-                        <td>
-                            <span class="badge badge-primary">{{ submission.grade }}</span>
-                        </td>
-                        <td>{{ submission.graded_at|date:"d.m.Y" }}</td>
-                        <td>
-                            <span class="badge badge-{{ submission.status }}">
-                                {{ submission.get_status_display }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
+<tr>
+    <td>Лабораторная</td>
+    <td><a href="{% url 'lab' submission.lab_work.id %}">
+            {{ submission.lab_work.title }}
+        </a></td>
+    <td>
+        <span class="badge
+            {% if submission.status == 'graded' %}badge-primary
+            {% elif submission.status == 'under_review' %}badge-warning
+            {% elif submission.status == 'submitted' %}badge-info
+            {% else %}badge-secondary{% endif %}">
+            {% if submission.grade %}
+                {{ submission.grade }}
+            {% else %}
+                {{ submission.get_status_display }}
+            {% endif %}
+        </span>
+    </td>
+    <td>
+        {% if submission.status == 'graded' %}
+            {{ submission.graded_at|date:"d.m.Y" }}
+        {% else %}
+            {{ submission.submitted_at|date:"d.m.Y" }}
+        {% endif %}
+    </td>
+    <td>
+        <span class="badge badge-{{ submission.status }}">
+            {{ submission.get_status_display }}
+        </span>
+    </td>
+</tr>
+{% endfor %}
 
-                    {% for result in test_grades %}
-                    <tr>
-                        <td>Тестирование</td>
-                        <td>{% if result.test_type == 'start' %} Входное{% else %}  Итоговое{% endif %}</td>
-                        <td>
-                            <span class="badge badge-success">{{ result.grade }}</span>
-                        </td>
-                        <td>{{ result.date_completed|date:"d.m.Y" }}</td>
-                        <td>
-                            <span class="badge badge-success">Завершен</span>
-                        </td>
-                    </tr>
-                    {% endfor %}
+                   {% for result in test_grades %}
+<tr>
+    <td>Тестирование</td>
+    <td><a href="{% url 'result_detail' result.id %}">
+        {% if result.test_type == 'start' %}Входное{% else %}Итоговое{% endif %}
+    </a></td>
+    <td>
+        {% if result.grade is not None %}
+            <span class="badge badge-success">{{ result.get_grade_display }}</span>
+        {% else %}
+            <span class="badge badge-warning">На проверке</span>
+        {% endif %}
+    </td>
+    <td>{{ result.date_completed|date:"d.m.Y" }}</td>
+    <td>
+        {% if result.grade is not None %}
+            <span class="badge badge-success">Завершен</span>
+        {% else %}
+            <span class="badge badge-warning">На проверке</span>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}
                 </tbody>
             </table>
         </div>
+    </div>
     </div>
 {% endblock %}

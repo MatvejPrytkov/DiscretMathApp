@@ -1,6 +1,12 @@
-{% extends 'base.html' %}
-{% block content %}
+
+{% extends 'student/base_student.html' %}
+{% block student_content %}
 <div class="container">
+<!--    <nav class="mb-4">-->
+<!--        <a href="{% url 'profile' %}" class="btn btn-outline-secondary btn-sm">← Личный кабинет</a>-->
+<!--        <a href="{% url 'test_view' 'start' %}" class="btn btn-outline-secondary btn-sm">📥 Входной тест</a>-->
+<!--        <a href="{% url 'test_view' 'final' %}" class="btn btn-outline-secondary btn-sm">📤 Итоговый тест</a>-->
+<!--    </nav>-->
     <h1> Мои лабораторные работы 🧪</h1>
     
     <h3> Доступные работы ({{ labs.count }})</h3>

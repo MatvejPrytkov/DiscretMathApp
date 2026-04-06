@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    {% if request.user.profile.role == 'student' %}
+    <nav class="student-nav mb-4">
+        <a href="{% url 'profile' %}" class="nav-link">
+            <span class="nav-icon">←</span>
+            Личный кабинет
+        </a>
+        <a href="{% url 'student_labs' %}" class="nav-link">
+            <span class="nav-icon">🧪</span>
+            Лабораторные
+        </a>
+        <a href="{% url 'test_view' 'start' %}" class="nav-link">
+            <span class="nav-icon">📥</span>
+            Входной тест
+        </a>
+        <a href="{% url 'test_view' 'final' %}" class="nav-link">
+            <span class="nav-icon">📤</span>
+            Итоговый тест
+        </a>
+    </nav>
+    {% endif %}
+
+
+    {% block student_content %}{% endblock %}
+{% endblock %}
