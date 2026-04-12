@@ -1,0 +1,164 @@
+{% load tz %}
+
+<div class="notifications-dropdown">
+    <div class="notifications-header">
+        <h4>Уведомления</h4>
+        <div class="notifications-actions">
+            {% if notifications %}
+                <a href="#" class="mark-read-btn" onclick="markAllNotificationsRead(); return false;">Отметить все прочитанными</a>
+                <a href="#" class="delete-all-btn" onclick="deleteAllNotifications(); return false;">🗑️ Очистить все</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="notifications-list">
+        {% for notification in notifications %}
+            <div class="notification-item {% if not notification.is_read %}unread{% endif %}" data-id="{{ notification.id }}">
+                <div class="notification-icon">
+                    {% if notification.notification_type == 'new_lab' %}🧪
+                    {% elif notification.notification_type == 'new_test' %}📝
+                    {% elif notification.notification_type == 'lab_submitted' %}📤
+                    {% elif notification.notification_type == 'test_completed' %}📊
+                    {% elif notification.notification_type == 'lab_graded' %}✅
+                    {% elif notification.notification_type == 'test_graded' %}✅
+                    {% else %}🔔{% endif %}
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">{{ notification.title }}</div>
+                    <div class="notification-message">{{ notification.message }}</div>
+                    <div class="notification-time">{{ notification.created_at|date:"d.m.Y H:i" }}</div>
+                </div>
+                <div class="notification-actions">
+                    {% if notification.link %}
+                        <a href="{{ notification.link }}" class="notification-link" onclick="openAndDeleteNotification({{ notification.id }}, this.href); return false;">→</a>
+                    {% endif %}
+                    <button class="notification-delete" onclick="deleteSingleNotification({{ notification.id }}, event)">✕</button>
+                </div>
+            </div>
+        {% empty %}
+            <div class="notification-empty">У вас нет уведомлений</div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .notifications-dropdown {
+        width: 420px;
+        max-width: 90vw;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        overflow: hidden;
+        z-index: 1000;
+    }
+    .notifications-header {
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .notifications-header h4 {
+        margin: 0;
+        font-size: 16px;
+    }
+    .notifications-actions {
+        display: flex;
+        gap: 12px;
+    }
+    .mark-read-btn, .delete-all-btn {
+        font-size: 12px;
+        color: #2f66ff;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .delete-all-btn {
+        color: #dc3545;
+    }
+    .mark-read-btn:hover, .delete-all-btn:hover {
+        text-decoration: underline;
+    }
+    .notifications-list {
+        max-height: 450px;
+        overflow-y: auto;
+    }
+    .notification-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        gap: 12px;
+        transition: background 0.2s;
+        position: relative;
+    }
+    .notification-item:hover {
+        background: #f8f9fa;
+    }
+    .notification-item.unread {
+        background: #e8f0fe;
+    }
+    .notification-item.unread:hover {
+        background: #dbeafe;
+    }
+    .notification-icon {
+        font-size: 20px;
+        min-width: 32px;
+        text-align: center;
+    }
+    .notification-content {
+        flex: 1;
+    }
+    .notification-title {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    .notification-message {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 4px;
+        line-height: 1.4;
+    }
+    .notification-time {
+        font-size: 11px;
+        color: #9ca3af;
+    }
+    .notification-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .notification-link {
+        color: #2f66ff;
+        text-decoration: none;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+    }
+    .notification-link:hover {
+        text-decoration: underline;
+    }
+    .notification-delete {
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    .notification-delete:hover {
+        background: #e5e7eb;
+        color: #dc3545;
+    }
+    .notification-empty {
+        padding: 40px;
+        text-align: center;
+        color: #9ca3af;
+    }
+    .notifications-loading {
+        padding: 40px;
+        text-align: center;
+        color: #9ca3af;
+    }
+</style>

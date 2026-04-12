@@ -1,75 +1,478 @@
-{% extends 'base.html' %}
-{% block title %}Результаты учеников{% endblock %}
+{% extends 'teacher/base_teacher.html' %}
+{% block teacher_content %}
 
-{% block content %}
+<style>
+    .page { max-width: 1100px; margin: 0 auto; }
+    .page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+    .page-title { margin: 0; font-size: 24px; font-weight: 700; }
+    .page-subtitle { margin: 6px 0 0; font-size: 13px; color: #6b7280; }
+
+    /* Единый блок фильтрации */
+    .filter-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #e5e7eb;
+    }
+    .filter-title {
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #1f2937;
+        font-size: 14px;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 8px;
+    }
+    .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: flex-end;
+    }
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 160px;
+    }
+    .filter-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+    }
+    .filter-group select, .filter-group input {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        background: white;
+        font-size: 14px;
+    }
+    .filter-group select:focus, .filter-group input:focus {
+        outline: none;
+        border-color: #2f66ff;
+    }
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        margin-bottom: 0;
+    }
+    .btn-filter, .btn-reset {
+        padding: 8px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        border: none;
+        font-weight: 500;
+        transition: all 0.2s;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-filter {
+        background: #2f66ff;
+        color: white;
+    }
+    .btn-filter:hover {
+        background: #1d4ed8;
+    }
+    .btn-reset {
+        background: #6c757d;
+        color: white;
+    }
+    .btn-reset:hover {
+        background: #5a6268;
+    }
+    .active-filters {
+        margin-top: 15px;
+        padding-top: 12px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+    .active-filters-label {
+        font-size: 13px;
+        color: #6c757d;
+    }
+    .filter-badge {
+        background: #2f66ff;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .filter-badge .remove {
+        cursor: pointer;
+        font-weight: bold;
+        margin-left: 4px;
+        text-decoration: none;
+        color: white;
+    }
+    .filter-badge .remove:hover {
+        opacity: 0.8;
+    }
+
+    .panel {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+        border: 1px solid rgba(17, 24, 39, 0.06);
+        overflow: hidden;
+    }
+    .panel-body {
+        padding: 0;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+    .table-wrap.table-scroll {
+        max-height: 460px;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background-color: #fff;
+    }
+    .table-wrap.table-scroll .results-table thead th {
+        position: sticky;
+        top: 0;
+        background: #f3f4f6;
+        z-index: 20;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .results-table thead th {
+        background: #f3f4f6;
+        color: #111827;
+        font-weight: 700;
+        font-size: 13px;
+        text-align: left;
+        padding: 12px 14px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .results-table tbody td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #eef2f7;
+        font-size: 14px;
+        background-color: #fff;
+    }
+    .results-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    .table-wrap.table-scroll .results-table thead tr {
+        background: #f3f4f6;
+    }
+
+    .type-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .type-test { background: #e3f2fd; color: #1976d2; }
+    .type-lab { background: #e8f5e9; color: #388e3c; }
+
+    .badge-score {
+        background: rgba(16, 185, 129, 0.12);
+        color: #047857;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+    }
+    .badge-percent {
+        background: rgba(245, 158, 11, 0.14);
+        color: #92400e;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-simple {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid #d7dbe0;
+        background: #fff;
+        text-decoration: none;
+        color: #111827;
+        font-size: 14px;
+    }
+    .btn-simple:hover {
+        background: #f8f9fa;
+    }
+
+    /* Стиль для выделения активного ученика */
+    .active-student-badge {
+        margin-top: 10px;
+        padding: 8px 15px;
+        background: #e8f0fe;
+        border-radius: 8px;
+        display: inline-block;
+        border-left: 4px solid #2f66ff;
+    }
+
+    /* Стили для блока действий (кнопки) */
+    .actions-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .btn-excel {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: #28a745;
+        color: white;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-excel:hover {
+        background: #218838;
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .filter-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .filter-actions {
+            flex-direction: column;
+        }
+        .btn-filter, .btn-reset {
+            width: 100%;
+        }
+        .actions-wrapper {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .actions-wrapper .btn-simple,
+        .actions-wrapper .btn-excel {
+            justify-content: center;
+            width: 100%;
+        }
+    }
+</style>
+
 <div class="page">
     <div class="page-header">
         <div>
             <h2 class="page-title">Результаты учеников</h2>
-            <div class="page-subtitle">Все попытки тестов, отсортированные по дате</div>
+            <div class="page-subtitle">Все попытки тестов и сдачи лабораторных работ, отсортированные по дате</div>
+            {% if student_id %}
+                {% for student in students %}
+                    {% if student.id|stringformat:"s" == student_id %}
+                        <div class="active-student-badge">
+                            <strong>👨‍🎓 Показаны результаты ученика:</strong> {{ student.profile.full_name|default:student.username }}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
         </div>
+    </div>
+
+    <!-- Единый блок фильтрации -->
+    <div class="filter-section">
+        <div class="filter-title">🔍 Фильтрация результатов</div>
+
+        <form method="GET" action="{% url 'student_results' %}" id="filterForm">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="student_id">Ученик:</label>
+                    <select name="student_id" id="student_id">
+                        <option value="">Все ученики</option>
+                        {% for student in students %}
+                            <option value="{{ student.id }}" {% if student_id == student.id|stringformat:"s" %}selected{% endif %}>
+                                {{ student.profile.full_name|default:student.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="type_filter">Тип работы:</label>
+                    <select name="type_filter" id="type_filter">
+                        <option value="">Все типы</option>
+                        <option value="test" {% if request.GET.type_filter == 'test' %}selected{% endif %}>📝 Тесты</option>
+                        <option value="lab" {% if request.GET.type_filter == 'lab' %}selected{% endif %}>🧪 Лабораторные</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="grade_filter">Оценка:</label>
+                    <select name="grade_filter" id="grade_filter">
+                        <option value="">Все оценки</option>
+                        <option value="5" {% if request.GET.grade_filter == '5' %}selected{% endif %}>5 (Отлично)</option>
+                        <option value="4" {% if request.GET.grade_filter == '4' %}selected{% endif %}>4 (Хорошо)</option>
+                        <option value="3" {% if request.GET.grade_filter == '3' %}selected{% endif %}>3 (Удовлетворительно)</option>
+                        <option value="2" {% if request.GET.grade_filter == '2' %}selected{% endif %}>2 (Неудовлетворительно)</option>
+                        <option value="pending" {% if request.GET.grade_filter == 'pending' %}selected{% endif %}>⏳ Не проверено</option>
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter">Применить</button>
+                    <a href="{% url 'student_results' %}" class="btn-reset">Сбросить все</a>
+                </div>
+            </div>
+
+            <!-- Активные фильтры -->
+            {% if student_id or request.GET.type_filter or request.GET.grade_filter %}
+            <div class="active-filters">
+                <span class="active-filters-label">Активные фильтры:</span>
+
+                {% if student_id %}
+                    {% for student in students %}
+                        {% if student.id|stringformat:"s" == student_id %}
+                            <span class="filter-badge">
+                                👤 {{ student.profile.full_name|default:student.username }}
+                                <a href="{% url 'student_results' %}?{% if request.GET.type_filter %}type_filter={{ request.GET.type_filter }}{% endif %}{% if request.GET.grade_filter %}&grade_filter={{ request.GET.grade_filter }}{% endif %}" class="remove">✕</a>
+                            </span>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+                {% if request.GET.type_filter %}
+                    <span class="filter-badge">
+                        {% if request.GET.type_filter == 'test' %}📝 Тесты{% else %}🧪 Лабораторные{% endif %}
+                        <a href="{% url 'student_results' %}?{% if student_id %}student_id={{ student_id }}{% endif %}{% if request.GET.grade_filter %}&grade_filter={{ request.GET.grade_filter }}{% endif %}" class="remove">✕</a>
+                    </span>
+                {% endif %}
+
+                {% if request.GET.grade_filter %}
+                    <span class="filter-badge">
+                        {% if request.GET.grade_filter == '5' %}⭐ Оценка 5
+                        {% elif request.GET.grade_filter == '4' %}⭐ Оценка 4
+                        {% elif request.GET.grade_filter == '3' %}⭐ Оценка 3
+                        {% elif request.GET.grade_filter == '2' %}⭐ Оценка 2
+                        {% else %}⏳ Не проверено{% endif %}
+                        <a href="{% url 'student_results' %}?{% if student_id %}student_id={{ student_id }}{% endif %}{% if request.GET.type_filter %}&type_filter={{ request.GET.type_filter }}{% endif %}" class="remove">✕</a>
+                    </span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </form>
     </div>
 
     <div class="panel">
-        <div class="panel-body table-wrap">
-           <table class="results-table">
-    <thead>
-        <tr>
-            <th>Ученик</th>
-            <th>Тест</th>
-            <th>Баллы</th>
-            <th>Процент</th>
-            <th>Оценка</th>  <!-- Новая колонка -->
-            <th>Дата</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for result in results %}
-        <tr>
-            <td class="col-student">
-                {{ result.user.profile.full_name|default:result.user.username }}
-            </td>
-            <td>
-                <a href="{% url 'result_detail' result.pk %}" style="text-decoration: none;">
-                    <span class="badge badge-test" style="cursor: pointer; hover: opacity 0.8;">
-                        {{ result.get_test_type_display }} 🔍
-                    </span>
-                </a>
-            </td>
-            <td>
-                <span class="badge badge-score">{{ result.score }} / {{ result.total_questions }}</span>
-            </td>
-            <td>
-                <span class="badge badge-percent">{{ result.percent|floatformat:1 }}%</span>
-            </td>
-            <td>
-                {% if result.grade %}
-                    <span class="badge badge-grade" style="background-color:
-                        {% if result.grade == 5 %}#28a745
-                        {% elif result.grade == 4 %}#17a2b8
-                        {% elif result.grade == 3 %}#ffc107
-                        {% else %}#dc3545
-                        {% endif %}; color: white; padding: 4px 8px; border-radius: 4px;">
-                        {{ result.get_grade_display }}
-                    </span>
-                {% else %}
-                    <span style="color: #6c757d;">—</span>
-                {% endif %}
-            </td>
-            <td>{{ result.date_completed|date:"d.m.Y H:i" }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6" class="empty-row">Результатов пока нет</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        <div class="panel-body table-wrap {% if results|length > 7 %}table-scroll{% endif %}">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Тип</th>
+                        <th>Ученик</th>
+                        <th>Название</th>
+                        <th>Результат</th>
+                        <th>Процент</th>
+                        <th>Оценка</th>
+                        <th>Дата</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>
+                            {% if result.type == 'test' %}
+                                <span class="type-badge type-test">📝 Тест</span>
+                            {% else %}
+                                <span class="type-badge type-lab">🧪 Лабораторная</span>
+                            {% endif %}
+                        </td>
+                        <td class="col-student">
+                            {{ result.user_name }}
+                        </td>
+                        <td>
+                            <a href="{{ result.detail_url }}" style="text-decoration: none;">
+                                {{ result.title }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge-score">{{ result.score }}</span>
+                        </td>
+                        <td>
+                            {% if result.type == 'test' and result.percent %}
+                                <span class="badge-percent">{{ result.percent|floatformat:1 }}%</span>
+                            {% else %}
+                                <span style="color: #6c757d;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if result.grade %}
+                                <span style="background-color:
+                                    {% if result.grade_value == 5 %}#28a745
+                                    {% elif result.grade_value == 4 %}#17a2b8
+                                    {% elif result.grade_value == 3 %}#ffc107
+                                    {% else %}#dc3545
+                                    {% endif %}; color: white; padding: 4px 8px; border-radius: 4px; display: inline-block;">
+                                    {{ result.grade }}
+                                </span>
+                            {% else %}
+                                <span style="color: #6c757d;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ result.date|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="empty-row" style="text-align: center; padding: 40px;">
+                            {% if student_id %}
+                                У данного ученика пока нет результатов
+                            {% else %}
+                                Результатов пока нет
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <div class="actions">
-        <a href="{% url 'teacher_dashboard' %}" class="btn-simple">Назад к панели</a>
+    <div class="actions-wrapper">
+        <a href="{% url 'teacher_dashboard' %}" class="btn-simple">← Назад к панели</a>
+        <a href="{% url 'export_student_results' %}?{{ request.GET.urlencode }}" class="btn-excel">
+            📊 Экспорт в Excel
+        </a>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Автоматическая отправка формы при изменении select
+    const selects = document.querySelectorAll('#student_id, #type_filter, #grade_filter');
+    const filterForm = document.getElementById('filterForm');
+
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    });
+});
+</script>
 {% endblock %}

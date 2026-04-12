@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ test.title }}</h2>
+<p>{{ test.description }}</p>
+<h3>Вопросы:</h3>
+<ul>
+    {% for question in test.questions.all %}
+    <li>{{ question.question_text }}</li>
+    {% endfor %}
+</ul>
+<h3>Назначенные ученики:</h3>
+<ul>
+    {% for student in test.assigned_to.all %}
+    <li>{{ student.profile.full_name }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

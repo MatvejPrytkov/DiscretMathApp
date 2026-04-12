@@ -1,0 +1,561 @@
+{% extends 'teacher/base_teacher.html' %}
+{% load static %}
+
+{% block teacher_content %}
+<div class="create-test-page container-fluid py-4">
+    <div class="page-title-wrap mb-4">
+        <h2 class="page-title mb-1">Создание нового теста</h2>
+        <p class="page-subtitle mb-0">Заполните основную информацию, выберите готовые вопросы или добавьте свои.</p>
+    </div>
+
+    <form method="post" id="testForm">
+        {% csrf_token %}
+
+        <div class="row g-4 align-items-start">
+            <!-- ЛЕВАЯ КОЛОНКА -->
+            <div class="col-xl-4 col-lg-5">
+                <!-- Основные поля теста -->
+                <div class="card custom-card mb-4">
+                    <div class="card-header custom-card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-alt me-2"></i>Основная информация о тесте
+                        </h5>
+                    </div>
+                    <div class="card-body custom-card-body">
+                        <div class="form-group mb-3">
+                            {{ test_form.title.label_tag }}
+                            {{ test_form.title }}
+                        </div>
+
+                        <div class="form-group mb-3">
+                            {{ test_form.description.label_tag }}
+                            {{ test_form.description }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ test_form.course.label_tag }}
+                                    {{ test_form.course }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ test_form.group.label_tag }}
+                                    {{ test_form.group }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Выбор студентов -->
+                <div class="card custom-card mb-4">
+                    <div class="card-header custom-card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user-graduate me-2"></i>Назначение теста ученикам
+                        </h5>
+                    </div>
+                    <div class="card-body custom-card-body">
+                        <div class="form-group mb-0">
+                            <label class="section-label">Выберите учеников, которым будет доступен тест:</label>
+                            <p class="text-muted small mb-3">
+                                Если ни один ученик не выбран, тест будет доступен всем вашим ученикам.
+                            </p>
+
+                            <div class="students-list">
+                                {% for student_profile in request.user.students.all %}
+                                    <div class="student-item">
+                                        <input class="form-check-input student-checkbox"
+                                               type="checkbox"
+                                               name="selected_students"
+                                               value="{{ student_profile.user.id }}"
+                                               id="student_{{ student_profile.user.id }}">
+                                        <label class="student-label" for="student_{{ student_profile.user.id }}">
+                                            <span class="student-name">{{ student_profile.full_name }}</span>
+                                            <span class="student-group">
+                                                Группа: {{ student_profile.group|default:"не указана" }}
+                                            </span>
+                                        </label>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-warning mb-0">У вас пока нет привязанных учеников.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПРАВАЯ КОЛОНКА -->
+            <div class="col-xl-8 col-lg-7">
+                <!-- Выбор существующих вопросов -->
+                <div class="card custom-card mb-4">
+                    <div class="card-header custom-card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list-check me-2"></i>Выберите вопросы из уже существующих
+                        </h5>
+                    </div>
+                    <div class="card-body custom-card-body">
+                        <div class="existing-questions-list">
+                            {% for question in all_questions %}
+                            <div class="existing-question-item">
+                                <input type="checkbox"
+                                       name="existing_questions"
+                                       value="{{ question.id }}"
+                                       id="question_{{ question.id }}"
+                                       class="existing-question-checkbox">
+
+                                <label for="question_{{ question.id }}" class="existing-question-label">
+                                    {{ question.question_text|truncatechars:100 }}
+                                </label>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted mb-0">В базе данных пока нет вопросов</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Динамическое добавление новых вопросов -->
+                <div class="card custom-card mb-4">
+                    <div class="card-header custom-card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-circle-plus me-2"></i>Добавить свои новые вопросы (необязательно)
+                        </h5>
+                    </div>
+                    <div class="card-body custom-card-body">
+                        <div id="questions-container">
+                            <!-- Первый вопрос -->
+                            <div class="question-block" id="question-block-0">
+                                <div class="question-block-header">
+                                    <h6 class="mb-0">Вопрос 1</h6>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label>Текст вопроса:</label>
+                                    <textarea name="question_form-0-question_text"
+                                              class="form-control question-text"
+                                              rows="2"
+                                              placeholder="Введите текст вопроса"></textarea>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label>Категория вопроса:</label>
+                                    <select name="question_form-0-category" class="form-control">
+                                        <option value="">Выберите категорию</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label>Вариант ответа 1:</label>
+                                            <input type="text"
+                                                   name="question_form-0-option1"
+                                                   class="form-control"
+                                                   placeholder="Вариант 1">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label>Вариант ответа 2:</label>
+                                            <input type="text"
+                                                   name="question_form-0-option2"
+                                                   class="form-control"
+                                                   placeholder="Вариант 2">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label>Вариант ответа 3:</label>
+                                            <input type="text"
+                                                   name="question_form-0-option3"
+                                                   class="form-control"
+                                                   placeholder="Вариант 3">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label>Вариант ответа 4:</label>
+                                            <input type="text"
+                                                   name="question_form-0-option4"
+                                                   class="form-control"
+                                                   placeholder="Вариант 4">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mb-0">
+                                    <label>Правильный ответ:</label>
+                                    <select name="question_form-0-correct_answer" class="form-control">
+                                        <option value="">Выберите правильный ответ</option>
+                                        <option value="1">Вариант 1</option>
+                                        <option value="2">Вариант 2</option>
+                                        <option value="3">Вариант 3</option>
+                                        <option value="4">Вариант 4</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="add-question-button-container" class="mt-3">
+                            <button type="button" class="btn add-question-btn" id="add-question-btn">
+                                <i class="fas fa-plus me-2"></i>Добавить ещё один вопрос
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопка создания теста -->
+        <div class="text-center mt-4 mb-5">
+            <button type="submit" class="btn create-test-btn btn-lg">
+                <i class="fas fa-save me-2"></i>Создать тест
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let questionCount = 1;
+    const questionsContainer = document.getElementById('questions-container');
+    const addQuestionBtn = document.getElementById('add-question-btn');
+
+    const categoryOptions = `
+        {% for category in categories %}
+        <option value="{{ category.id }}">{{ category.name }}</option>
+        {% endfor %}
+    `;
+
+    function addNewQuestionBlock() {
+        const newBlock = document.createElement('div');
+        newBlock.className = 'question-block';
+        newBlock.id = `question-block-${questionCount}`;
+
+        newBlock.innerHTML = `
+            <div class="question-block-header">
+                <h6 class="mb-0">Вопрос ${questionCount + 1}</h6>
+            </div>
+
+            <div class="form-group mb-3">
+                <label>Текст вопроса:</label>
+                <textarea name="question_form-${questionCount}-question_text"
+                          class="form-control question-text"
+                          rows="2"
+                          placeholder="Введите текст вопроса"></textarea>
+            </div>
+
+            <div class="form-group mb-3">
+                <label>Категория вопроса:</label>
+                <select name="question_form-${questionCount}-category" class="form-control">
+                    <option value="">Выберите категорию</option>
+                    ${categoryOptions}
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label>Вариант ответа 1:</label>
+                        <input type="text"
+                               name="question_form-${questionCount}-option1"
+                               class="form-control"
+                               placeholder="Вариант 1">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label>Вариант ответа 2:</label>
+                        <input type="text"
+                               name="question_form-${questionCount}-option2"
+                               class="form-control"
+                               placeholder="Вариант 2">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label>Вариант ответа 3:</label>
+                        <input type="text"
+                               name="question_form-${questionCount}-option3"
+                               class="form-control"
+                               placeholder="Вариант 3">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label>Вариант ответа 4:</label>
+                        <input type="text"
+                               name="question_form-${questionCount}-option4"
+                               class="form-control"
+                               placeholder="Вариант 4">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mb-0">
+                <label>Правильный ответ:</label>
+                <select name="question_form-${questionCount}-correct_answer" class="form-control">
+                    <option value="">Выберите правильный ответ</option>
+                    <option value="1">Вариант 1</option>
+                    <option value="2">Вариант 2</option>
+                    <option value="3">Вариант 3</option>
+                    <option value="4">Вариант 4</option>
+                </select>
+            </div>
+        `;
+
+        questionsContainer.appendChild(newBlock);
+        questionCount++;
+        newBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    addQuestionBtn.addEventListener('click', function() {
+        addNewQuestionBlock();
+    });
+
+    document.getElementById('testForm').addEventListener('submit', function() {
+        console.log('Отправка формы...');
+    });
+});
+</script>
+
+<style>
+.create-test-page {
+    background: linear-gradient(180deg, #f8fbff 0%, #f4f6fb 100%);
+    border-radius: 20px;
+}
+
+.page-title-wrap {
+    padding: 8px 4px;
+}
+
+.page-title {
+    font-weight: 700;
+    color: #1f2d3d;
+}
+
+.page-subtitle {
+    color: #6c7a89;
+    font-size: 0.98rem;
+}
+
+.custom-card {
+    border: none;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(31, 45, 61, 0.08);
+    background: #ffffff;
+}
+
+.custom-card-header {
+    background: linear-gradient(135deg, #4f8cff 0%, #6ea8fe 100%);
+    color: #fff;
+    border-bottom: none;
+    padding: 16px 20px;
+}
+
+.custom-card-header h5 {
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.custom-card-body {
+    padding: 22px 20px;
+}
+
+.section-label,
+.create-test-page label {
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 8px;
+    display: inline-block;
+}
+
+.create-test-page input[type="text"],
+.create-test-page input[type="number"],
+.create-test-page input[type="email"],
+.create-test-page input[type="date"],
+.create-test-page select,
+.create-test-page textarea {
+    width: 100%;
+    border: 1px solid #d8e1ee;
+    border-radius: 12px;
+    padding: 10px 14px;
+    background-color: #fbfdff;
+    transition: all 0.25s ease;
+    box-shadow: none;
+}
+
+.create-test-page input[type="text"]:focus,
+.create-test-page input[type="number"]:focus,
+.create-test-page input[type="email"]:focus,
+.create-test-page input[type="date"]:focus,
+.create-test-page select:focus,
+.create-test-page textarea:focus {
+    border-color: #6ea8fe;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(78, 140, 255, 0.15);
+    outline: none;
+}
+
+.existing-questions-list,
+.students-list {
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 8px 4px 8px 2px;
+}
+
+.existing-question-item,
+.student-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 8px;
+    border: 1px solid #edf2f7;
+    border-radius: 12px;
+    background: #f9fbff;
+    transition: all 0.2s ease;
+}
+
+.existing-question-item:not(:last-child),
+.student-item:not(:last-child) {
+    margin-bottom: 10px;
+}
+
+.existing-question-item:hover,
+.student-item:hover {
+    background: #f1f6ff;
+    border-color: #d8e7ff;
+}
+
+.existing-question-checkbox,
+.student-checkbox {
+    margin-top: 4px;
+    flex-shrink: 0;
+    transform: scale(1.1);
+}
+
+.existing-question-label,
+.student-label {
+    margin: 0;
+    line-height: 1.45;
+    cursor: pointer;
+    flex: 1;
+    word-break: break-word;
+    color: #2f3b4a;
+}
+
+.student-name {
+    display: block;
+    font-weight: 600;
+}
+
+.student-group {
+    display: block;
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.question-block {
+    background: linear-gradient(180deg, #f9fbff 0%, #f4f8ff 100%);
+    border: 1px solid #e3ecf8;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.question-block:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(79, 140, 255, 0.08);
+    border-color: #cfe0ff;
+}
+
+.question-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5edf8;
+}
+
+.question-block-header h6 {
+    font-weight: 700;
+    color: #234;
+}
+
+.add-question-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #eef4ff 0%, #dbeafe 100%);
+    color: #2356a8;
+    font-weight: 600;
+    transition: all 0.25s ease;
+}
+
+.add-question-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(79, 140, 255, 0.15);
+    background: linear-gradient(135deg, #dfeeff 0%, #cde3ff 100%);
+    color: #1d4f9c;
+}
+
+.create-test-btn {
+    border: none;
+    border-radius: 14px;
+    padding: 14px 30px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #28c76f 0%, #20b15a 100%);
+    box-shadow: 0 10px 22px rgba(40, 199, 111, 0.22);
+    transition: all 0.25s ease;
+}
+
+.create-test-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(40, 199, 111, 0.28);
+}
+
+.existing-questions-list::-webkit-scrollbar,
+.students-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.existing-questions-list::-webkit-scrollbar-thumb,
+.students-list::-webkit-scrollbar-thumb {
+    background: #c8d7ee;
+    border-radius: 10px;
+}
+
+.existing-questions-list::-webkit-scrollbar-track,
+.students-list::-webkit-scrollbar-track {
+    background: #edf3fb;
+    border-radius: 10px;
+}
+
+@media (max-width: 991.98px) {
+    .custom-card-body {
+        padding: 18px 16px;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+    }
+}
+</style>
+{% endblock %}

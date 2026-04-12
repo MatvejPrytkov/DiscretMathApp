@@ -20,7 +20,6 @@ urlpatterns = [
     # Учительские маршруты
     path('teacher/', views.teacher_dashboard, name='teacher_dashboard'),
     path('teacher/student_results', views.student_results, name='student_results'),
-    path('teacher/manage-tests/', views.manage_tests, name='manage_tests'),
     # 🆕 МАРШРУТЫ ДЛЯ ОЦЕНОК
     path('teacher/grade-test/<int:result_id>/', views.grade_test_result, name='grade_test'),
 
@@ -34,6 +33,24 @@ urlpatterns = [
 
     path('lab/<int:lab_id>/submit/', views.submit_lab, name='submit_lab'),
     path('lab/delete/<int:lab_id>/', views.delete_lab_work, name='delete_lab_work'),
+    path('teacher/questions/', views.manage_questions, name='manage_questions'),
+    path('teacher/questions/add/', views.add_question, name='add_question'),
+    path('teacher/tests/', views.teacher_manage_tests, name='teacher_manage_tests'),
+    path('teacher/tests/create/', views.create_teacher_test, name='create_teacher_test'),
+    path('teacher/tests/<int:test_id>/', views.teacher_test_detail, name='teacher_test_detail'),
+    path('student/teacher-tests/', views.student_teacher_tests, name='student_teacher_tests'),
+    path('student/teacher-test/<int:test_id>/', views.take_teacher_test, name='take_teacher_test'),
+    path('teacher/student_lab/<int:lab_id>/', views.teacher_lab_detail, name='teacher_lab_detail'),
+    path('teacher/tests/delete/<int:test_id>/', views.delete_teacher_test, name='delete_teacher_test'),
+    path('teacher/lab/submission/<int:submission_id>/', views.submission_detail, name='submission_detail'),
+    path('teacher/student_results/export/', views.export_student_results_excel, name='export_student_results'),
+    path('notifications/get/', views.get_notifications, name='get_notifications'),
+    path('notifications/mark-read/<int:notification_id>/', views.mark_notification_read, name='mark_notification_read'),
+    path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
+    path('notifications/unread-count/', views.get_unread_notifications_count, name='unread_notifications_count'),
+    path('notifications/delete/<int:notification_id>/', views.delete_notification, name='delete_notification'),
+    path('notifications/delete-all/', views.delete_all_notifications, name='delete_all_notifications'),
+    path('teacher/lab/submission/<int:submission_id>/download/', views.serve_submission_file, name='serve_submission_file'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

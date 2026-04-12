@@ -1,43 +1,119 @@
-{% extends 'base.html' %}
-{% block title %}Управление тестами{% endblock %}
+{% extends 'teacher/base_teacher.html' %}
+{% block teacher_content %}
+<h2>Мои тесты</h2>
+<a href="{% url 'create_teacher_test' %}" class="btn btn-success create-test-btn">Создать новый тест</a>
 
-{% block content %}
-<div class="container mt-4">
-    <h2>Управление тестами</h2>
-    
-    <!-- Кнопка создания нового теста -->
-    <a href="{% url 'teacher_create_test' %}" class="btn btn-primary mb-3">Создать тест</a>
-    
-    <!-- Список тестов -->
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Название</th>
-                    <th>Вопросов</th>
-                    <th>Создан</th>
-                    <th>Действия</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for test in tests %}
-                <tr>
-                    <td>{{ test.title }}</td>
-                    <td>{{ test.questions.count }}</td>
-                    <td>{{ test.created_at|date:"d.m.Y" }}</td>
-                    <td>
-                        <a href="{% url 'teacher_edit_test' test.pk %}" class="btn btn-sm btn-warning">Редактировать</a>
-                        <a href="{% url 'teacher_test_results' test.pk %}" class="btn btn-sm btn-info">Результаты</a>
-                        <a href="{% url 'teacher_delete_test' test.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Удалить тест?')">Удалить</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center">Тестов пока нет</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+{% if tests %}
+<div class="test-list-container">
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Количество вопросов</th>
+                <th>Дата создания</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for test in tests %}
+            <tr>
+                <td>{{ test.title }}</td>
+                <td>{{ test.questions.count }}</td>
+                <td>{{ test.created_at|date:"d.m.Y H:i" }}</td>
+                <td>
+                    <a href="{% url 'teacher_test_detail' test.id %}" class="btn btn-info btn-sm">Просмотр</a>
+                    <form method="POST" action="{% url 'delete_teacher_test' test.id %}" class="d-inline delete-form" data-test-title="{{ test.title }}">
+                        {% csrf_token %}
+                        <button type="button" class="btn btn-danger btn-sm delete-btn">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
+{% else %}
+<p>У вас пока нет созданных тестов.</p>
+{% endif %}
+
+<style>
+.create-test-btn {
+    display: inline-block;
+    margin-bottom: 24px;
+}
+
+.test-list-container {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.test-list-container .table {
+    width: 100%;
+    margin-bottom: 0;
+    table-layout: fixed;
+}
+
+.test-list-container thead,
+.test-list-container tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.test-list-container thead {
+    background-color: #fff;
+}
+
+.test-list-container tbody {
+    display: block;
+    max-height: 300px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.test-list-container thead th {
+    background-color: #fff;
+    border-bottom: 1px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+/* Стили для скроллбара */
+.test-list-container tbody::-webkit-scrollbar {
+    width: 8px;
+}
+
+.test-list-container tbody::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.test-list-container tbody::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.test-list-container tbody::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForms = document.querySelectorAll('.delete-form');
+
+    deleteForms.forEach(form => {
+        const deleteBtn = form.querySelector('.delete-btn');
+        deleteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const testTitle = form.dataset.testTitle;
+            if (confirm(`Вы уверены, что хотите удалить тест "${testTitle}"?`)) {
+                form.submit();
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

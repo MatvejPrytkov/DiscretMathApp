@@ -3,177 +3,522 @@
 {% block title %}Личный кабинет{% endblock %}
 
 {% block content %}
+<style>
+    .grade-badge {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        font-size: 0.875rem;
+        font-weight: 600;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        color: #fff;
+    }
 
-    <h1>Личный кабинет: {{ user.username }}</h1>
+    .grade-2 {
+        background-color: #dc3545;
+    }
 
-    <div class="profile-actions">
-        <h3>Управление аккаунтом</h3>
-        <div style="width: 100%; display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="{% url 'profile_update' %}" class="btn btn-primary">✏️ Редактировать</a>
-            <a href="{% url 'change_password' %}" class="btn btn-success">🔐 Сменить пароль</a>
-            <a href="{% url 'delete_account' %}" class="btn btn-danger"
-               onclick="return confirm('Вы уверены?')">🗑️ Удалить аккаунт</a>
-            <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
-        </div>
+    .grade-3 {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .grade-4 {
+        background-color: #007bff;
+    }
+
+    .grade-5 {
+        background-color: #28a745;
+    }
+
+    /* Бледные цвета строк сводной таблицы */
+    .summary-row-2 {
+        background-color: #f8d7da !important;
+    }
+
+    .summary-row-3 {
+        background-color: #fff3cd !important;
+    }
+
+    .summary-row-4 {
+        background-color: #dbeafe !important;
+    }
+
+    .summary-row-5 {
+        background-color: #d4edda !important;
+    }
+
+    /* Чтобы цвет применялся ко всей строке, включая ячейки */
+    .summary-row-2 td,
+    .summary-row-3 td,
+    .summary-row-4 td,
+    .summary-row-5 td {
+        background-color: inherit !important;
+    }
+
+    /* Небольшой hover для кликабельных строк */
+    .summary-row-2:hover td {
+        background-color: #f1c2c7 !important;
+    }
+
+    .summary-row-3:hover td {
+        background-color: #ffe69c !important;
+    }
+
+    .summary-row-4:hover td {
+        background-color: #cfe2ff !important;
+    }
+
+    .summary-row-5:hover td {
+        background-color: #badbcc !important;
+    }
+
+    /* Стили для фильтров */
+    .filter-section {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #dee2e6;
+    }
+
+    .filter-group {
+        display: inline-block;
+        margin-right: 20px;
+        margin-bottom: 10px;
+    }
+
+    .filter-group label {
+        margin-right: 10px;
+        font-weight: 500;
+    }
+
+    .filter-group select, .filter-group input {
+        padding: 5px 10px;
+        border-radius: 4px;
+        border: 1px solid #ced4da;
+    }
+
+    .filter-buttons {
+        display: inline-block;
+    }
+
+    .btn-clear {
+        background-color: #6c757d;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+    }
+
+    .btn-clear:hover {
+        background-color: #5a6268;
+        color: white;
+    }
+
+    .filter-badge {
+        background-color: #007bff;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        margin-left: 8px;
+    }
+
+    .hidden-row {
+        display: none;
+    }
+</style>
+
+<h1>Личный кабинет: {{ user.username }}</h1>
+
+<div class="teacher-info mb-4" style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff;">
+    <h4 style="margin-bottom: 10px;">👨‍🏫 Ваш преподаватель</h4>
+    {% if teacher_name %}
+        <p style="font-size: 1.1rem; margin-bottom: 5px;">
+            <strong>{{ teacher_name }}</strong>
+        </p>
+        {% if teacher.email %}
+            <p class="text-muted" style="margin-bottom: 0;">
+                <small>Email: {{ teacher.email }}</small>
+            </p>
+        {% endif %}
+    {% else %}
+        <p class="text-muted" style="font-style: italic;">
+            Преподаватель не назначен
+        </p>
+    {% endif %}
+</div>
+
+<div class="profile-actions">
+    <h3>Управление аккаунтом</h3>
+    <div style="width: 100%; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="{% url 'profile_update' %}" class="btn btn-primary">✏️ Редактировать</a>
+        <a href="{% url 'change_password' %}" class="btn btn-success">🔐 Сменить пароль</a>
+        <a href="{% url 'delete_account' %}" class="btn btn-danger"
+           onclick="return confirm('Вы уверены?')">🗑️ Удалить аккаунт</a>
+        <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
     </div>
+</div>
 
-    <div class="test-banners">
-        <h3>🎯 Пройти тестирование</h3>
-        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-            <a href="{% url 'test_view' 'start' %}" class="btn btn-success">📥 Входное тестирование</a>
+<div class="test-banners">
+    <h3>🎯 Выполнить работу</h3>
+    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <a href="{% url 'test_view' 'start' %}" class="btn btn-success">📥 Входное тестирование</a>
+
+        <!-- Проверяем, пройден ли итоговый тест -->
+        {% with final_result=test_grades|dictsortreversed:"date_completed"|first %}
+        {% if final_result and final_result.test_type == 'final' %}
+            <a href="{% url 'result_detail' final_result.id %}" class="btn btn-primary">
+                📊 Посмотреть результат итогового тестирования
+            </a>
+        {% else %}
             <a href="{% url 'test_view' 'final' %}" class="btn btn-primary">📤 Итоговое тестирование</a>
-        </div>
-    </div>
-    <div class="lab_works">
+        {% endif %}
+        {% endwith %}
 
-         <a href="{% url 'student_labs' %}" class="btn btn-success"> Посмотреть список доступных лабораторных работ 🧪</a>
-
+        <a href="{% url 'student_teacher_tests' %}" class="btn btn-success">📝 Тесты от учителя</a>
+        <div class="lab_works">
+    <a href="{% url 'student_labs' %}" class="btn btn-success"> 🧪 Посмотреть список доступных лабораторных работ </a>
+</div>
     </div>
+</div>
+
+
 
 <div class="mt-5">
-        <h2>📊 Все мои работы</h2>
+    <h2>📊 Все мои работы</h2>
 
-        <div class="row">
-            <!-- Оценки за лабораторные -->
-           <div class="col-md-6">
-    <h4>🧪 Лабораторные </h4>
-    {% if lab_grades %}
-        <div class="list-group">
-        {% for submission in lab_grades %}
-            <a href="{% url 'lab' submission.lab_work.id %}"
-               class="list-group-item list-group-item-action text-decoration-none text-dark">
-                <div class="d-flex w-100 justify-content-between">
-                    <h6 class="mb-1">{{ submission.lab_work.title }}</h6>
-                    <span class="badge
-                        {% if submission.status == 'graded' %}badge-primary
-                        {% elif submission.status == 'under_review' %}badge-warning
-                        {% elif submission.status == 'submitted' %}badge-info
-                        {% else %}badge-secondary{% endif %}">
-                        {% if submission.grade %}
-                            {{ submission.grade }}
-                        {% else %}
-                            {{ submission.get_status_display }}
-                        {% endif %}
-                    </span>
-                </div>
-                <small class="text-muted">
-                    {% if submission.status == 'graded' %}
-                        Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}
-                        {% if submission.comment %}
-                            <br>Комментарий: {{ submission.comment }}
-                        {% endif %}
-                    {% else %}
-                        Сдано: {{ submission.submitted_at|date:"d.m.Y H:i" }}
-                    {% endif %}
-                </small>
-            </a>
-        {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-muted">Нет сданных лабораторных работ</p>
-    {% endif %}
-</div>
-            <!-- Оценки за тесты -->
-            <div class="col-md-6">
-    <h4>📝 Тесты</h4>
-    {% if test_grades %}
-        <div class="list-group">
-        {% for result in test_grades %}
-            <a href="{% url 'result_detail' result.id %}"
-               class="list-group-item list-group-item-action text-decoration-none text-dark">
-                <div class="d-flex w-100 justify-content-between">
-                     {% if result.get_test_type_display == 'Входное тестирование' %}
-                    <h6 class="mb-1">📥{{ result.get_test_type_display }}</h6>
-                    {% else %}
-                    <h6 class="mb-1">📤{{ result.get_test_type_display }}</h6>
-                    {% endif %}
-                    <span class="badge badge-success">{{ result.score }} / {{ result.total_questions }} ({{ result.percent|floatformat:0 }}%)</span>
-                </div>
-                <small class="text-muted">
-                    Пройден: {{ result.date_completed|date:"d.m.Y H:i" }}
-                </small>
-            </a>
-        {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-muted">Нет оценок за тесты</p>
-    {% endif %}
-</div>
-
-        <!-- Сводная таблица всех оценок -->
-        <div class="mt-4">
-            <h5>Сводная таблица</h5>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Тип</th>
-                        <th>Название</th>
-                        <th>Оценка</th>
-                        <th>Дата</th>
-                        <th>Статус</th>
-                    </tr>
-                </thead>
-                <tbody>
+    <div class="row">
+        <div class="col-md-6">
+            <h4>🧪 Лабораторные</h4>
+            {% if lab_grades %}
+                <div class="list-group" {% if lab_grades|length > 3 %}style="max-height: 300px; overflow-y: auto;"{% endif %}>
                     {% for submission in lab_grades %}
-<tr>
-    <td>Лабораторная</td>
-    <td><a href="{% url 'lab' submission.lab_work.id %}">
-            {{ submission.lab_work.title }}
-        </a></td>
-    <td>
-        <span class="badge
-            {% if submission.status == 'graded' %}badge-primary
-            {% elif submission.status == 'under_review' %}badge-warning
-            {% elif submission.status == 'submitted' %}badge-info
-            {% else %}badge-secondary{% endif %}">
-            {% if submission.grade %}
-                {{ submission.grade }}
+                        <a href="{% url 'lab' submission.lab_work.id %}"
+                           class="list-group-item list-group-item-action text-decoration-none text-dark">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ submission.lab_work.title }}</h6>
+                                <span class="badge
+                                    {% if submission.status == 'graded' %}badge-primary
+                                    {% elif submission.status == 'under_review' %}badge-warning
+                                    {% elif submission.status == 'submitted' %}badge-info
+                                    {% else %}badge-secondary{% endif %}">
+                                    {% if submission.grade %}
+                                        {{ submission.grade }}
+                                    {% else %}
+                                        {{ submission.get_status_display }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <small class="text-muted">
+                                {% if submission.status == 'graded' %}
+                                    Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}
+                                    {% if submission.comment %}
+                                        <br>Комментарий: {{ submission.comment }}
+                                    {% endif %}
+                                {% else %}
+                                    Сдано: {{ submission.submitted_at|date:"d.m.Y H:i" }}
+                                {% endif %}
+                            </small>
+                        </a>
+                    {% endfor %}
+                </div>
             {% else %}
-                {{ submission.get_status_display }}
+                <p class="text-muted">Нет сданных лабораторных работ</p>
             {% endif %}
-        </span>
-    </td>
-    <td>
-        {% if submission.status == 'graded' %}
-            {{ submission.graded_at|date:"d.m.Y" }}
-        {% else %}
-            {{ submission.submitted_at|date:"d.m.Y" }}
-        {% endif %}
-    </td>
-    <td>
-        <span class="badge badge-{{ submission.status }}">
-            {{ submission.get_status_display }}
-        </span>
-    </td>
-</tr>
-{% endfor %}
+        </div>
 
-                   {% for result in test_grades %}
-<tr>
-    <td>Тестирование</td>
-    <td><a href="{% url 'result_detail' result.id %}">
-        {% if result.test_type == 'start' %}Входное{% else %}Итоговое{% endif %}
-    </a></td>
-    <td>
-        {% if result.grade is not None %}
-            <span class="badge badge-success">{{ result.get_grade_display }}</span>
-        {% else %}
-            <span class="badge badge-warning">На проверке</span>
-        {% endif %}
-    </td>
-    <td>{{ result.date_completed|date:"d.m.Y" }}</td>
-    <td>
-        {% if result.grade is not None %}
-            <span class="badge badge-success">Завершен</span>
-        {% else %}
-            <span class="badge badge-warning">На проверке</span>
-        {% endif %}
-    </td>
-</tr>
-{% endfor %}
-                </tbody>
-            </table>
+        <div class="col-md-6">
+            <h4>📝 Тесты</h4>
+            {% if test_grades %}
+                <div class="list-group" {% if test_grades|length > 3 %}style="max-height: 300px; overflow-y: auto;"{% endif %}>
+                    {% for result in test_grades %}
+                        <a href="{% url 'result_detail' result.id %}"
+                           class="list-group-item list-group-item-action text-decoration-none text-dark">
+                            <div class="d-flex w-100 justify-content-between">
+                                {% if result.test_type == 'start' %}
+                                    <h6 class="mb-1">📥{{ result.get_test_type_display }}</h6>
+                                {% elif result.test_type == 'final' %}
+                                    <h6 class="mb-1">📤{{ result.get_test_type_display }}</h6>
+                                {% else %}
+                                    <h6 class="mb-1">📝{{ result.get_test_type_display }}</h6>
+                                {% endif %}
+                                <span class="badge badge-success">{{ result.score }} / {{ result.total_questions }} ({{ result.percent|floatformat:0 }}%)</span>
+                            </div>
+                            <small class="text-muted">
+                                Пройден: {{ result.date_completed|date:"d.m.Y H:i" }}
+                            </small>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted">Нет оценок за тесты</p>
+            {% endif %}
+        </div>
+
+        <!-- Сводная таблица всех оценок с фильтрацией -->
+        <!-- Добавляем якорь с id="summary-table" -->
+        <div id="summary-table" class="mt-4">
+            <h5>
+                Сводная таблица
+                {% if current_type_filter or current_grade_filter or current_status_filter %}
+                    <span class="filter-badge">Фильтр активен</span>
+                {% endif %}
+            </h5>
+
+            <!-- Форма фильтрации -->
+            <div class="filter-section">
+                <!-- Добавляем скрытое поле для сохранения якоря -->
+                <input type="hidden" name="anchor" value="summary-table">
+                <form method="get" id="filterForm">
+                    <div class="filter-group">
+                        <label for="typeFilter">Тип:</label>
+                        <select name="type" id="typeFilter">
+                            <option value="">Все типы</option>
+                            <option value="lab" {% if current_type_filter == 'lab' %}selected{% endif %}>Лабораторные</option>
+                            <option value="start" {% if current_type_filter == 'start' %}selected{% endif %}>Входное тестирование</option>
+                            <option value="final" {% if current_type_filter == 'final' %}selected{% endif %}>Итоговое тестирование</option>
+                            <option value="teacher" {% if current_type_filter == 'teacher' %}selected{% endif %}>Тесты учителя</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="gradeFilter">Оценка:</label>
+                        <select name="grade" id="gradeFilter">
+                            <option value="">Все оценки</option>
+                            <option value="5" {% if current_grade_filter == '5' %}selected{% endif %}>5 (Отлично)</option>
+                            <option value="4" {% if current_grade_filter == '4' %}selected{% endif %}>4 (Хорошо)</option>
+                            <option value="3" {% if current_grade_filter == '3' %}selected{% endif %}>3 (Удовлетворительно)</option>
+                            <option value="2" {% if current_grade_filter == '2' %}selected{% endif %}>2 (Неудовлетворительно)</option>
+                            <option value="pending" {% if current_grade_filter == 'pending' %}selected{% endif %}>На проверке</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="statusFilter">Статус:</label>
+                        <select name="status" id="statusFilter">
+                            <option value="">Все статусы</option>
+                            <option value="graded" {% if current_status_filter == 'graded' %}selected{% endif %}>Проверено</option>
+                            <option value="pending" {% if current_status_filter == 'pending' %}selected{% endif %}>На проверке</option>
+                            <option value="submitted" {% if current_status_filter == 'submitted' %}selected{% endif %}>Сдано</option>
+                            <option value="under_review" {% if current_status_filter == 'under_review' %}selected{% endif %}>На рассмотрении</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-buttons">
+                        <button type="submit" class="btn btn-primary btn-sm">Применить</button>
+                        {% if current_type_filter or current_grade_filter or current_status_filter %}
+                            <a href="{% url 'profile' %}" class="btn-clear" id="clearFiltersBtn">✖ Сбросить фильтры</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+            {% with lab_grades|length as lab_count %}
+            {% with test_grades|length as test_count %}
+            {% with lab_count|add:test_count as total_count %}
+
+            <div class="table-container" style="border: 1px solid #dee2e6; border-radius: 0.25rem; {% if total_count > 3 %}max-height: 400px; display: flex; flex-direction: column;{% endif %}">
+
+                <table class="table table-striped mb-0" style="margin-bottom: 0; {% if total_count > 3 %}border-bottom: none;{% endif %}">
+                    <thead style="background: white;">
+                        <tr>
+                            <th style="width: 15%;">Тип</th>
+                            <th style="width: 35%;">Название</th>
+                            <th style="width: 15%;">Оценка</th>
+                            <th style="width: 15%;">Дата</th>
+                            <th style="width: 20%;">Статус</th>
+                        </tr>
+                    </thead>
+                </table>
+
+                <div {% if total_count > 3 %}style="overflow-y: auto; flex-grow: 1;"{% endif %}>
+                    <table class="table table-striped mb-0" style="{% if total_count > 3 %}margin-top: 0; border-top: none;{% endif %}">
+                        <tbody id="summaryTableBody">
+                            {% for submission in lab_grades %}
+                                <tr
+                                    onclick="window.location.href='{% url 'lab' submission.lab_work.id %}'"
+                                    class="
+                                        {% if submission.grade == '2' or submission.grade == 2 %}
+                                            summary-row-2
+                                        {% elif submission.grade == '3' or submission.grade == 3 %}
+                                            summary-row-3
+                                        {% elif submission.grade == '4' or submission.grade == 4 %}
+                                            summary-row-4
+                                        {% elif submission.grade == '5' or submission.grade == 5 %}
+                                            summary-row-5
+                                        {% endif %}
+                                    "
+                                    style="cursor: pointer;"
+                                    data-type="lab"
+                                    data-grade="{% if submission.grade %}{{ submission.grade }}{% else %}pending{% endif %}"
+                                    data-status="{{ submission.status }}"
+                                >
+                                    <td style="width: 15%;">Лабораторная</td>
+                                    <td style="width: 35%;">
+                                        <a href="{% url 'lab' submission.lab_work.id %}" style="text-decoration: none; color: inherit;">
+                                            {{ submission.lab_work.title }}
+                                        </a>
+                                    </td>
+                                    <td style="width: 15%;">
+                                        {% if submission.grade %}
+                                            <span class="grade-badge grade-{{ submission.grade }}">{{ submission.grade }}</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">{{ submission.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="width: 15%;">
+                                        {% if submission.status == 'graded' %}
+                                            {{ submission.graded_at|date:"d.m.Y" }}
+                                        {% else %}
+                                            {{ submission.submitted_at|date:"d.m.Y" }}
+                                        {% endif %}
+                                    </td>
+                                    <td style="width: 20%;">
+                                        <span class="badge badge-{{ submission.status }}">
+                                            {{ submission.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+
+                            {% for result in test_grades %}
+                                <tr
+                                    onclick="window.location.href='{% url 'result_detail' result.id %}'"
+                                    class="
+                                        {% if result.grade == 2 %}
+                                            summary-row-2
+                                        {% elif result.grade == 3 %}
+                                            summary-row-3
+                                        {% elif result.grade == 4 %}
+                                            summary-row-4
+                                        {% elif result.grade == 5 %}
+                                            summary-row-5
+                                        {% endif %}
+                                    "
+                                    style="cursor: pointer;"
+                                    data-type="{{ result.test_type }}"
+                                    data-grade="{% if result.grade %}{{ result.grade }}{% else %}pending{% endif %}"
+                                    data-status="{% if result.grade %}graded{% else %}pending{% endif %}"
+                                >
+                                    <td style="width: 15%;">
+                                        {% if result.test_type == 'teacher' %}Тест учителя{% else %}Тестирование{% endif %}
+                                    </td>
+                                    <td style="width: 35%;">
+                                        <a href="{% url 'result_detail' result.id %}" style="text-decoration: none; color: inherit;">
+                                            {% if result.test_type == 'start' %}
+                                                Входное
+                                            {% elif result.test_type == 'final' %}
+                                                Итоговое
+                                            {% elif result.test_type == 'teacher' %}
+                                                {{ result.category_results.teacher_test.name|default:"" }}
+                                            {% else %}
+                                                Тест
+                                            {% endif %}
+                                        </a>
+                                    </td>
+                                    <td style="width: 15%;">
+                                        {% if result.grade is not None %}
+                                            <span class="grade-badge grade-{{ result.grade }}">{{ result.get_grade_display }}</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">На проверке</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="width: 15%;">{{ result.date_completed|date:"d.m.Y" }}</td>
+                                    <td style="width: 20%;">
+                                        {% if result.grade is not None %}
+                                            <span class="badge badge-success">Проверено</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">На проверке</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            {% if lab_grades|length == 0 and test_grades|length == 0 %}
+                <p class="text-muted text-center mt-3">Нет результатов, соответствующих фильтрам</p>
+            {% endif %}
+
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
         </div>
     </div>
-    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filterForm');
+
+    // Функция для прокрутки к сводной таблице
+    function scrollToSummaryTable() {
+        const summaryTable = document.getElementById('summary-table');
+        if (summaryTable) {
+            const offset = 20; // Небольшой отступ сверху
+            const elementPosition = summaryTable.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    if (filterForm) {
+        // Перехватываем отправку формы
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Сохраняем позицию прокрутки в sessionStorage
+            sessionStorage.setItem('scrollToSummary', 'true');
+
+            // Отправляем форму
+            filterForm.submit();
+        });
+
+        // Автоматическая отправка формы при изменении любого фильтра (через submit)
+        const selects = filterForm.querySelectorAll('select');
+        selects.forEach(select => {
+            select.addEventListener('change', function() {
+                sessionStorage.setItem('scrollToSummary', 'true');
+                filterForm.submit();
+            });
+        });
+    }
+
+    // Проверяем, нужно ли прокрутить к сводной таблице после загрузки страницы
+    if (sessionStorage.getItem('scrollToSummary') === 'true') {
+        sessionStorage.removeItem('scrollToSummary');
+        setTimeout(scrollToSummaryTable, 100); // Небольшая задержка для полной загрузки DOM
+    }
+
+    // Для кнопки сброса фильтров
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', function(e) {
+            sessionStorage.setItem('scrollToSummary', 'true');
+        });
+    }
+
+    // Если есть параметр anchor в URL, прокручиваем к указанному элементу
+    const urlParams = new URLSearchParams(window.location.search);
+    const anchor = urlParams.get('anchor');
+    if (anchor === 'summary-table') {
+        setTimeout(scrollToSummaryTable, 100);
+    }
+});
+</script>
+
 {% endblock %}

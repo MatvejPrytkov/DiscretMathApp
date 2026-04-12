@@ -3,16 +3,50 @@
 {% block title %}Изменение профиля{% endblock %}
 
 {% block content %}
+<style>
+    .btn-danger:hover {
+    background: linear-gradient(135deg, #b02a37 0%, #8b1e2a 100%);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.form-actions {
+    margin-top: 28px;
+    display: flex;
+    gap: 12px;
+}
+
+.form-actions button,
+.form-actions a {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    box-sizing: border-box;
+    border: none;
+    min-height: 48px;
+    font-family: inherit;
+    line-height: 1.2;
+}
+</style>
 <div class="card">
     <h1>Редактирование профиля</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        
-        <div style="margin-top: 24px; display: flex; gap: 10px;">
-    <button type="submit" class="btn btn-primary" style="flex: 1;">Сохранить</button>
-    <a href="{% url 'profile' %}" class="btn-cancel" style="flex: 1;">Отмена</a>
-</div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Сохранить</button>
+           <a href="{% url 'profile' %}" class="btn-danger">Отмена</a>
+        </div>
     </form>
 </div>
 {% endblock %}

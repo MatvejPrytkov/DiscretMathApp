@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр работы - {{ lab.student.profile.full_name }}</title>
+    <!-- Подключите ваши CSS стили -->
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Просмотр сданной работы</h1>
+            <a href="{% url 'teacher_labs' %}" class="back-btn">← Назад к списку работ</a>
+        </div>
+
+        <div class="lab-details">
+            <div class="student-info">
+                <h2>Информация о студенте</h2>
+                <p><strong>ФИО:</strong> {{ lab.student.profile.full_name }}</p>
+                <p><strong>Группа:</strong> {{ lab.student.profile.group }}</p>
+                <p><strong>Курс:</strong> {{ lab.student.profile.course }}</p>
+                <p><strong>Дата сдачи:</strong> {{ lab.submitted_at|date:"d.m.Y H:i" }}</p>
+            </div>
+
+            <div class="lab-content">
+                <h2>Лабораторная работа №{{ lab.lab_number }}</h2>
+
+                <div class="file-section">
+                    <h3>Прикрепленный файл:</h3>
+                    <div class="file-card">
+                        <div class="file-info">
+                            <span class="file-name">{{ lab.get_file_name }}</span>
+                            <span class="file-size">{{ lab.file.size|filesizeformat }}</span>
+                        </div>
+                        <a href="{{ lab.file.url }}" download class="download-btn">
+                            📥 Скачать файл
+                        </a>
+                    </div>
+                </div>
+
+                {% if lab.teacher_comment %}
+                <div class="comment-section">
+                    <h3>Ваш комментарий:</h3>
+                    <div class="comment-box">
+                        {{ lab.teacher_comment }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="grade-section">
+                    <h3>Оценка:</h3>
+                    {% if lab.grade %}
+                        <div class="current-grade">
+                            <span class="grade-badge">{{ lab.grade }}</span>
+                            <span class="grade-text">Баллов</span>
+                        </div>
+                    {% else %}
+                        <div class="no-grade">
+                            <span class="warning">Оценка не выставлена</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="actions">
+                <a href="{{ lab.file.url }}" target="_blank" class="btn preview-btn">
+                    👁️ Предпросмотр
+                </a>
+                <a href="{% url 'teacher_labs' %}" class="btn back-btn">
+                    Закрыть
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .back-btn {
+            color: #007bff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .lab-details {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .student-info, .lab-content {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .file-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            margin: 15px 0;
+        }
+
+        .file-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .download-btn {
+            background: #28a745;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+        }
+
+        .comment-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .grade-section {
+            margin-top: 20px;
+        }
+
+        .grade-badge {
+            display: inline-block;
+            background: #17a2b8;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .no-grade .warning {
+            color: #dc3545;
+            font-style: italic;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .preview-btn {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .preview-btn:hover {
+            background: #e0a800;
+        }
+    </style>
+</body>
+</html>

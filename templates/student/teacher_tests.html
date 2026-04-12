@@ -1,0 +1,124 @@
+{% extends 'student/base_student.html' %}
+{% block student_content %}
+<h2>Тесты от учителя</h2>
+
+{% if tests %}
+<div class="test-list-container">
+    <div class="list-group">
+        {% for test in tests %}
+            {% if test.is_completed %}
+                <a href="{% url 'result_detail' test.result.id %}" class="list-group-item list-group-item-action list-group-item-success">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-1">
+                                {{ test.title }}
+                                <span class="badge bg-success ms-2">✓ Пройден</span>
+                            </h5>
+                            <p class="mb-1">{{ test.description|truncatechars:100 }}</p>
+                            <small>
+                                Вопросов: {{ test.questions.count }} |
+                                Результат: {{ test.result.score }}/{{ test.result.total_questions }}
+                                ({{ test.result.percent }}%)
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">
+                                Пройден: {{ test.result.date_completed|date:"d.m.Y H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                </a>
+            {% else %}
+                <a href="{% url 'take_teacher_test' test.id %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-1">{{ test.title }}</h5>
+                            <p class="mb-1">{{ test.description|truncatechars:100 }}</p>
+                            <small>Вопросов: {{ test.questions.count }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary">Не пройден</span>
+                        </div>
+                    </div>
+                </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<p>Нет доступных тестов от учителя.</p>
+{% endif %}
+
+<style>
+.test-list-container {
+    max-height: 300px;
+    overflow-y: hidden;
+    border-radius: 4px;
+}
+
+.test-list-container.scroll-active {
+    overflow-y: auto;
+}
+
+/* Стили для скроллбара */
+.test-list-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.test-list-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.test-list-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.test-list-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.list-group-item-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.list-group-item-success:hover {
+    background-color: #c3e6cb !important;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+    border-radius: 0.25rem;
+}
+
+.bg-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.bg-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.text-end {
+    text-align: right;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Активация скролла при превышении 4 элементов
+    const container = document.querySelector('.test-list-container');
+    if (container) {
+        const testItems = container.querySelectorAll('.list-group-item');
+        if (testItems.length > 4) {
+            container.classList.add('scroll-active');
+        }
+    }
+});
+</script>
+{% endblock %}

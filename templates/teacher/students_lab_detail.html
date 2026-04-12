@@ -1,0 +1,226 @@
+{% extends 'teacher/base_teacher.html' %}
+{% load static %}
+
+{% block title %}Проверка лабораторной работы{% endblock %}
+
+{% block teacher_content %}
+<div class="container mt-4">
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        Сданная работа
+                        <small class="float-end">
+                            Статус:
+                            {% if submission.grade %}
+                                <span class="badge bg-success">Проверено</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Не проверено</span>
+                            {% endif %}
+                        </small>
+                    </h5>
+                </div>
+
+                <div class="card-body">
+                    <h4 class="card-title mb-3">{{ lab.title }}</h4>
+                    <p><strong>Студент:</strong> {{ student_full_name|default:student_username }}</p>
+
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Описание задания:</strong></label>
+                        <div class="border rounded p-3 bg-light">
+                            {{ lab.description|linebreaks }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Комментарий к работе:</strong></label>
+                        <div class="border rounded p-3 bg-light">
+                            {% if submission.comment %}
+                                {{ submission.comment|linebreaks }}
+                            {% else %}
+                                <span class="text-muted">Комментарий отсутствует.</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if submission.submitted_file %}
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Файл с отправленной работой:</strong></label>
+                        <div class="border rounded p-3 bg-light">
+                            <p class="mb-2">
+                                <i class="bi bi-file-earmark-{{ submitted_file_extension|cut:'.' }}"></i>
+                                {{ submitted_file_name }}
+                            </p>
+
+                            {% if can_preview %}
+                                <a href="{{ file_download_url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                    Открыть файл
+                                </a>
+                            {% else %}
+                                <a href="{{ file_download_url }}" class="btn btn-outline-primary btn-sm">
+                                    Скачать файл
+                                </a>
+                            {% endif %}
+
+
+
+
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if submission.submitted_at %}
+                    <p class="text-muted mb-0">
+                        Сдано: {{ submission.submitted_at|date:"d.m.Y H:i" }}
+                    </p>
+                    {% endif %}
+
+                    {% if submission.grade %}
+                    <div class="alert alert-info mt-3">
+                        <strong>Оценка:</strong> {{ submission.grade }}<br>
+                        {% if submission.graded_at %}
+                            <strong>Дата проверки:</strong> {{ submission.graded_at|date:"d.m.Y H:i" }}<br>
+                        {% endif %}
+                        {% if submission.graded_by %}
+                            <strong>Проверил:</strong>
+                            {% if submission.graded_by.profile.full_name %}
+                                {{ submission.graded_by.profile.full_name }}
+                            {% else %}
+                                {{ submission.graded_by.username }}
+                            {% endif %}
+                            <br>
+                        {% endif %}
+                        <strong>Комментарий:</strong><br>
+                        {{ submission.comment|default:"Комментарий отсутствует"|linebreaks }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer">
+                    <a href="{% url 'teacher_labs' %}" class="btn btn-secondary">
+                        Назад к списку
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">Информация о студенте</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>ФИО:</strong> {{ student_full_name }}</p>
+                    <p><strong>Группа:</strong> {{ student_profile.group|default:"-" }}</p>
+                    <p><strong>Курс:</strong> {{ student_course|default:"-" }}</p>
+                    <p><strong>Email:</strong> {{ student.email|default:"-" }}</p>
+
+                    <hr>
+
+                    <h6>Статистика по лабораторным:</h6>
+                    <p class="mb-0">Сдано работ: {{ student_submissions_count }}</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header {% if submission.grade %}bg-warning{% else %}bg-success{% endif %} text-white">
+                    <h6 class="mb-0">
+                        {% if submission.grade %}
+                            Редактирование оценки
+                        {% else %}
+                            Выставление оценки
+                        {% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if submission.grade %}
+                    <div class="alert alert-light border">
+                        <strong>Текущая оценка:</strong> {{ submission.grade }}
+                    </div>
+
+                    <button type="button" class="btn btn-outline-primary mb-3" id="edit-btn" onclick="toggleEditForm()">
+                        Редактировать
+                    </button>
+                    {% endif %}
+
+                    <form method="post" id="grade-form" {% if submission.grade %}style="display: none;"{% endif %}>
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="grade" class="form-label">Оценка</label>
+                            <select name="grade" id="grade" class="form-select" required>
+                                <option value="">-- Выберите оценку --</option>
+                                <option value="5" {% if submission.grade == "5" %}selected{% endif %}>5</option>
+                                <option value="4" {% if submission.grade == "4" %}selected{% endif %}>4</option>
+                                <option value="3" {% if submission.grade == "3" %}selected{% endif %}>3</option>
+                                <option value="2" {% if submission.grade == "2" %}selected{% endif %}>2</option>
+                                <option value="н" {% if submission.grade == "н" %}selected{% endif %}>Незачет</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Комментарий преподавателя</label>
+                            <textarea
+                                name="comment"
+                                id="comment"
+                                class="form-control"
+                                rows="4"
+                                placeholder="Введите комментарий преподавателя...">{% if submission.grade %}{{ submission.comment|default:'' }}{% endif %}</textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                {% if submission.grade %}Сохранить{% else %}Оценить{% endif %}
+                            </button>
+
+                            {% if submission.grade %}
+                            <button type="button" class="btn btn-secondary" onclick="toggleEditForm()">
+                                Отмена
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleEditForm() {
+    const form = document.getElementById('grade-form');
+    const editBtn = document.getElementById('edit-btn');
+
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        if (editBtn) {
+            editBtn.style.display = 'none';
+        }
+
+        const gradeField = document.getElementById('grade');
+        if (gradeField) {
+            gradeField.focus();
+        }
+    } else {
+        form.style.display = 'none';
+        if (editBtn) {
+            editBtn.style.display = 'inline-block';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('grade-form');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+        const grade = document.getElementById('grade');
+        if (grade && !grade.value) {
+            e.preventDefault();
+            alert('Выберите оценку');
+        }
+    });
+});
+</script>
+{% endblock %}

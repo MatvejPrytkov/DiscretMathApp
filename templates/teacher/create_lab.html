@@ -1,6 +1,26 @@
-{% extends 'base.html' %}
+{% extends 'teacher/base_teacher.html' %}
+{% block teacher_content %}
+<style>
+    .page-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 28px;
+    }
 
-{% block content %}
+    .page-header h1 {
+        margin: 0;
+    }
+
+    .page-subtitle {
+        margin-top: 10px;
+        margin-bottom: 0;
+        color: #6b7280;
+        font-size: 1rem;
+    }
+</style>
+
 <div class="container">
     <div class="page-header">
         <h1>Создание лабораторной работы</h1>
@@ -69,17 +89,18 @@
                     >
                     <small class="help-text">Загрузите файл формата .docx</small>
                 </div>
+
                 <div class="form-group">
-    <label for="id_pptx_file">Презентация (.pptx) (необязательно)</label>
-    <input
-        type="file"
-        id="id_pptx_file"
-        name="pptx_file"
-        class="form-control"
-        accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation"
-    >
-    <small class="help-text">Загрузите файл формата .pptx (презентация)</small>
-</div>
+                    <label for="id_pptx_file">Презентация (.pptx) (необязательно)</label>
+                    <input
+                        type="file"
+                        id="id_pptx_file"
+                        name="pptx_file"
+                        class="form-control"
+                        accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                    >
+                    <small class="help-text">Загрузите файл формата .pptx (презентация)</small>
+                </div>
 
                 <div class="action-buttons">
                     <button type="submit" class="btn btn-success">Сохранить</button>
@@ -89,48 +110,4 @@
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const first = document.getElementById('id_title');
-    if (first) first.focus();
-
-    const fileInput = document.getElementById('id_docx_file');
-    if (fileInput) {
-        fileInput.addEventListener('change', function () {
-            const file = this.files && this.files[0] ? this.files[0] : null;
-            const old = document.getElementById('selected-file-name');
-            if (old) old.remove();
-
-            if (file) {
-                const info = document.createElement('div');
-                info.id = 'selected-file-name';
-                info.className = 'help-text';
-                info.style.marginTop = '6px';
-                info.textContent = 'Выбран файл: ' + file.name;
-                this.parentNode.appendChild(info);
-            }
-        }
-    const pptxInput = document.getElementById('id_pptx_file');
-if (pptxInput) {
-    pptxInput.addEventListener('change', function () {
-        const file = this.files && this.files[0] ? this.files[0] : null;
-        const old = document.getElementById('selected-pptx-file-name');
-        if (old) old.remove();
-
-        if (file) {
-            const info = document.createElement('div');
-            info.id = 'selected-pptx-file-name';
-            info.className = 'help-text';
-            info.style.marginTop = '6px';
-            info.textContent = 'Выбран файл: ' + file.name;
-            this.parentNode.appendChild(info);
-        }
-    });
-}
-
-        );
-    }
-});
-</script>
 {% endblock %}

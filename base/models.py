@@ -43,6 +43,7 @@ class TestResult(models.Model):
     TEST_TYPES = [
         ('start', 'Входное тестирование'),
         ('final', 'Итоговое тестирование'),
+        ('teacher', 'Тест от учителя'),
     ]
 
     GRADE_CHOICES = [
@@ -88,7 +89,18 @@ class TestResult(models.Model):
         blank=True,
         verbose_name='Дата оценки'
     )
+    teacher_test = models.ForeignKey(
+        'TeacherTest',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='results',
+        verbose_name='Тест учителя'
+    )
 
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('result_detail', args=[str(self.id)])
     def __str__(self):
         return f"{self.user.username} - {self.get_test_type_display()} ({self.score}/{self.total_questions})"
 
@@ -126,6 +138,10 @@ class LabWork(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True, verbose_name="Активна")
     docx_file = models.FileField(upload_to=lab_file_path, verbose_name="Файл.docx")
+
+    def get_file_name(self):
+        """Получить имя файла без пути"""
+        return os.path.basename(self.file.name)
     def __str__(self):
         return self.title
 class LabSubmission(models.Model):
@@ -135,7 +151,7 @@ class LabSubmission(models.Model):
         ('graded', 'Проверено'),
         ('rejected', 'Отклонено'),
     ]
-
+    checked = models.BooleanField(default=False)
     lab_work = models.ForeignKey(LabWork, on_delete=models.CASCADE, related_name='submissions')
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lab_submissions')
     submitted_file = models.FileField(upload_to='lab_submissions/')
@@ -172,6 +188,8 @@ class TestQuestion(models.Model):
     option_b = models.TextField(verbose_name="Вариант B")
     option_c = models.TextField(verbose_name="Вариант C")
     option_d = models.TextField(verbose_name="Вариант D")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='created_questions')
     correct_option = models.CharField(
         max_length=1,
         choices=[('a', 'A'), ('b', 'B'), ('c', 'C'), ('d', 'D')],
@@ -252,3 +270,54 @@ class TestKindCategory(models.Model):
     def __str__(self):
         return f"{self.test_kind.code} → {self.category.name} ({self.questions_count} вопросов)"
 
+
+class TeacherTest(models.Model):
+    teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_tests')
+    title = models.CharField(max_length=200, verbose_name="Название теста")
+    description = models.TextField(blank=True, verbose_name="Описание")
+    questions = models.ManyToManyField(TestQuestion, through='TeacherTestQuestion', related_name='teacher_tests')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True, verbose_name="Активен")
+    assigned_to = models.ManyToManyField(User, related_name='assigned_tests', blank=True, limit_choices_to={'profile__role': 'student'})
+
+    def __str__(self):
+        return f"{self.title} (учитель: {self.teacher.profile.full_name})"
+
+class TeacherTestQuestion(models.Model):
+    test = models.ForeignKey(TeacherTest, on_delete=models.CASCADE)
+    question = models.ForeignKey(TestQuestion, on_delete=models.CASCADE)
+    order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+        unique_together = ['test', 'question']
+
+
+# Добавьте в models.py после существующих моделей
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('new_lab', 'Новая лабораторная работа'),
+        ('new_test', 'Новый тест'),
+        ('lab_submitted', 'Сдана лабораторная работа'),
+        ('test_completed', 'Пройден тест'),
+        ('lab_graded', 'Проверена лабораторная работа'),
+        ('test_graded', 'Проверен тест'),
+        ('lab_comment', 'Добавлен комментарий к лабораторной'),
+    ]
+
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications', null=True, blank=True)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    link = models.CharField(max_length=500, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.get_notification_type_display()} для {self.recipient.username}"

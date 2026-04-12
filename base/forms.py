@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, TestResult, LabWork
+from .models import UserProfile, TestResult, LabWork, TestQuestion, TeacherTest, LabSubmission
+
 
 class RegistrationForm(UserCreationForm):
     name = forms.CharField(max_length=100, label="ФИО")
@@ -141,3 +142,104 @@ class LabWorkForm(forms.ModelForm):
         widgets = {
             'pptx_file': forms.FileInput(attrs={'accept': '.pptx'}),
         }
+
+class AddQuestionForm(forms.ModelForm):
+    class Meta:
+        model = TestQuestion
+        fields = ['category', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option', 'difficulty']
+        widgets = {
+            'question_text': forms.Textarea(attrs={'rows': 3}),
+            'option_a': forms.Textarea(attrs={'rows': 2}),
+            'option_b': forms.Textarea(attrs={'rows': 2}),
+            'option_c': forms.Textarea(attrs={'rows': 2}),
+            'option_d': forms.Textarea(attrs={'rows': 2}),
+        }
+
+class CreateTeacherTestForm(forms.ModelForm):
+    questions = forms.ModelMultipleChoiceField(
+        queryset=TestQuestion.objects.none(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
+    assigned_to = forms.ModelMultipleChoiceField(
+        queryset=User.objects.none(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Назначить ученикам"
+    )
+
+    class Meta:
+        model = TeacherTest
+        fields = ['title', 'description', 'questions', 'assigned_to']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            # ИЗМЕНЕНИЕ: показываем все вопросы вместо фильтрации по created_by
+            self.fields['questions'].queryset = TestQuestion.objects.all()
+
+            # Ограничиваем учеников только привязанными к этому учителю
+            self.fields['assigned_to'].queryset = User.objects.filter(
+                profile__role='student',
+                profile__teacher=user
+            )
+            # Показываем полное имя ученика в чекбоксах
+            self.fields['assigned_to'].label_from_instance = (
+                lambda obj: obj.profile.full_name
+                if hasattr(obj, 'profile') and obj.profile.full_name
+                else obj.username
+            )
+
+class TestQuestionForm(forms.ModelForm):
+    class Meta:
+        model = TestQuestion
+        fields = ['question_text','option_a', 'option_b', 'option_c', 'option_d', 'correct_option']
+        widgets = {
+            'question_text': forms.Textarea(attrs={'class': 'form-control question-text', 'rows': 2, 'placeholder': 'Текст вопроса'}),
+            'option_a': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Вариант ответа 1'}),
+            'option_b': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Вариант ответа 2'}),
+            'option_c': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Вариант ответа 3'}),
+            'option_d': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Вариант ответа 4'}),
+            'correct_option': forms.Select(attrs={'class': 'form-control'}, choices=[
+                (1, 'Вариант 1'), (2, 'Вариант 2'), (3, 'Вариант 3'), (4, 'Вариант 4')
+            ]),
+        }
+
+class TeacherTestForm(forms.ModelForm):
+    class Meta:
+        model = TeacherTest
+        fields = ['title', 'description']  # Убрали 'course' и 'group'
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название теста'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Описание теста'}),
+        }
+
+    # Поле для выбора существующих вопросов остается
+    existing_questions = forms.ModelMultipleChoiceField(
+        queryset=TestQuestion.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Выбрать вопросы из базы данных"
+    )
+
+
+class GradeLabForm(forms.ModelForm):
+    class Meta:
+        model = LabSubmission
+        fields = ['grade', 'comment', 'checked']
+        widgets = {
+            'comment': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+            'grade': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 100}),
+            'checked': forms.HiddenInput(),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.checked = True  # При сохранении оценки автоматически отмечаем как проверенное
+        if commit:
+            instance.save()
+        return instance

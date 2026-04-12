@@ -25,9 +25,11 @@
                 <div class="action-buttons">
                     <a href="{{ lab.docx_file.url }}" class="btn btn-info" download>📥 Скачать файл задания</a>
                 </div>
+                {% if lab.pptx_file %}
                 <div class="action-buttons">
                     <a href="{{ lab.pptx_file.url }}" class="btn btn-info" download>📥 Скачать презентацию</a>
                 </div>
+                {% endif %}
             </div>
 
             <!-- Разделитель -->

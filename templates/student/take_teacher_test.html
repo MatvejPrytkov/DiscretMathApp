@@ -1,0 +1,131 @@
+{% extends 'student/base_student.html' %}
+
+{% block student_content %}
+<style>
+    .questions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+        align-items: start;
+    }
+
+    .question-item {
+        min-width: 0;
+    }
+
+    .question-item .card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .question-item .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Контейнер для всех вариантов ответов */
+    .answers-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly; /* Равномерное распределение по высоте */
+    }
+
+    .answer-option {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 24px;
+        align-items: center; /* Вертикальное выравнивание по центру */
+        column-gap: 16px;
+        padding-left: 0;
+        margin-bottom: 12px;
+    }
+
+    .answer-option .form-check-label {
+        margin-bottom: 0;
+        cursor: pointer;
+        line-height: 1.4;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .answer-option .form-check-input {
+        margin: 0;
+        justify-self: end;
+        position: static;
+        /* Фиксируем размер для единообразия */
+        width: 1.2em;
+        height: 1.2em;
+    }
+
+    /* Дополнительное выравнивание последнего элемента, если вариантов меньше 4 */
+    .answer-option:last-child {
+        margin-bottom: 0;
+    }
+
+    @media (max-width: 991.98px) {
+        .questions-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Для очень больших экранов — ограничение максимальной ширины карточек */
+    @media (min-width: 1400px) {
+        .questions-grid {
+            grid-template-columns: repeat(2, minmax(0, 800px));
+            justify-content: center;
+        }
+    }
+</style>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="questions-grid">
+        {% for question in questions %}
+        <div class="question-item">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Вопрос {{ forloop.counter }}</h5>
+                    <p class="card-text">{{ question.question_text }}</p>
+
+                    <div class="answers-container">
+                        <div class="form-check answer-option">
+                            <label class="form-check-label" for="q{{ question.id }}_a">
+                                A) {{ question.option_a }}
+                            </label>
+                            <input class="form-check-input" type="radio" name="q_{{ question.id }}" id="q{{ question.id }}_a" value="a">
+                        </div>
+
+                        <div class="form-check answer-option">
+                            <label class="form-check-label" for="q{{ question.id }}_b">
+                                B) {{ question.option_b }}
+                            </label>
+                            <input class="form-check-input" type="radio" name="q_{{ question.id }}" id="q{{ question.id }}_b" value="b">
+                        </div>
+
+                        <div class="form-check answer-option">
+                            <label class="form-check-label" for="q{{ question.id }}_c">
+                                C) {{ question.option_c }}
+                            </label>
+                            <input class="form-check-input" type="radio" name="q_{{ question.id }}" id="q{{ question.id }}_c" value="c">
+                        </div>
+
+                        <div class="form-check answer-option">
+                            <label class="form-check-label" for="q{{ question.id }}_d">
+                                D) {{ question.option_d }}
+                            </label>
+                            <input class="form-check-input" type="radio" name="q_{{ question.id }}" id="q{{ question.id }}_d" value="d">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Отправить ответы</button>
+</form>
+{% endblock %}

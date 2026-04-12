@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Мои вопросы</h2>
+<a href="{% url 'add_question' %}" class="btn btn-success">Добавить новый вопрос</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Вопрос</th>
+            <th>Категория</th>
+            <th>Дата создания</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for question in questions %}
+        <tr>
+            <td>{{ question.question_text|truncatechars:100 }}</td>
+            <td>{{ question.category.name }}</td>
+            <td>{{ question.created_at|date:"d.m.Y H:i" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

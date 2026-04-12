@@ -218,28 +218,8 @@ input:focus {
 }
 
 /* Стили страницы результатов (student_results.html) */
-.page { max-width: 1100px; margin: 0 auto; }
-.page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
-.page-title { margin: 0; font-size: 24px; font-weight: 700; }
-.page-subtitle { margin: 6px 0 0; font-size: 13px; color: #6b7280; }
 
-.panel {
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-    border: 1px solid rgba(17, 24, 39, 0.06);
-    overflow: hidden;
-}
-.panel-body { padding: 16px; }
-.table-wrap { overflow: auto; }
 
-.results-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 760px; }
-.results-table thead th {
-    position: sticky; top: 0; background: #f3f4f6; color: #111827;
-    font-weight: 700; font-size: 13px; text-align: left; padding: 12px 14px;
-    border-bottom: 1px solid #e5e7eb;
-}
-.results-table tbody td { padding: 12px 14px; border-bottom: 1px solid #eef2f7; font-size: 14px; }
 
 .badge {
     display: inline-flex; align-items: center; padding: 4px 10px;
@@ -487,35 +467,7 @@ canvas {
     cursor: pointer;
     flex-shrink: 0;       /* Чтобы кнопка не сжималась */
 }
-/* Специальный стиль для кнопок "Отмена" */
-.btn-cancel{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
 
-    width: 100%;              /* чтобы в паре с flex занимала всю доступную ширину */
-    box-sizing: border-box;
-
-    padding: 8px 16px;        /* ТОЧНО как у .btn */
-    min-height: auto;         /* убираем фиксированную высоту */
-    font-size: 1rem;
-    line-height: 1.5;
-    font-weight: 400;
-
-    border-radius: 4px;       /* как у .btn (было 0.375rem) */
-    border: 1px solid #dc3545;
-    background: #dc3545;
-    color: #fff;
-    text-decoration: none;
-
-    cursor: pointer;
-}
-
-.btn-cancel:hover{
-    background: #bb2d3b;
-    border-color: #b02a37;
-    color: #fff;
-}
 /* Основной контейнер */
 .mt-5 {
     margin-top: 3rem !important;
@@ -1754,3 +1706,471 @@ canvas {
 .answers-grid .card:nth-child(3) { animation-delay: 0.3s; }
 .answers-grid .card:nth-child(4) { animation-delay: 0.4s; }
 .answers-grid .card:nth-child(5) { animation-delay: 0.5s; }
+.form-check-inline {
+    margin-right: 15px;
+    margin-bottom: 10px;
+}
+
+/* Стилизация чекбоксов и их меток */
+/* Блок "Вопросы" - чекбокс и текст вопроса на одном уровне */
+.questions-block {
+    margin-top: 16px;
+}
+.questions-block .checkbox-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.questions-block input[type="checkbox"] {
+    margin-right: 12px;
+    margin-top: 0;
+    flex-shrink: 0;
+}
+.questions-block label {
+    display: inline;
+    margin-top: 0;
+    font-weight: normal;
+    cursor: pointer;
+}
+/* Блок "Назначить ученикам" - аналогичное выравнивание */
+.assign-block {
+    margin-top: 16px;
+}
+.assign-block .checkbox-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.assign-block input[type="checkbox"] {
+    margin-right: 12px;
+    margin-top: 0;
+    flex-shrink: 0;
+}
+.assign-block label {
+    display: inline;
+    margin-top: 0;
+    font-weight: normal;
+    cursor: pointer;
+}
+/* Общие стили для чекбоксов */
+input[type="checkbox"] {
+    width: auto;
+    transform: scale(1.2);
+}
+/* Если чекбоксы вложены прямо в label (структура <label><input /> текст</label>) */
+label > input[type="checkbox"] {
+    margin-right: 8px;
+    vertical-align: middle;
+}
+/* Дополнительные стили для заголовков блоков */
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e5e7eb;
+}
+/* Стилизация кнопки отправки (если нужна) */
+button[type="submit"] {
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    background: #2f66ff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+button[type="submit"]:hover {
+    background: #1d4ed8;
+}
+
+.checkbox-list {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    background: #f9fafb;
+    margin-top: 8px;
+}
+.checkbox-list .form-check {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: white;
+    transition: all 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+.checkbox-list .form-check:hover {
+    border-color: #2f66ff;
+    box-shadow: 0 2px 8px rgba(47, 102, 255, 0.1);
+}
+.checkbox-list .form-check-input {
+    margin-right: 12px;
+    flex-shrink: 0;
+    transform: scale(1.2);
+    margin-top: 0;
+}
+.checkbox-list .form-check-label {
+    display: inline;
+    margin-top: 0;
+    font-weight: normal;
+    cursor: pointer;
+    flex-grow: 1;
+    color: #374151;
+    line-height: 1.5;
+    word-break: break-word;
+}
+/* Переопределение inline-поведения для блоков вопросов и учеников */
+.checkbox-list .form-check-inline {
+    display: flex !important;
+    margin-right: 0;
+    margin-bottom: 12px;
+    width: 100%;
+}
+/* Стили для заголовков блоков */
+.form-group > label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 12px;
+    display: block;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e5e7eb;
+}
+/* Адаптивность */
+@media (max-width: 768px) {
+    .checkbox-list {
+        padding: 12px;
+    }
+
+.checkbox-list .form-check {
+    padding: 10px 12px;
+}
+
+.checkbox-list .form-check-label {
+    font-size: 14px;
+}
+
+
+
+/* Стили для списков вопросов и назначения учеников с горизонтальными разделителями */
+.checkbox-list {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0; /* Убираем padding, так как элементы будут иметь свои отступы */
+    background: #f9fafb;
+    margin-top: 8px;
+    overflow: hidden; /* Чтобы скругления углов контейнера работали правильно */
+}
+
+.checkbox-list .form-check {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0; /* Убираем нижний отступ, так как разделитель - это border */
+    padding: 12px 16px;
+    border: none;
+    border-bottom: 1px solid #e5e7eb; /* Горизонтальный разделитель */
+    border-radius: 0;
+    background: white;
+    transition: all 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.checkbox-list .form-check:last-child {
+    border-bottom: none; /* Убираем разделитель у последнего элемента */
+}
+
+.checkbox-list .form-check:hover {
+    border-bottom-color: #2f66ff;
+    background-color: #f8fafc;
+    box-shadow: 0 2px 8px rgba(47, 102, 255, 0.1);
+}
+
+.checkbox-list .form-check-input {
+    margin-right: 12px;
+    flex-shrink: 0;
+    transform: scale(1.2);
+    margin-top: 0;
+}
+
+.checkbox-list .form-check-label {
+    display: inline;
+    margin-top: 0;
+    font-weight: normal;
+    cursor: pointer;
+    flex-grow: 1;
+    color: #374151;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+/* Переопределение inline-поведения для блоков вопросов и учеников */
+.checkbox-list .form-check-inline {
+    display: flex !important;
+    margin-right: 0;
+    margin-bottom: 0;
+    width: 100%;
+}
+
+/* Стили для заголовков блоков */
+.form-group > label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 12px;
+    display: block;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .checkbox-list {
+        padding: 0;
+    }
+
+    .checkbox-list .form-check {
+        padding: 10px 12px;
+    }
+
+    .checkbox-list .form-check-label {
+        font-size: 14px;
+    }
+}
+
+.clickable-card {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .clickable-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    /* Стили для ссылки-заголовка */
+    .card-title-link {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .card-title-link:hover {
+        color: #007bff;
+        text-decoration: underline;
+    }
+
+.submitted-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.submitted-card {
+    margin-bottom: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+
+.card + .card {
+    margin-top: 24px;
+}
+/* ============================================
+   ЕДИНЫЕ СТИЛИ ДЛЯ КНОПОК ФОРМ
+   ============================================ */
+
+/* Контейнер для группы кнопок в формах */
+
+/* Базовый стиль для всех кнопок в формах */
+
+
+
+
+/* Кнопка "Сохранить" (синяя) */
+.form-actions .btn-primary {
+    background: linear-gradient(135deg, #2f66ff 0%, #1d4ed8 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(47, 102, 255, 0.25);
+}
+
+.form-actions .btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(47, 102, 255, 0.35);
+}
+
+/* Кнопка "Отмена" */
+.form-actions .btn-cancel {
+    background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.25);
+}
+
+.form-actions .btn-cancel:hover {
+    background: linear-gradient(135deg, #545b62 0%, #3d4248 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(108, 117, 125, 0.35);
+    color: white;
+    text-decoration: none;
+}
+
+/* Активное состояние кнопок */
+.form-actions .btn-success:active,
+.form-actions .btn-primary:active,
+.form-actions .btn-cancel:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Для карточек форм */
+.card .form-actions {
+    margin-top: 28px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 480px) {
+    .form-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .form-actions .btn,
+    .form-actions .btn-cancel,
+    .form-actions button[type="submit"],
+    .form-actions a {
+        width: 100%;
+        padding: 12px 16px;
+    }
+}
+/* ============================================
+   ЕДИНЫЕ СТИЛИ ДЛЯ КНОПОК ФОРМ
+   ============================================ */
+
+/* Контейнер для группы кнопок в формах */
+
+/* Базовый стиль для всех кнопок в формах */
+.form-actions .btn,
+.form-actions .btn-cancel,
+.form-actions button[type="submit"],
+.form-actions a {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    box-sizing: border-box;
+    border: none;
+    min-height: 48px;
+    font-family: inherit;
+    line-height: 1.2;
+}
+
+/* Кнопка "Изменить пароль" (зеленая) */
+.form-actions .btn-success,
+.form-actions button[type="submit"].btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
+}
+
+.form-actions .btn-success:hover,
+.form-actions button[type="submit"].btn-success:hover {
+    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(40, 167, 69, 0.35);
+}
+
+/* Кнопка "Сохранить" (синяя) */
+.form-actions .btn-primary {
+    background: linear-gradient(135deg, #2f66ff 0%, #1d4ed8 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(47, 102, 255, 0.25);
+}
+
+.form-actions .btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(47, 102, 255, 0.35);
+}
+
+/* Кнопка "Отмена" (серая) */
+.form-actions .btn-cancel {
+    background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.25);
+}
+
+.form-actions .btn-cancel:hover {
+    background: linear-gradient(135deg, #545b62 0%, #3d4248 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(108, 117, 125, 0.35);
+    color: white;
+    text-decoration: none;
+}
+
+/* Активное состояние кнопок */
+.form-actions .btn-success:active,
+.form-actions .btn-primary:active,
+.form-actions .btn-cancel:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Для карточек форм */
+.card .form-actions {
+    margin-top: 28px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 480px) {
+    .form-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+
+}
+/* Красная кнопка (Отмена/Удаление) */
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+    color: white;
+}
+
+/* ============================================
+   ФИКС ПРОСВЕЧИВАНИЯ СТРОК В ТАБЛИЦЕ С ФИКСИРОВАННОЙ ШАПКОЙ
+   ============================================ */
+
+/* Основное исправление для таблицы результатов */
+.table-wrap.table-scroll {
+    max-height: 460px;
+    overflow-y: auto;
+
+}
+
+/* Переопределение для таблицы результатов - фикс скролла */
+.table-wrap.table-scroll .results-table thead th {
+    position: sticky !important;
+    top: 0 !important;
+    background: #f3f4f6 !important;
+    z-index: 100 !important;
+}
+
+.table-wrap.table-scroll .results-table tbody td {
+    background: #fff !important;
+}

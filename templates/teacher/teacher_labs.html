@@ -1,59 +1,441 @@
-{% extends 'base.html' %}
-{% block content %}
+{% extends 'teacher/base_teacher.html' %}
+{% block teacher_content %}
+
+<style>
+    .submissions-container {
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: flex-start;
+        align-items: flex-start;
+    }
+
+    .submission-card {
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        flex: 0 0 calc(50% - 10px);
+        min-width: 280px;
+        margin-bottom: 20px;
+        box-sizing: border-box;
+    }
+
+    .submission-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .submission-card .card {
+        height: 100%;
+        margin-bottom: 0;
+    }
+
+    /* Контейнер для лабораторных работ со скроллом */
+    .labs-container {
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        margin-bottom: 30px;
+    }
+
+    .labs-container .cards-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 25px;
+        justify-content: flex-start; /* Изменено с center на flex-start */
+    }
+
+    /* Карточки лабораторных работ - по 2 в ряд на больших экранах */
+    .labs-container .card {
+        flex: 0 0 calc(50% - 12.5px);
+        min-width: 300px;
+        max-width: 500px;
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .labs-container .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    /* Стили для карточки лабораторной работы с центрированием */
+    .labs-container .card .card-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        flex: 1;
+        padding: 20px;
+    }
+
+    .labs-container .card .card-body h5 {
+        margin-bottom: 15px;
+        font-weight: 600;
+        word-break: break-word;
+        font-size: 1.25rem;
+    }
+
+    .labs-container .card .card-body p {
+        margin-bottom: 15px;
+        width: 100%;
+        font-size: 0.95rem;
+    }
+
+    .labs-container .card .btn-group {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .labs-container .card .btn-group .btn {
+        flex: 1;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    /* Стиль для скроллбара */
+    .labs-container::-webkit-scrollbar,
+    .submissions-container::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .labs-container::-webkit-scrollbar-track,
+    .submissions-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .labs-container::-webkit-scrollbar-thumb,
+    .submissions-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+
+    .labs-container::-webkit-scrollbar-thumb:hover,
+    .submissions-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .filter-form {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+    }
+
+    .teacher-filter-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
+        gap: 32px;
+        align-items: start;
+    }
+
+    .status-filter-block,
+    .search-filter-block {
+        width: 100%;
+    }
+
+    .filter-main-title {
+        margin: 0 0 12px 0;
+        font-weight: 600;
+    }
+
+    .status-filter-title {
+        display: block;
+        margin-bottom: 12px;
+        font-weight: 600;
+    }
+
+    .search-filter-title {
+        display: block;
+        margin: 0 0 12px 0;
+        font-weight: 600;
+    }
+
+    .status-options-grid {
+        display: grid;
+        grid-template-columns: max-content 40px;
+        column-gap: 18px;
+        row-gap: 12px;
+        align-items: center;
+    }
+
+    .status-option-text {
+        margin: 0;
+        line-height: 1.2;
+        cursor: pointer;
+    }
+
+    .status-option-input {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .status-option-input .form-check-input {
+        margin: 0;
+        float: none;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .search-filter-block {
+        max-width: 430px;
+        justify-self: end;
+    }
+
+    .filter-actions {
+        margin-top: 14px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .badge-checked {
+        background-color: #198754;
+        color: white;
+    }
+
+    .badge-unchecked {
+        background-color: #fd7e14;
+        color: white;
+    }
+
+    .status-badge {
+        font-size: 0.8em;
+        padding: 4px 8px;
+    }
+
+    .scroll-notice {
+        font-size: 0.9em;
+        color: #6c757d;
+        text-align: center;
+        padding: 10px;
+        border-top: 1px solid #dee2e6;
+        margin-top: 10px;
+    }
+
+    /* Стили для уведомления о скролле */
+    .labs-scroll-notice {
+        font-size: 0.85em;
+        color: #6c757d;
+        text-align: center;
+        padding: 8px;
+        border-top: 1px solid #dee2e6;
+        margin-top: 10px;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 992px) {
+        .submission-card {
+            flex: 0 0 calc(50% - 10px);
+        }
+
+        .labs-container .card {
+            flex: 0 0 calc(50% - 12.5px);
+            min-width: 280px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .teacher-filter-layout {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .status-filter-block,
+        .search-filter-block {
+            max-width: 100%;
+            justify-self: stretch;
+        }
+
+        .status-options-grid {
+            grid-template-columns: 1fr 40px;
+        }
+
+        .labs-container .card {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        .submission-card {
+            flex: 0 0 100%;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .filter-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-actions .btn {
+            width: 100%;
+        }
+
+        .labs-container .card .btn-group {
+            flex-direction: column;
+        }
+
+        .labs-container .card .btn-group .btn {
+            width: 100%;
+        }
+    }
+</style>
+
 <div class="container">
     <h1>🧪 Лабораторные работы</h1>
 
-    <div style="margin-bottom: 30px;">
+    <div style="margin-bottom: 20px;">
         <a href="{% url 'create_lab' %}" class="btn btn-primary">➕ Новая лабораторная</a>
     </div>
 
-   <h3>📋 Ваши лабораторные ({{ labs.count }})</h3>
-<div class="cards-grid">
-    {% for lab in labs %}
-    <div class="card">
-        <div class="card-body">
-            <h5>{{ lab.title }}</h5>
-            <p><strong>Тема:</strong> {{ lab.theme }} | <strong>Сложность:</strong> {{ lab.get_difficulty_display }}</p>
-            <div class="btn-group" role="group">
-<!--                <a href="{{ lab.docx_file.url }}" class="btn btn-sm btn-info" download>📥 Скачать</a>-->
-                <a href="{% url 'lab_detail' lab.id %}" class="btn btn-sm btn-primary">📊 Подробнее</a>
+    <h3>Ваши лабораторные ({{ labs.count }})</h3>
 
-                <!-- Кнопка удаления с подтверждением -->
-                <form method="POST" action="{% url 'delete_lab_work' lab.id %}" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-danger"
-                            onclick="return confirm('Вы уверены, что хотите удалить лабораторную работу «{{ lab.title }}»? Все связанные сдачи также будут удалены.')">
-                        🗑️ Удалить
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-    {% empty %}
-    <p>У вас пока нет лабораторных работ.</p>
-    {% endfor %}
-</div>
-
-    <h3>📥 Сданные работы: ({{ submissions|length }})</h3>
-    <div class="submissions-grid">
-        {% for submission in submissions %}
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <strong>{{ submission.student.profile.full_name }}</strong><br>
-                        <small>{{ submission.lab_work.title }}</small>
+    {% if labs %}
+        <div class="labs-container {% if labs.count <= 2 %}no-scroll{% endif %}">
+            <div class="cards-grid">
+                {% for lab in labs %}
+                <div class="card">
+                    <div class="card-body">
+                        <h5>{{ lab.title }}</h5>
+                        <p><strong>Тема:</strong> {{ lab.theme }} | <strong>Сложность:</strong> {{ lab.get_difficulty_display }}</p>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'lab_detail' lab.id %}" class="btn btn-sm btn-primary">📊 Подробнее</a>
+                            <form method="POST" action="{% url 'delete_lab_work' lab.id %}" style="display: inline; width: 100%;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Вы уверены, что хотите удалить лабораторную работу «{{ lab.title }}»? Все связанные сдачи также будут удалены.')">
+                                    🗑️ Удалить
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                    <span class="badge badge-{{ submission.status }}">{{ submission.get_status_display }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    {% else %}
+        <p>У вас пока нет лабораторных работ.</p>
+    {% endif %}
+
+    <div class="filter-form">
+        <form method="GET" action="{% url 'teacher_labs' %}" class="teacher-filter-layout">
+            <div class="status-filter-block">
+                <h4 class="filter-main-title">📋 Фильтрация сданных работ</h4>
+                <label class="form-label status-filter-title">Статус проверки:</label>
+
+                <div class="status-options-grid">
+                    <label class="status-option-text" for="all">Все работы</label>
+                    <div class="status-option-input">
+                        <input class="form-check-input" type="radio" name="checked" id="all" value="" {% if not checked_filter %}checked{% endif %}>
+                    </div>
+
+                    <label class="status-option-text" for="checked_true">Только проверенные</label>
+                    <div class="status-option-input">
+                        <input class="form-check-input" type="radio" name="checked" id="checked_true" value="true" {% if checked_filter == 'true' %}checked{% endif %}>
+                    </div>
+
+                    <label class="status-option-text" for="checked_false">Только непроверенные</label>
+                    <div class="status-option-input">
+                        <input class="form-check-input" type="radio" name="checked" id="checked_false" value="false" {% if checked_filter == 'false' %}checked{% endif %}>
+                    </div>
                 </div>
             </div>
-        </div>
-        {% endfor %}
+
+            <div class="search-filter-block">
+                <label for="search_name" class="form-label search-filter-title">Поиск по ФИО студента:</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="search_name"
+                    name="search_name"
+                    placeholder="Введите ФИО студента..."
+                    value="{{ search_name }}"
+                >
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Применить фильтры
+                    </button>
+                    <a href="{% url 'teacher_labs' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Сбросить
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <h3>📥 Сданные работы: ({{ total_submissions }})</h3>
+
+    <div class="submissions-container {% if total_submissions <= 2 %}no-scroll{% endif %}">
+        {% if submissions %}
+            {% for submission in submissions %}
+                <a href="{% url 'submission_detail' submission.id %}" class="submission-card">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title mb-1">{{ submission.lab_work.title }}</h6>
+                                    <p class="card-text mb-1">
+                                        <strong>Студент:</strong> {{ submission.student.profile.full_name }}
+                                    </p>
+                                    <p class="card-text mb-1">
+                                        <strong>Дата сдачи:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}
+                                    </p>
+                                    {% if submission.grade %}
+                                    <p class="card-text mb-1">
+                                        <strong>Оценка:</strong> {{ submission.grade }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    {% if submission.grade %}
+                                        <span class="badge badge-checked status-badge">✓ Проверено</span>
+                                    {% else %}
+                                        <span class="badge badge-unchecked status-badge">✗ Не проверено</span>
+                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted mt-2 d-block">Нажмите для деталей</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+
+
+
+        {% endif %}
     </div>
 
     <div style="margin-top: 30px;">
-        <a href="{% url 'teacher_dashboard' %}" class="btn btn-success"> Вернуться на учительскую панель</a>
+        <a href="{% url 'teacher_dashboard' %}" class="btn btn-success">
+            <i class="fas fa-arrow-left"></i> Вернуться на учительскую панель
+        </a>
     </div>
-
 </div>
+
 {% endblock %}

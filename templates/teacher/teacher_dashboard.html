@@ -18,188 +18,339 @@
         </div>
     </div>
 
-    <!-- 📈 НОВЫЕ ГРАФИКИ -->
-   <div class="charts-section">
+    <!-- 📈 ГРАФИКИ -->
+    <div class="charts-section">
         <h2>📈 Аналитика результатов</h2>
 
+        <!-- Первая строка: Типы тестов и Успеваемость (Тесты) -->
         <div class="charts-container">
-            <!-- График 1: Типы тестов -->
             <div class="chart-card">
                 <h4>Типы тестов</h4>
                 <canvas id="testTypesChart"></canvas>
             </div>
-
-            <!-- График 2: Распределение оценок -->
             <div class="chart-card">
-                <h4>Успеваемость</h4>
+                <h4>Успеваемость (Тесты)</h4>
                 <canvas id="gradesChart"></canvas>
             </div>
+        </div>
 
-            <!-- График 3: Результаты по темам -->
+        <!-- Вторая строка: Результаты по темам (слева) и Успеваемость (Лабораторные) (справа) -->
+        <div class="charts-container" style="margin-top: 20px;">
             <div class="chart-card">
-                <h4>Результаты по темам</h4>
+                <h4>Результаты по темам (Тесты)</h4>
                 <canvas id="themesChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h4>Успеваемость (Лабораторные)</h4>
+                <canvas id="labGradesChart"></canvas>
             </div>
         </div>
     </div>
 
     <div class="action-buttons">
-
-        <a href="{% url 'student_results' %}" class="btn btn-success">📊 Результаты тестов</a>
+        <a href="{% url 'student_results' %}" class="btn btn-success">📊 Результаты работ</a>
+        <a href="{% url 'teacher_manage_tests' %}" class="btn btn-primary">📝 Управление тестами</a>
+        <a href="{% url 'teacher_labs' %}" class="btn btn-primary">🧪 Управление лабораторными</a>
         <a href="{% url 'download_report' %}" class="btn btn-success">📥 Выгрузить отчет</a>
-
-         <a href="{% url 'delete_account' %}" class="btn btn-danger"
-               onclick="return confirm('Вы уверены?')">🗑️ Удалить аккаунт</a>
-            <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
-        <div class="action-buttons">
-
-    <a href="{% url 'teacher_labs' %}" class="btn btn-info">🧪 Лабораторные</a>
-
-</div>
+        <a href="{% url 'delete_account' %}" class="btn btn-danger" onclick="return confirm('Вы уверены?')">🗑️ Удалить аккаунт</a>
+        <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
     </div>
 
-    <!-- Остальной контент (таблица учеников) -->
-   <div class="panel">
-    <div class="panel-body">
-        <h3>Мои ученики ({{ student_count }})</h3>
-        <div class="table-wrap">
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>ФИО Ученика</th>
-                        <th>Email</th>
-                        <th>Тестов пройдено</th>
-                        <th>Лабораторных работ сдано</th> <!-- Новая колонка -->
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for student in students %}
-                    <tr>
-                        <td>{{ student.profile.full_name }}</td>
-                        <td>{{ student.email }}</td>
-                        <td>
-                            <a href="{% url 'student_results' %}?student_id={{ student.id }}" class="btn-simple">
-                                {{ student.test_count }}
-                            </a>
-                        </td>
-                        <td>{{ student.lab_submission_count }}</td> <!-- Новое поле -->
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" style="text-align: center; color: #6b7280;">
-                            У вас пока нет прикрепленных учеников
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <!-- Таблица учеников -->
+    <div class="panel">
+        <div class="panel-body">
+            <h3>Мои ученики ({{ student_count }})</h3>
+            <div class="table-wrap">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>ФИО Ученика</th>
+                            <th>Email</th>
+                            <th>Тестов пройдено</th>
+                            <th>Лабораторных работ сдано</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr class="student-row" data-student-id="{{ student.id }}" data-student-name="{{ student.profile.full_name }}" style="cursor: pointer;">
+                            <td>{{ student.profile.full_name }}</td>
+                            <td>{{ student.email }}</td>
+                            <td class="clickable-count">
+                                <a href="{% url 'student_results' %}?student_id={{ student.id }}&type_filter=test" class="count-link" onclick="event.stopPropagation();">
+                                    {{ student.test_count }}
+                                </a>
+                            </td>
+                            <td class="clickable-count">
+                                <a href="{% url 'student_results' %}?student_id={{ student.id }}&type_filter=lab" class="count-link" onclick="event.stopPropagation();">
+                                    {{ student.lab_submission_count }}
+                                </a>
+                              </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #6b7280;">
+                                У вас пока нет прикрепленных учеников
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Подключение Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    /* Стили для кликабельных строк */
+    .student-row {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .student-row:hover {
+        background-color: #e8f0fe !important;
+    }
 
+    /* Стили для кликабельных ячеек с числами */
+    .clickable-count {
+        text-align: center;
+    }
+    .count-link {
+        display: inline-block;
+        padding: 4px 12px;
+        background: #e9ecef;
+        border-radius: 20px;
+        text-decoration: none;
+        color: #2f66ff;
+        font-weight: 600;
+        transition: all 0.2s;
+        pointer-events: auto;
+    }
+    .count-link:hover {
+        background: #2f66ff;
+        color: white;
+        transform: scale(1.05);
+    }
+
+    /* Стили для таблицы */
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .results-table thead th {
+        background: #f3f4f6;
+        color: #111827;
+        font-weight: 700;
+        font-size: 13px;
+        text-align: left;
+        padding: 12px 14px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .results-table tbody td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #eef2f7;
+        font-size: 14px;
+        background-color: #fff;
+    }
+    .results-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+    /* Стили для контейнера графиков */
+    .charts-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .chart-card {
+        flex: 1;
+        min-width: 300px;
+        max-width: 450px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .chart-card h4 {
+        text-align: center;
+        margin-bottom: 15px;
+        color: #374151;
+    }
+    canvas {
+        max-height: 250px;
+        width: 100% !important;
+    }
+    @media (max-width: 768px) {
+        .charts-container {
+            flex-direction: column;
+            align-items: center;
+        }
+        .chart-card {
+            width: 100%;
+            max-width: 100%;
+        }
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // График 1: Типы тестов
+    // ========== ГРАФИК 1: Типы тестов ==========
     const testCtx = document.getElementById('testTypesChart').getContext('2d');
     new Chart(testCtx, {
         type: 'doughnut',
         data: {
             labels: [
-    {% for stat in test_stats %}
-        {% if stat.test_type == 'start' %}'Входной'
-        {% elif stat.test_type == 'final' %}'Итоговый'
-        {% else %}'{{ stat.test_type|title }}'
-        {% endif %},
-    {% endfor %}
-],
+                {% for stat in test_stats %}
+                    {% if stat.test_type == 'start' %}'Входной'
+                    {% elif stat.test_type == 'final' %}'Итоговый'
+                    {% else %}'Тест от учителя'
+                    {% endif %},
+                {% endfor %}
+            ],
             datasets: [{
                 data: [{% for stat in test_stats %}{{ stat.count }},{% endfor %}],
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'bottom' } }
-        }
-    });
-
-    // График 2: Распределение оценок
-    const gradesCtx = document.getElementById('gradesChart').getContext('2d');
-    new Chart(gradesCtx, {
-        type: 'bar',
-        data: {
-            labels: [{% for grade in grade_distribution %}'{{ grade.grade }}',{% endfor %}],
-            datasets: [{
-                label: 'Количество учеников',
-                data: [{% for grade in grade_distribution %}{{ grade.count }},{% endfor %}],
                 backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
             }]
         },
         options: {
             responsive: true,
-            scales: { y: { beginAtZero: true } }
+            maintainAspectRatio: true,
+            plugins: { legend: { position: 'bottom' } }
         }
     });
 
-   // График 3: Результаты по темам
-const themesCtx = document.getElementById('themesChart').getContext('2d');
+    // ========== ГРАФИК 2: Распределение оценок за ТЕСТЫ ==========
+    const gradesCtx = document.getElementById('gradesChart').getContext('2d');
+    new Chart(gradesCtx, {
+        type: 'bar',
+        data: {
+            labels: ['5 (Отлично)', '4 (Хорошо)', '3 (Удовл.)', '2 (Неудовл.)', 'Не оценено'],
+            datasets: [{
+                label: 'Распределение оценок',
+                data: [
+                    {{ test_grade_5_count|default:0 }},
+                    {{ test_grade_4_count|default:0 }},
+                    {{ test_grade_3_count|default:0 }},
+                    {{ test_grade_2_count|default:0 }},
+                    {{ test_grade_pending_count|default:0 }}
+                ],
+                backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Количество работ' }
+                }
+            },
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
 
-// Формируем названия (напр. "Графы", "Логика")
-const themeLabels = [
-    {% for theme_key, theme_data in theme_stats %}
-        "{{ theme_data.name }}",
-    {% endfor %}
-];
+    // ========== ГРАФИК 3: Распределение оценок за ЛАБОРАТОРНЫЕ ==========
+    const labGradesCtx = document.getElementById('labGradesChart').getContext('2d');
+    new Chart(labGradesCtx, {
+        type: 'bar',
+        data: {
+            labels: ['5 (Отлично)', '4 (Хорошо)', '3 (Удовл.)', '2 (Неудовл.)', 'Не оценено'],
+            datasets: [{
+                label: 'Распределение оценок',
+                data: [
+                    {{ lab_grade_5_count|default:0 }},
+                    {{ lab_grade_4_count|default:0 }},
+                    {{ lab_grade_3_count|default:0 }},
+                    {{ lab_grade_2_count|default:0 }},
+                    {{ lab_grade_pending_count|default:0 }}
+                ],
+                backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Количество работ' }
+                }
+            },
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
 
-// Формируем проценты (исправьте обращение к данным, так как theme_stats теперь список кортежей .items())
-const themeData = [
-    {% for theme_key, theme_data in theme_stats %}
-        {% if theme_data.total > 0 %}
-            {{ theme_data.correct }} / {{ theme_data.total }} * 100,
-        {% else %}
-            0,
-        {% endif %}
-    {% endfor %}
-];
+    // ========== ГРАФИК 4: Результаты по темам (Тесты) ==========
+    const themesCtx = document.getElementById('themesChart').getContext('2d');
+    const themeLabels = [
+        {% for theme_key, theme_data in theme_stats %}
+            "{{ theme_data.name }}",
+        {% endfor %}
+    ];
+    const themeData = [
+        {% for theme_key, theme_data in theme_stats %}
+            {% if theme_data.total > 0 %}
+                {{ theme_data.correct }} / {{ theme_data.total }} * 100,
+            {% else %}
+                0,
+            {% endif %}
+        {% endfor %}
+    ];
+    new Chart(themesCtx, {
+        type: 'radar',
+        data: {
+            labels: themeLabels,
+            datasets: [{
+                label: 'Средний % правильных ответов',
+                data: themeData,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                r: {
+                    angleLines: { display: true },
+                    suggestedMin: 0,
+                    suggestedMax: 100,
+                    ticks: {
+                        stepSize: 20,
+                        callback: function(value) { return value + '%'; }
+                    }
+                }
+            },
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
 
-new Chart(themesCtx, {
-    type: 'radar',
-    data: {
-        labels: themeLabels,
-        datasets: [{
-            label: 'Средний % правильных ответов',
-            data: themeData,
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            pointBackgroundColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            r: {
-                angleLines: { display: true },
-                suggestedMin: 0,
-                suggestedMax: 100,
-                ticks: {
-                    stepSize: 20,
-                    callback: function(value) { return value + '%'; }
+    // Обработчик клика по строке ученика
+    const studentRows = document.querySelectorAll('.student-row');
+    studentRows.forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'A' && !e.target.closest('a')) {
+                const studentId = this.dataset.studentId;
+                if (studentId) {
+                    window.location.href = "{% url 'student_results' %}?student_id=" + studentId;
                 }
             }
-        },
-        plugins: {
-            legend: { position: 'top' }
-        }
-    }
-  });
+        });
+    });
 });
-
 </script>
-
-
-
 {% endblock %}
