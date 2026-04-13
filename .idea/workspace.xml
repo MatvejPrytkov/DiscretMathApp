@@ -5,77 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="be9a2357-744f-40ee-abdc-3c06ce9324fa" name="Changes" comment="Add_DataBase">
-      <change afterPath="$PROJECT_DIR$/base/context_processors.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/migrations/0022_testquestion_created_by_alter_testresult_test_type_and_more.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/migrations/0023_labsubmission_checked.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/migrations/0024_testresult_teacher_test.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/migrations/0025_notification.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/includes/notifications.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/student/take_teacher_test.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/student/teacher_tests.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/add_question.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/base_teacher.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/create_teacher_test.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/manage_questions.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/students_lab_detail.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/teacher_lab_detail.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/test_detail.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/static/Plenty.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/static/css/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/core/static/css/style.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/static/final_test.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/static/graphs.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/static/logic.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/import_test_data.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_submissions/Cryptography.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_submissions/Doc1.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_submissions/F2l.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_submissions/Введение_в_дискретную_математику.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_submissions/Введение_в_дискретную_математику_FNu1DBZ.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_submissions/Криптография.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_submissions/Лабораторная_по_криптографии.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_submissions/Лабораторная_работа_3.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_submissions/Отчетпопрактике.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_submissions/Раздаточный_материал.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_submissions/Таблица_дискретка.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/01151717-3e8d-4023-95db-e22cd9c31d09.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/06eba468-09b6-410b-9ef1-5bd6b8c1ca41.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/5813a8b4-89ad-4532-b67c-e37d8cb5f4c3.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/61773149-7a50-4858-8e3d-071ea6606c90.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/9ca78f2a-f28a-41e6-8d89-3681eef87a97.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/ba5f8c1b-064b-451c-87ff-1d405d04d6ba.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/be21c89e-c238-4c74-a9e5-01d9670f38b7.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/fdfd11cd-c9a0-4aba-b8fe-7ebb74169513.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/Лабораторная_по_криптографии.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/Лабораторная_по_криптографии_lbYmxrm.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/Лабораторная_работа_1.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/lab_works/Лабораторная_работа_3.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/media/pptx_files/Лекция_1_логика__копия.pptx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/media/pptx_files/Лекция_1_логика__копия_SDvytpg.pptx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/media/pptx_files/Лекция_1_логика__копия_cFxS6TS.pptx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/media/pptx_files/Лекция_2предикаты.pptx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/media/pptx_files/Полная_матлогика_2023.pptx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/media/pptx_files/Полная_матлогика_2023_juWUWAW.pptx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/media/pptx_files/Проблема_Континуума.pptx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/Profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/Profile.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/base_student.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/base_student.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/change_password.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/change_password.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/lab.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/lab.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/profile_update.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/profile_update.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/student_labs.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/student_labs.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/create_lab.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/create_lab.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/lab_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/lab_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/manage_tests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/manage_tests.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/student_results.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/student_results.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_dashboard.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_labs.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_labs.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -197,61 +128,5 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Add_DataBase" />
     <option name="LAST_COMMIT_MESSAGE" value="Add_DataBase" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>80</line>
-          <option name="timeStamp" value="2" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>492</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>506</line>
-          <option name="timeStamp" value="4" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>317</line>
-          <option name="timeStamp" value="5" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>653</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>446</line>
-          <option name="timeStamp" value="7" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/base/forms.py</url>
-          <line>116</line>
-          <option name="timeStamp" value="9" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>84</line>
-          <option name="timeStamp" value="10" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/base/models.py</url>
-          <line>146</line>
-          <option name="timeStamp" value="11" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>1356</line>
-          <option name="timeStamp" value="12" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>
