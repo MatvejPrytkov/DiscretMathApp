@@ -4,6 +4,10 @@
 
 {% block student_content %}
 <h1>Итоговое тестирование</h1>
+ <div class="result-meta-item">
+            <span>⚠️</span>
+            <strong>Внимание:</strong> Итоговое тестирование можно пройти только один раз!
+        </div>
 <form method="post">
     {% csrf_token %}
     {% for q in questions %}

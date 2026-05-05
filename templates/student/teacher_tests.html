@@ -1,43 +1,252 @@
 {% extends 'student/base_student.html' %}
 {% block student_content %}
-<h2>Тесты от учителя</h2>
+
+<style>
+    /* Контейнер для сетки тестов */
+    .tests-grid-container {
+        margin-top: 20px;
+    }
+
+    /* Горизонтальная сетка карточек */
+    .tests-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    /* Карточка теста — компактная */
+    .test-card {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid rgba(99, 102, 241, 0.12);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        cursor: pointer;
+        text-decoration: none;
+        display: block;
+        position: relative;
+    }
+
+    .test-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+        border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    /* Пройденные тесты — зелёный акцент */
+    .test-card.completed {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-left: 4px solid #22c55e;
+    }
+
+    /* Тело карточки */
+    .test-card-body {
+        padding: 16px;
+    }
+
+    /* Заголовок карточки */
+    .test-card-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .test-card-title h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        flex: 1;
+    }
+
+    /* Бейджи статуса */
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-badge.completed {
+        background: #22c55e;
+        color: white;
+    }
+
+    .status-badge.pending {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    /* Описание */
+    .test-card-description {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-bottom: 12px;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Информационная строка */
+    .test-card-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .test-card-questions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .test-card-questions::before {
+        content: "📋";
+        font-size: 0.7rem;
+    }
+
+    .test-card-result {
+        font-weight: 600;
+        color: #10b981;
+    }
+
+    .test-card-result span {
+        background: rgba(16, 185, 129, 0.1);
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+
+    .test-card-date {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .test-card-date::before {
+        content: "📅";
+        font-size: 0.7rem;
+    }
+
+    /* Пустое состояние */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(99, 102, 241, 0.1);
+    }
+
+    .empty-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+        font-size: 1.2rem;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    /* Адаптивность */
+    @media (min-width: 1400px) {
+        .tests-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    @media (min-width: 1800px) {
+        .tests-grid {
+            grid-template-columns: repeat(5, 1fr);
+        }
+    }
+
+    @media (max-width: 900px) {
+        .tests-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 600px) {
+        .tests-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+</style>
+
+<h2>📝 Тесты от учителя</h2>
 
 {% if tests %}
-<div class="test-list-container">
-    <div class="list-group">
+<div class="tests-grid-container">
+    <div class="tests-grid">
         {% for test in tests %}
             {% if test.is_completed %}
-                <a href="{% url 'result_detail' test.result.id %}" class="list-group-item list-group-item-action list-group-item-success">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h5 class="mb-1">
-                                {{ test.title }}
-                                <span class="badge bg-success ms-2">✓ Пройден</span>
-                            </h5>
-                            <p class="mb-1">{{ test.description|truncatechars:100 }}</p>
-                            <small>
-                                Вопросов: {{ test.questions.count }} |
-                                Результат: {{ test.result.score }}/{{ test.result.total_questions }}
-                                ({{ test.result.percent }}%)
-                            </small>
+                <a href="{% url 'result_detail' test.result.id %}" class="test-card completed">
+                    <div class="test-card-body">
+                        <div class="test-card-title">
+                            <h5>{{ test.title }}</h5>
+                            <span class="status-badge completed">✓ Пройден</span>
                         </div>
-                        <div class="text-end">
-                            <small class="text-muted">
-                                Пройден: {{ test.result.date_completed|date:"d.m.Y H:i" }}
-                            </small>
+                        {% if test.description %}
+                            <div class="test-card-description">{{ test.description|truncatechars:80 }}</div>
+                        {% endif %}
+                        <div class="test-card-info">
+                            <div class="test-card-questions">
+                                {{ test.questions.count }} вопросов
+                            </div>
+                            <div class="test-card-result">
+                                <span>{{ test.result.score }}/{{ test.result.total_questions }} ({{ test.result.percent|floatformat:0 }}%)</span>
+                            </div>
+                        </div>
+                        <div class="test-card-info" style="margin-top: 6px; border-top: none; padding-top: 0;">
+                            <div class="test-card-date">
+                                {{ test.result.date_completed|date:"d.m.Y" }}
+                            </div>
+                            {% if test.result.grade %}
+                                <div style="font-weight: 600; color: #059669;">
+                                    Оценка: {{ test.result.get_grade_display }}
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 </a>
             {% else %}
-                <a href="{% url 'take_teacher_test' test.id %}" class="list-group-item list-group-item-action">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h5 class="mb-1">{{ test.title }}</h5>
-                            <p class="mb-1">{{ test.description|truncatechars:100 }}</p>
-                            <small>Вопросов: {{ test.questions.count }}</small>
+                <a href="{% url 'take_teacher_test' test.id %}" class="test-card">
+                    <div class="test-card-body">
+                        <div class="test-card-title">
+                            <h5>{{ test.title }}</h5>
+                            <span class="status-badge pending">📌 Не пройден</span>
                         </div>
-                        <div class="text-end">
-                            <span class="badge bg-primary">Не пройден</span>
+                        {% if test.description %}
+                            <div class="test-card-description">{{ test.description|truncatechars:80 }}</div>
+                        {% endif %}
+                        <div class="test-card-info">
+                            <div class="test-card-questions">
+                                {{ test.questions.count }} вопросов
+                            </div>
+                            <div class="test-card-questions" style="color: #f59e0b;">
+                                Ожидает выполнения
+                            </div>
                         </div>
                     </div>
                 </a>
@@ -46,20 +255,11 @@
     </div>
 </div>
 {% else %}
-<p>Нет доступных тестов от учителя.</p>
+<div class="empty-state">
+    <div class="empty-icon">📭</div>
+    <h3>Нет доступных тестов</h3>
+    <p>У вас пока нет назначенных тестов от учителя.</p>
+</div>
 {% endif %}
 
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Активация скролла при превышении 4 элементов
-    const container = document.querySelector('.test-list-container');
-    if (container) {
-        const testItems = container.querySelectorAll('.list-group-item');
-        if (testItems.length > 4) {
-            container.classList.add('scroll-active');
-        }
-    }
-});
-</script>
 {% endblock %}

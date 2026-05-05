@@ -15,11 +15,18 @@
             <p style="font-size: 1.1rem; margin-bottom: 5px;">
                 <strong>{{ teacher_name }}</strong>
             </p>
+
             {% if teacher.email %}
                 <p class="text-muted" style="margin-bottom: 0;">
                     <small>Email: {{ teacher.email }}</small>
                 </p>
             {% endif %}
+            <!-- ✅ ДОБАВЛЕНА КНОПКА ПЕРЕХОДА В ЧАТ С ПРЕПОДАВАТЕЛЕМ -->
+<div style="margin-top: 12px;">
+                <a href="{% url 'student_teacher_chat_detail' teacher.id %}" class="btn btn-info" style="white-space: nowrap;">
+                    💬 Чат с преподавателем
+                </a>
+            </div>
         {% else %}
             <p class="text-muted" style="font-style: italic;">
                 Преподаватель не назначен
@@ -69,16 +76,13 @@
         <a href="{% url 'test_view' 'start' %}" class="btn btn-success">📥 Входное тестирование</a>
 
         <!-- Проверяем, пройден ли итоговый тест -->
-        {% with final_result=test_grades|dictsortreversed:"date_completed"|first %}
-        {% if final_result and final_result.test_type == 'final' %}
-            <a href="{% url 'result_detail' final_result.id %}" class="btn btn-primary">
-                📊 Посмотреть результат итогового тестирования
-            </a>
-        {% else %}
-            <a href="{% url 'test_view' 'final' %}" class="btn btn-primary">📤 Итоговое тестирование</a>
-        {% endif %}
-        {% endwith %}
-
+        {% if has_final_test and final_test_result_obj %}
+    <a href="{% url 'result_detail' final_test_result_obj.id %}" class="btn btn-primary">
+        📊 Посмотреть результат итогового тестирования
+    </a>
+{% else %}
+    <a href="{% url 'test_view' 'final' %}" class="btn btn-primary">📤 Итоговое тестирование</a>
+{% endif %}
         <a href="{% url 'student_teacher_tests' %}" class="btn btn-success">📝 Тесты от учителя</a>
         <div class="lab_works">
             <a href="{% url 'student_labs' %}" class="btn btn-success"> 🧪 Посмотреть список доступных лабораторных работ </a>

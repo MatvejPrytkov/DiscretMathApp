@@ -25,25 +25,27 @@
         <span class="nav-icon">📥</span>
         Входной тест
     </a>
-    <a href="{% url 'student_teacher_tests' %}" class="nav-link {% if request.resolver_match.url_name == 'student_teacher_tests' or request.resolver_match.url_name == 'take_teacher_test' %}active{% endif %}">
+     <a href="{% url 'student_teacher_tests' %}" class="nav-link {% if request.resolver_match.url_name == 'student_teacher_tests' or request.resolver_match.url_name == 'take_teacher_test' %}active{% endif %}">
         <span class="nav-icon">👩‍🏫</span>
         Тесты от учителя
     </a>
-    {% with final_result=request.user.testresult_set.all|dictsortreversed:"date_completed" %}
-    {% with final_test=final_result|first %}
-        {% if final_test and final_test.test_type == 'final' %}
-            <a href="{% url 'result_detail' final_test.id %}" class="nav-link {% if request.resolver_match.url_name == 'result_detail' and final_test.test_type == 'final' %}active{% endif %}">
-                <span class="nav-icon">📤</span>
-                Результат тестирования
-            </a>
-        {% else %}
-            <a href="{% url 'test_view' 'final' %}" class="nav-link {% if request.resolver_match.url_name == 'test_view' and request.resolver_match.kwargs.test_kind == 'final' %}active{% endif %}">
-                <span class="nav-icon">📤</span>
-                Итоговый тест
-            </a>
-        {% endif %}
-    {% endwith %}
-    {% endwith %}
+   <a href="{% url 'student_test_results' %}" class="nav-link {% if active_nav == 'test_results' %}active{% endif %}">
+    <span class="nav-icon">📊</span>
+    Результаты тестирований
+</a>
+
+<!-- ИТОГОВЫЙ ТЕСТ -->
+{% if has_final_test and final_test_result %}
+    <a href="{% url 'result_detail' final_test_result.id %}" class="nav-link {% if active_nav == 'final_result' %}active{% endif %}">
+        <span class="nav-icon">📤</span>
+        Результат итогового тестирования
+    </a>
+{% else %}
+    <a href="{% url 'test_view' 'final' %}" class="nav-link {% if active_nav == 'final_test' %}active{% endif %}">
+        <span class="nav-icon">📤</span>
+        Итоговый тест
+    </a>
+{% endif %}
 </nav>
 
 {% endif %}

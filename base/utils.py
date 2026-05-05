@@ -14,27 +14,38 @@ def create_notification(recipient, sender, notification_type, title, message, li
             link=link
         )
 
-def notify_teacher_about_submission(teacher, student, lab_work, submission_id):
-    """Уведомление учителя о сдаче лабораторной работы"""
-    create_notification(
+def notify_teacher_about_submission(teacher, student, lab_work, submission_id, request=None):
+    """Уведомление учителя о сдаче лабораторной работы (с проверкой нахождения на странице)"""
+    return create_notification_smart(
         recipient=teacher,
         sender=student,
         notification_type='lab_submitted',
         title='📝 Новая сдача лабораторной работы',
         message=f'Студент {student.profile.full_name} сдал лабораторную работу "{lab_work.title}".',
-        link=f'/teacher/lab/submission/{submission_id}/'
+        link=f'/teacher/lab/submission/{submission_id}/',
+        request=request,
+        current_object_type='submission',
+        current_object_id=submission_id
     )
 
-def notify_teacher_about_test_completion(teacher, student, test_result):
-    """Уведомление учителя о прохождении теста"""
+
+def notify_teacher_about_test_completion(teacher, student, test_result, request=None):
+    """Уведомление учителя о прохождении теста (с проверкой)"""
     test_name = test_result.get_test_type_display()
-    create_notification(
+
+    # Определяем тип объекта для проверки
+    obj_type = 'teacher_result' if test_result.test_type == 'teacher' else 'result'
+
+    return create_notification_smart(
         recipient=teacher,
         sender=student,
         notification_type='test_completed',
         title='📊 Пройден новый тест',
         message=f'Студент {student.profile.full_name} прошел тест "{test_name}". Результат: {test_result.score}/{test_result.total_questions} ({test_result.percent}%).',
-        link=f'/teacher/result/{test_result.id}/'
+        link=f'/teacher/result/{test_result.id}/' if test_result.test_type == 'teacher' else f'/teacher/result/{test_result.id}/',
+        request=request,
+        current_object_type=obj_type,
+        current_object_id=test_result.id
     )
 
 def notify_student_about_new_lab(teacher, student, lab_work):
@@ -48,28 +59,33 @@ def notify_student_about_new_lab(teacher, student, lab_work):
         link=f'/students/labs/lab/{lab_work.id}/'
     )
 
-def notify_student_about_new_test(teacher, student, teacher_test):
-    """Уведомление студента о новом тесте"""
-    create_notification(
+def notify_student_about_new_test(teacher, student, teacher_test, request=None):
+    """Уведомление студента о новом тесте (с проверкой)"""
+    return create_notification_smart(
         recipient=student,
         sender=teacher,
         notification_type='new_test',
         title=f'📝 Новый тест: {teacher_test.title}',
         message=f'Преподаватель добавил новый тест "{teacher_test.title}".\n\n'
-                f'Описание: {teacher_test.description[:100]}{"..." if teacher_test.description and len(teacher_test.description) > 100 else ""}\n'
                 f'Количество вопросов: {teacher_test.questions.count()}',
-        link=f'/student/teacher-tests/{teacher_test.id}/'
+        link=f'/student/teacher-tests/{teacher_test.id}/',
+        request=request,
+        current_object_type='test',
+        current_object_id=teacher_test.id
     )
 
-def notify_student_about_lab_grade(teacher, student, submission):
-    """Уведомление студента о проверке лабораторной работы"""
-    create_notification(
+def notify_student_about_lab_grade(teacher, student, submission, request=None):
+    """Уведомление студента о проверке лабораторной работы (с проверкой)"""
+    return create_notification_smart(
         recipient=student,
         sender=teacher,
         notification_type='lab_graded',
         title='✅ Лабораторная работа проверена',
         message=f'Преподаватель проверил вашу работу "{submission.lab_work.title}". Оценка: {submission.grade or "не указана"}.',
-        link=f'/students/labs/lab/{submission.lab_work.id}/'  # ✅ ИСПРАВЛЕНО - ведет на страницу лабораторной работы студента
+        link=f'/student/labs/lab/{submission.lab_work.id}/',
+        request=request,
+        current_object_type='lab',
+        current_object_id=submission.lab_work.id
     )
 
 def notify_student_about_test_grade(teacher, student, test_result):
@@ -211,3 +227,60 @@ def notify_about_teacher_message_with_file(recipient, sender, file_name, message
         message=f'{sender.profile.full_name or sender.username} отправил файл: {file_name}',
         link=link
     )
+
+
+# utils.py
+
+def is_user_on_page(request, object_type, object_id):
+    """
+    Проверяет, находится ли пользователь на странице указанного объекта.
+
+    object_type: 'lab', 'test', 'submission', 'result'
+    object_id: ID объекта
+    """
+    if not request:
+        return False
+
+    # Получаем текущий URL
+    current_path = request.path
+    referer = request.META.get('HTTP_REFERER', '')
+
+    # Словарь путей для разных типов объектов
+    path_patterns = {
+        'lab': f'/student/labs/lab/{object_id}/',
+        'submission': f'/teacher/lab/submission/{object_id}/',
+        'test': f'/student/teacher-tests/{object_id}/',
+        'result': f'/student/result/{object_id}/',
+        'teacher_result': f'/teacher/result/{object_id}/',
+    }
+
+    # Проверяем текущий путь и referer
+    pattern = path_patterns.get(object_type)
+    if not pattern:
+        return False
+
+    return pattern in current_path or pattern in referer
+
+
+def create_notification_smart(recipient, sender, notification_type, title, message, link='', request=None,
+                              current_object_type=None, current_object_id=None):
+    """
+    Умное создание уведомления — не отправляет, если пользователь уже на этой странице.
+    """
+    # Проверяем, нужно ли пропустить уведомление
+    if request and current_object_type and current_object_id:
+        if is_user_on_page(request, current_object_type, current_object_id):
+            # Пользователь уже на странице — не отправляем уведомление
+            return None
+
+    # Стандартное создание уведомления
+    if recipient and recipient != sender:
+        return Notification.objects.create(
+            recipient=recipient,
+            sender=sender,
+            notification_type=notification_type,
+            title=title,
+            message=message,
+            link=link
+        )
+    return None

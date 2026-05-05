@@ -6,14 +6,19 @@
 {% block teacher_content %}
 <style>
     .chats-container {
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
     }
-    
+
     .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
         margin-bottom: 30px;
     }
-    
+
     .page-header h1 {
         font-size: 28px;
         font-weight: 700;
@@ -23,17 +28,153 @@
         color: transparent;
         margin-bottom: 8px;
     }
-    
+
     .page-header p {
         color: #64748b;
+        margin: 0;
     }
-    
+
+    /* ========== ФИЛЬТРЫ ========== */
+    .filter-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .filter-title {
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #1f2937;
+        font-size: 14px;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 8px;
+    }
+
+    .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 160px;
+    }
+
+    .filter-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .filter-group select,
+    .filter-group input {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        background: white;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+        outline: none;
+        border-color: #2f66ff;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+    }
+
+    .btn-filter, .btn-reset {
+        padding: 8px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        border: none;
+        font-weight: 500;
+        transition: all 0.2s;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-filter {
+        background: #2f66ff;
+        color: white;
+    }
+
+    .btn-filter:hover {
+        background: #1d4ed8;
+    }
+
+    .btn-reset {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-reset:hover {
+        background: #5a6268;
+    }
+
+    /* ========== СОРТИРОВКА ========== */
+    .sort-bar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .sort-select {
+        padding: 8px 16px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .sort-select:hover {
+        border-color: #2f66ff;
+    }
+
+    .stats-badge {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 8px 20px;
+        border-radius: 40px;
+        font-size: 14px;
+        color: #475569;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+    }
+
+    .stats-badge strong {
+        color: #ef4444;
+        font-size: 18px;
+    }
+
+    /* ========== СЕТКА КАРТОЧЕК ========== */
     .students-chats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 24px;
+        min-height: 400px;
     }
-    
+
     .student-chat-card {
         background: white;
         border-radius: 20px;
@@ -43,13 +184,13 @@
         cursor: pointer;
         position: relative;
     }
-    
+
     .student-chat-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.15);
         border-color: #6366f1;
     }
-    
+
     .chat-header {
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         padding: 16px;
@@ -58,7 +199,7 @@
         align-items: center;
         gap: 12px;
     }
-    
+
     .student-avatar {
         width: 48px;
         height: 48px;
@@ -70,23 +211,28 @@
         font-size: 20px;
         color: white;
         font-weight: bold;
+        flex-shrink: 0;
     }
-    
+
     .student-info {
         flex: 1;
+        min-width: 0;
     }
-    
+
     .student-name {
         font-weight: 700;
         color: #1e293b;
         font-size: 16px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-    
+
     .student-details {
         font-size: 12px;
         color: #64748b;
     }
-    
+
     .unread-indicator {
         position: absolute;
         top: 10px;
@@ -97,13 +243,14 @@
         padding: 2px 8px;
         font-size: 11px;
         font-weight: bold;
+        z-index: 10;
     }
-    
+
     .chat-preview {
         padding: 16px;
         background: white;
     }
-    
+
     .last-message {
         font-size: 13px;
         color: #475569;
@@ -114,88 +261,609 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
-    
+
     .last-message-time {
         font-size: 10px;
         color: #94a3b8;
     }
-    
+
+    /* ========== ПАГИНАЦИЯ ========== */
+    .pagination-container {
+        margin-top: 32px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .pagination {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .pagination li {
+        display: inline-block;
+    }
+
+    .pagination a,
+    .pagination span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        height: 40px;
+        padding: 0 12px;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #4b5563;
+        background: white;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .pagination a:hover {
+        background: #2f66ff;
+        color: white;
+        border-color: #2f66ff;
+        transform: translateY(-2px);
+    }
+
+    .pagination .active span {
+        background: linear-gradient(135deg, #2f66ff 0%, #1d4ed8 100%);
+        color: white;
+        border-color: #2f66ff;
+    }
+
+    .pagination .disabled span {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .pagination .disabled span:hover {
+        transform: none;
+        background: white;
+        color: #4b5563;
+    }
+
+    /* ========== АКТИВНЫЕ ФИЛЬТРЫ ========== */
+    .active-filters {
+        margin-top: 15px;
+        padding-top: 12px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .active-filters-label {
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .filter-badge {
+        background: linear-gradient(135deg, #2f66ff 0%, #1d4ed8 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .filter-badge .remove {
+        cursor: pointer;
+        font-weight: bold;
+        margin-left: 4px;
+        text-decoration: none;
+        color: white;
+        font-size: 14px;
+    }
+
+    .filter-badge .remove:hover {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
+
+    /* ========== ПУСТОЕ СОСТОЯНИЕ ========== */
     .empty-state {
         text-align: center;
         padding: 60px 20px;
         background: white;
         border-radius: 20px;
+        grid-column: 1 / -1;
     }
-    
+
     .empty-icon {
         font-size: 64px;
         margin-bottom: 20px;
         opacity: 0.5;
     }
-    
+
     .empty-state h3 {
         color: #1e293b;
         margin-bottom: 10px;
     }
-    
+
     .empty-state p {
         color: #64748b;
     }
-    
+
+    /* ========== АДАПТИВНОСТЬ ========== */
+    @media (max-width: 900px) {
+        .students-chats-grid {
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+    }
+
     @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
         .students-chats-grid {
             grid-template-columns: 1fr;
+        }
+
+        .filter-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-actions {
+            flex-direction: column;
+        }
+
+        .btn-filter, .btn-reset {
+            width: 100%;
+        }
+
+        .sort-bar {
+            justify-content: stretch;
+        }
+
+        .sort-select {
+            flex: 1;
+        }
+
+        .stats-badge {
+            align-self: flex-start;
+        }
+
+        .pagination a,
+        .pagination span {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 10px;
+            font-size: 13px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .chat-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .student-info {
+            text-align: center;
+        }
+
+        .student-name {
+            white-space: normal;
         }
     }
 </style>
 
 <div class="chats-container">
     <div class="page-header">
-        <h1>💬 Чаты с учениками</h1>
-        <p>Всего учеников: {{ total_students }}</p>
+        <div>
+            <h1>💬 Чаты с учениками</h1>
+            <p id="totalStudentsCount">Всего учеников: {{ total_students }}</p>
+        </div>
+        <div class="stats-badge">
+            📬 Непрочитанных: <strong id="totalUnreadCount">0</strong>
+        </div>
     </div>
-    
-    {% if students %}
-        <div class="students-chats-grid">
-            {% for student_data in students %}
-                <div class="student-chat-card" onclick="window.location.href='{% url 'teacher_student_chat_detail' student_data.student.id %}'">
-                    {% if student_data.unread_count > 0 %}
-                        <div class="unread-indicator">{{ student_data.unread_count }}</div>
-                    {% endif %}
-                    <div class="chat-header">
-                        <div class="student-avatar">
-                            {{ student_data.name|slice:":1"|upper }}
-                        </div>
-                        <div class="student-info">
-                            <div class="student-name">{{ student_data.name }}</div>
-                            <div class="student-details">
-                                Группа {{ student_data.group }} • {{ student_data.course }} курс
-                            </div>
-                        </div>
+
+    <!-- Блок фильтрации -->
+    <div class="filter-section">
+        <div class="filter-title">🔍 Фильтрация чатов</div>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="groupFilter">Группа:</label>
+                <select id="groupFilter">
+                    <option value="">Все группы</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="courseFilter">Курс:</label>
+                <select id="courseFilter">
+                    <option value="">Все курсы</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="unreadFilter">Непрочитанные:</label>
+                <select id="unreadFilter">
+                    <option value="">Все чаты</option>
+                    <option value="true">Только с непрочитанными</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="searchNameInput">Поиск по ФИО:</label>
+                <input type="text" id="searchNameInput" placeholder="Введите ФИО..." autocomplete="off">
+            </div>
+            <div class="filter-actions">
+                <button id="resetFiltersBtn" class="btn-reset">✖ Сбросить фильтры</button>
+            </div>
+        </div>
+        <div class="active-filters" id="activeFilters" style="display: none;">
+            <span class="active-filters-label">Активные фильтры:</span>
+            <span id="activeFiltersList"></span>
+        </div>
+    </div>
+
+    <!-- Блок сортировки -->
+    <div class="sort-bar">
+        <select id="sortSelect" class="sort-select">
+            <option value="name_asc">📝 По имени (А-Я)</option>
+            <option value="name_desc">📝 По имени (Я-А)</option>
+            <option value="unread_desc">🔴 По непрочитанным (сначала с сообщениями)</option>
+            <option value="group_asc">👥 По группе (А-Я)</option>
+            <option value="course_asc">📚 По курсу (по возрастанию)</option>
+            <option value="last_message_desc">💬 По дате сообщения (сначала новые)</option>
+            <option value="last_message_asc">💬 По дате сообщения (сначала старые)</option>
+        </select>
+    </div>
+
+    <!-- Контейнер для карточек чатов -->
+    <div id="chatsGridContainer" class="students-chats-grid"></div>
+
+    <!-- Пагинация -->
+    <div id="paginationContainer" class="pagination-container"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Исходные данные из Django
+    let studentsData = [
+        {% for student_data in students %}
+        {
+            student: { id: {{ student_data.student.id }} },
+            name: "{{ student_data.name|escapejs }}",
+            group: "{{ student_data.group|default:'—'|escapejs }}",
+            course: "{{ student_data.course|default:'—'|escapejs }}",
+            unread_count: {{ student_data.unread_count|default:0 }},
+            last_message: {% if student_data.last_message %}{
+                content: "{{ student_data.last_message.content|escapejs }}"
+            }{% else %}null{% endif %},
+            last_message_time: {% if student_data.last_message_time %}"{{ student_data.last_message_time|date:'Y-m-d H:i:s' }}"{% else %}null{% endif %}
+        },
+        {% endfor %}
+    ];
+
+    let filteredAndSortedData = [...studentsData];
+    let currentPage = 1;
+    const itemsPerPage = 9;
+
+    // Элементы DOM
+    const chatsGrid = document.getElementById('chatsGridContainer');
+    const paginationContainer = document.getElementById('paginationContainer');
+    const groupFilter = document.getElementById('groupFilter');
+    const courseFilter = document.getElementById('courseFilter');
+    const unreadFilter = document.getElementById('unreadFilter');
+    const searchInput = document.getElementById('searchNameInput');
+    const sortSelect = document.getElementById('sortSelect');
+    const resetBtn = document.getElementById('resetFiltersBtn');
+    const activeFiltersDiv = document.getElementById('activeFilters');
+    const activeFiltersList = document.getElementById('activeFiltersList');
+    const totalStudentsSpan = document.getElementById('totalStudentsCount');
+    const totalUnreadSpan = document.getElementById('totalUnreadCount');
+
+    // Заполнение выпадающих списков групп и курсов
+    function populateFilters() {
+        const groups = new Set();
+        const courses = new Set();
+
+        studentsData.forEach(student => {
+            if (student.group && student.group !== '—') groups.add(student.group);
+            if (student.course && student.course !== '—') courses.add(String(student.course));
+        });
+
+        if (groupFilter) {
+            groupFilter.innerHTML = '<option value="">Все группы</option>' +
+                Array.from(groups).sort().map(g => `<option value="${g}">${g}</option>`).join('');
+        }
+
+        if (courseFilter) {
+            courseFilter.innerHTML = '<option value="">Все курсы</option>' +
+                Array.from(courses).sort((a, b) => Number(a) - Number(b)).map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+    }
+
+    // Подсчет общего количества непрочитанных
+    function updateTotalUnread() {
+        const totalUnread = studentsData.reduce((sum, student) => sum + (student.unread_count || 0), 0);
+        if (totalUnreadSpan) totalUnreadSpan.textContent = totalUnread;
+    }
+
+    // Применение фильтров
+    function applyFilters() {
+        const groupValue = groupFilter.value;
+        const courseValue = courseFilter.value;
+        const unreadValue = unreadFilter.value;
+        const searchValue = searchInput.value.toLowerCase().trim();
+
+        filteredAndSortedData = studentsData.filter(student => {
+            const matchesGroup = groupValue === '' || student.group === groupValue;
+            const matchesCourse = courseValue === '' || String(student.course) === courseValue;
+            const matchesUnread = unreadValue === '' || (unreadValue === 'true' && student.unread_count > 0);
+            const matchesSearch = searchValue === '' || student.name.toLowerCase().includes(searchValue);
+
+            return matchesGroup && matchesCourse && matchesUnread && matchesSearch;
+        });
+
+        // Применяем сортировку
+        applySorting();
+
+        // Обновляем статистику
+        const visibleCount = filteredAndSortedData.length;
+        totalStudentsSpan.textContent = `Всего учеников: ${visibleCount}`;
+
+        // Обновляем активные фильтры
+        updateActiveFilters();
+
+        // Сбрасываем на первую страницу
+        currentPage = 1;
+
+        // Рендерим
+        renderChats();
+        renderPagination();
+    }
+
+    // Применение сортировки
+    function applySorting() {
+        const sortValue = sortSelect.value;
+
+        filteredAndSortedData.sort((a, b) => {
+            switch(sortValue) {
+                case 'name_asc':
+                    return a.name.localeCompare(b.name, 'ru');
+                case 'name_desc':
+                    return b.name.localeCompare(a.name, 'ru');
+                case 'unread_desc':
+                    return (b.unread_count || 0) - (a.unread_count || 0);
+                case 'group_asc':
+                    const groupA = a.group === '—' ? '' : a.group;
+                    const groupB = b.group === '—' ? '' : b.group;
+                    return groupA.localeCompare(groupB, 'ru');
+                case 'course_asc':
+                    const courseA = a.course === '—' ? 999 : Number(a.course);
+                    const courseB = b.course === '—' ? 999 : Number(b.course);
+                    return courseA - courseB;
+                case 'last_message_desc':
+                    const timeA = a.last_message_time ? new Date(a.last_message_time) : new Date(0);
+                    const timeB = b.last_message_time ? new Date(b.last_message_time) : new Date(0);
+                    return timeB - timeA;
+                case 'last_message_asc':
+                    const timeA2 = a.last_message_time ? new Date(a.last_message_time) : new Date(0);
+                    const timeB2 = b.last_message_time ? new Date(b.last_message_time) : new Date(0);
+                    return timeA2 - timeB2;
+                default:
+                    return 0;
+            }
+        });
+    }
+
+    // Обновление активных фильтров
+    function updateActiveFilters() {
+        const filters = [];
+
+        if (groupFilter.value) {
+            filters.push({ name: `Группа: ${groupFilter.value}`, type: 'group', value: groupFilter.value });
+        }
+        if (courseFilter.value) {
+            filters.push({ name: `Курс: ${courseFilter.value}`, type: 'course', value: courseFilter.value });
+        }
+        if (unreadFilter.value === 'true') {
+            filters.push({ name: 'Только с непрочитанными', type: 'unread', value: 'true' });
+        }
+        if (searchInput.value.trim()) {
+            const shortSearch = searchInput.value.trim().length > 20 ?
+                searchInput.value.trim().substring(0, 20) + '...' :
+                searchInput.value.trim();
+            filters.push({ name: `Поиск: "${shortSearch}"`, type: 'search', value: searchInput.value.trim() });
+        }
+
+        if (filters.length > 0) {
+            activeFiltersDiv.style.display = 'flex';
+            activeFiltersList.innerHTML = filters.map(filter => `
+                <span class="filter-badge">
+                    ${filter.name}
+                    <span class="remove" data-type="${filter.type}" data-value="${filter.value}">✕</span>
+                </span>
+            `).join('');
+
+            document.querySelectorAll('.filter-badge .remove').forEach(removeBtn => {
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const type = this.dataset.type;
+                    if (type === 'group') groupFilter.value = '';
+                    else if (type === 'course') courseFilter.value = '';
+                    else if (type === 'unread') unreadFilter.value = '';
+                    else if (type === 'search') searchInput.value = '';
+                    applyFilters();
+                });
+            });
+        } else {
+            activeFiltersDiv.style.display = 'none';
+        }
+    }
+
+    // Рендеринг карточек чатов
+    function renderChats() {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const pageData = filteredAndSortedData.slice(startIndex, endIndex);
+
+        if (pageData.length === 0) {
+            chatsGrid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">💬</div>
+                    <h3>Нет чатов по выбранным фильтрам</h3>
+                    <p>Попробуйте изменить параметры фильтрации или сбросить фильтры</p>
+                </div>
+            `;
+            return;
+        }
+
+        chatsGrid.innerHTML = pageData.map(student => `
+            <div class="student-chat-card" data-student-id="${student.student.id}" onclick="window.location.href='/teacher/chat/student/detail/${student.student.id}/'">
+                ${student.unread_count > 0 ? `<div class="unread-indicator">${student.unread_count}</div>` : ''}
+                <div class="chat-header">
+                    <div class="student-avatar">
+                        ${escapeHtml(student.name.charAt(0).toUpperCase())}
                     </div>
-                    <div class="chat-preview">
-                        {% if student_data.last_message %}
-                            <div class="last-message">
-                                {{ student_data.last_message.content|truncatechars:80 }}
-                            </div>
-                            <div class="last-message-time">
-                                {{ student_data.last_message_time|date:"d.m.Y H:i" }}
-                            </div>
-                        {% else %}
-                            <div class="last-message" style="color: #94a3b8;">
-                                Нет сообщений. Начните диалог!
-                            </div>
-                        {% endif %}
+                    <div class="student-info">
+                        <div class="student-name">${escapeHtml(student.name)}</div>
+                        <div class="student-details">
+                            Группа ${escapeHtml(student.group)} • ${student.course} курс
+                        </div>
                     </div>
                 </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="empty-state">
-            <div class="empty-icon">👨‍🎓</div>
-            <h3>У вас пока нет учеников</h3>
-            <p>Когда ученики выберут вас преподавателем, они появятся здесь</p>
-        </div>
-    {% endif %}
-</div>
+                <div class="chat-preview">
+                    ${student.last_message ? `
+                        <div class="last-message">
+                            ${escapeHtml(student.last_message.content.substring(0, 80))}${student.last_message.content.length > 80 ? '...' : ''}
+                        </div>
+                        <div class="last-message-time">
+                            ${formatDate(student.last_message_time)}
+                        </div>
+                    ` : `
+                        <div class="last-message" style="color: #94a3b8;">
+                            Нет сообщений. Начните диалог!
+                        </div>
+                    `}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Рендеринг пагинации
+    function renderPagination() {
+        const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
+
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        let paginationHtml = '<ul class="pagination">';
+
+        // Предыдущая страница
+        paginationHtml += `
+            <li class="${currentPage === 1 ? 'disabled' : ''}">
+                ${currentPage === 1 ? '<span>←</span>' : `<a href="#" data-page="${currentPage - 1}">←</a>`}
+            </li>
+        `;
+
+        // Номера страниц
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, currentPage + 2);
+
+        if (startPage > 1) {
+            paginationHtml += `<li><a href="#" data-page="1">1</a></li>`;
+            if (startPage > 2) paginationHtml += `<li><span>...</span></li>`;
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `
+                <li class="${i === currentPage ? 'active' : ''}">
+                    ${i === currentPage ? `<span>${i}</span>` : `<a href="#" data-page="${i}">${i}</a>`}
+                </li>
+            `;
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) paginationHtml += `<li><span>...</span></li>`;
+            paginationHtml += `<li><a href="#" data-page="${totalPages}">${totalPages}</a></li>`;
+        }
+
+        // Следующая страница
+        paginationHtml += `
+            <li class="${currentPage === totalPages ? 'disabled' : ''}">
+                ${currentPage === totalPages ? '<span>→</span>' : `<a href="#" data-page="${currentPage + 1}">→</a>`}
+            </li>
+        `;
+
+        paginationHtml += '</ul>';
+        paginationContainer.innerHTML = paginationHtml;
+
+        // Добавляем обработчики для ссылок пагинации
+        document.querySelectorAll('.pagination a[data-page]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = parseInt(this.dataset.page);
+                if (!isNaN(page) && page !== currentPage && page >= 1 && page <= totalPages) {
+                    currentPage = page;
+                    renderChats();
+                    renderPagination();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        });
+    }
+
+    // Вспомогательные функции
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch(e) {
+            return dateString;
+        }
+    }
+
+    function resetFilters() {
+        groupFilter.value = '';
+        courseFilter.value = '';
+        unreadFilter.value = '';
+        searchInput.value = '';
+        applyFilters();
+    }
+
+    // Добавляем обработчики событий
+    if (groupFilter) groupFilter.addEventListener('change', applyFilters);
+    if (courseFilter) courseFilter.addEventListener('change', applyFilters);
+    if (unreadFilter) unreadFilter.addEventListener('change', applyFilters);
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (sortSelect) sortSelect.addEventListener('change', applyFilters);
+    if (resetBtn) resetBtn.addEventListener('click', resetFilters);
+
+    // Инициализация
+    populateFilters();
+    updateTotalUnread();
+    applyFilters();
+});
+</script>
 {% endblock %}

@@ -1,0 +1,478 @@
+{% extends 'student/base_student.html' %}
+{% load tz %}
+
+{% block title %}Результаты тестирования{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ПОЛНЫЙ СБРОС СТИЛЕЙ ДЛЯ КАРТОЧЕК */
+    .results-list {
+        display: grid !important;
+        gap: 1.5rem !important;
+        margin-top: 1.5rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Адаптивные колонки - УВЕЛИЧЕННАЯ МИНИМАЛЬНАЯ ШИРИНА */
+    @media (max-width: 640px) {
+        .results-list {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
+    @media (min-width: 641px) and (max-width: 900px) {
+        .results-list {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+
+    @media (min-width: 901px) and (max-width: 1200px) {
+        .results-list {
+            grid-template-columns: repeat(2, 1fr) !important; /* 2 колонки вместо 3 */
+        }
+    }
+
+    @media (min-width: 1201px) and (max-width: 1600px) {
+        .results-list {
+            grid-template-columns: repeat(3, 1fr) !important; /* 3 колонки вместо 4 */
+        }
+    }
+
+    @media (min-width: 1601px) and (max-width: 2000px) {
+        .results-list {
+            grid-template-columns: repeat(4, 1fr) !important; /* 4 колонки */
+        }
+    }
+
+    @media (min-width: 2001px) {
+        .results-list {
+            grid-template-columns: repeat(5, 1fr) !important;
+        }
+    }
+
+    /* Карточка - увеличенная ширина */
+    .result-card {
+        background: white !important;
+        border-radius: 20px !important;
+        border: 1px solid #e2e8f0 !important;
+        overflow: hidden !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer !important;
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+        min-width: 0 !important; /* Позволяет карточке сжиматься */
+    }
+
+    .result-card:hover {
+        transform: translateY(-6px) !important;
+        box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.15) !important;
+        border-color: #6366f1 !important;
+    }
+
+    /* Заголовок карточки */
+    .result-card-header {
+        padding: 20px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    }
+
+    .result-title {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+
+    .result-icon {
+        font-size: 28px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .result-name {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        color: #1e293b !important;
+        word-break: break-word !important;
+        line-height: 1.3 !important;
+    }
+
+    .result-badge {
+        padding: 4px 12px !important;
+        border-radius: 20px !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+    }
+
+    .badge-start {
+        background: #dbeafe !important;
+        color: #1e40af !important;
+    }
+
+    .badge-final {
+        background: #fef3c7 !important;
+        color: #92400e !important;
+    }
+
+    .badge-teacher {
+        background: #dcfce7 !important;
+        color: #166534 !important;
+        white-space: normal !important; /* Разрешаем перенос для длинных названий */
+    }
+
+    /* Тело карточки */
+    .result-card-body {
+        padding: 20px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 15px !important;
+        flex: 1 !important;
+    }
+
+    .result-stats {
+        display: flex !important;
+        gap: 24px !important;
+        flex-wrap: wrap !important;
+    }
+
+    .result-stat {
+        text-align: center !important;
+    }
+
+    .result-stat-value {
+        font-size: 18px !important;
+        font-weight: bold !important;
+        color: #1e293b !important;
+    }
+
+    .result-stat-label {
+        font-size: 10px !important;
+        color: #64748b !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    /* Оценка */
+    .result-grade {
+        font-weight: bold !important;
+        padding: 8px 16px !important;
+        border-radius: 30px !important;
+        white-space: normal !important;
+        text-align: center !important;
+        min-width: 100px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1.2 !important;
+    }
+
+    .grade-5 {
+        background: #dcfce7 !important;
+        color: #166534 !important;
+        font-size: 18px !important;
+    }
+
+    .grade-4 {
+        background: #dbeafe !important;
+        color: #1e40af !important;
+        font-size: 18px !important;
+    }
+
+    .grade-3 {
+        background: #fef3c7 !important;
+        color: #92400e !important;
+        font-size: 18px !important;
+    }
+
+    .grade-pending {
+        background: #fee2e2 !important;
+        color: #991b1b !important;
+        font-size: 16px !important;
+    }
+
+    .grade-2 {
+        background: #fee2e2 !important;
+        color: #991b1b !important;
+        font-size: 11px !important;
+        padding: 6px 12px !important;
+        letter-spacing: -0.3px !important;
+        white-space: nowrap !important;
+    }
+
+    .result-date {
+        padding: 12px 20px !important;
+        border-top: 1px solid #e2e8f0 !important;
+        background: #f8fafc !important;
+        font-size: 12px !important;
+        color: #64748b !important;
+    }
+
+    /* Остальные стили */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-value {
+        font-size: 36px;
+        font-weight: bold;
+        color: #4f46e5;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        color: #64748b;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 16px;
+    }
+
+    .empty-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+    }
+
+    .filter-section {
+        margin-bottom: 25px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-btn {
+        padding: 8px 20px;
+        border: 1px solid #e2e8f0;
+        border-radius: 25px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .filter-btn.active {
+        background: #6366f1;
+        color: white;
+        border-color: #6366f1;
+    }
+
+    .filter-btn:hover:not(.active) {
+        background: #f1f5f9;
+    }
+
+    @media (max-width: 768px) {
+        .stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .result-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .result-card-body {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .result-stats {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .result-grade {
+            align-self: flex-start;
+        }
+
+        .grade-2 {
+            font-size: 10px;
+            padding: 4px 10px;
+            white-space: nowrap;
+        }
+
+        .badge-teacher {
+            white-space: normal;
+            font-size: 10px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-section {
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            flex: 1;
+            text-align: center;
+        }
+
+        .grade-2 {
+            font-size: 9px;
+            padding: 3px 8px;
+            white-space: nowrap;
+        }
+
+        .result-name {
+            font-size: 13px;
+        }
+
+        .badge-teacher {
+            font-size: 9px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<h1>📊 Результаты тестирования</h1>
+
+<div class="stats-cards">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_tests }}</div>
+        <div class="stat-label">Всего тестов пройдено</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ avg_percent|floatformat:0 }}%</div>
+        <div class="stat-label">Средний результат</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ avg_score|floatformat:1 }}</div>
+        <div class="stat-label">Средний балл</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">
+            {% if start_count > 0 %}✓{% else %}❌{% endif %}
+        </div>
+        <div class="stat-label">
+            Входной: {{ start_count }}
+            / Итоговый: {{ final_count }}
+            / Тесты учителя: {{ teacher_count }}
+        </div>
+    </div>
+</div>
+
+<div class="filter-section">
+    <button class="filter-btn active" data-filter="all">Все тесты</button>
+    <button class="filter-btn" data-filter="start">Входные</button>
+    <button class="filter-btn" data-filter="final">Итоговое</button>
+    <button class="filter-btn" data-filter="teacher">Тесты учителя</button>
+</div>
+
+{% if test_results %}
+<div class="results-list" id="results-list">
+    {% for result in test_results %}
+    <div class="result-card" data-test-type="{{ result.test_type }}" onclick="window.location.href='{{ result.detail_url }}?from=results'">
+        <div class="result-card-header">
+            <div class="result-title">
+                <span class="result-icon">{{ result.icon }}</span>
+                <span class="result-name">{{ result.type_name }}</span>
+            </div>
+            <span class="result-badge badge-{{ result.test_type }}">
+                {% if result.test_type == 'start' %}Входной
+                {% elif result.test_type == 'final' %}Итоговый
+                {% else %}Тест учителя{% endif %}
+            </span>
+        </div>
+        <div class="result-card-body">
+            <div class="result-stats">
+                <div class="result-stat">
+                    <div class="result-stat-value">{{ result.score }}/{{ result.total_questions }}</div>
+                    <div class="result-stat-label">Правильных</div>
+                </div>
+                <div class="result-stat">
+                    <div class="result-stat-value">{{ result.percent|floatformat:1 }}%</div>
+                    <div class="result-stat-label">Процент</div>
+                </div>
+            </div>
+            <div class="result-grade grade-{% if result.grade %}{{ result.grade }}{% else %}pending{% endif %}">
+                {{ result.grade_display }}
+            </div>
+        </div>
+        <div class="result-date">
+            📅 {{ result.date_completed|date:"d.m.Y H:i" }}
+            {% if result.graded_at %}
+                • ✅ Проверено: {{ result.graded_at|date:"d.m.Y H:i" }}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📭</div>
+    <h3>Нет пройденных тестов</h3>
+    <p>Вы ещё не прошли ни одного теста. Пройдите входное тестирование или тесты от учителя, чтобы они появились здесь.</p>
+    <a href="{% url 'test_view' 'start' %}" class="btn btn-primary" style="margin-top: 20px;">📥 Пройти входной тест</a>
+    <a href="{% url 'student_teacher_tests' %}" class="btn btn-success" style="margin-top: 20px;">👩‍🏫 Тесты от учителя</a>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const resultCards = document.querySelectorAll('.result-card');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const filterValue = this.getAttribute('data-filter');
+
+            resultCards.forEach(card => {
+                if (filterValue === 'all') {
+                    card.style.display = 'flex';
+                } else {
+                    const testType = card.getAttribute('data-test-type');
+                    if (testType === filterValue) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

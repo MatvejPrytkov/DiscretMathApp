@@ -34,7 +34,7 @@ urlpatterns = [
     path('student/chat/unread-count/', views.get_unread_messages_count, name='get_unread_messages_count'),
     path('student/chat/users-list/', views.get_chat_users_list, name='get_chat_users_list'),
     path('student/chat/get-messages/<int:user_id>/', views.get_chat_messages, name='get_chat_messages'),
-
+    path('student/test-results/', views.student_test_results, name='student_test_results'),
     # Чат студента с учителем
     path('student/chat/teacher/list/', views.student_teacher_chat_list, name='student_teacher_chat_list'),
     path('student/chat_with_teacher/', views.student_teacher_chat_list, name='student_chat_with_teacher'),

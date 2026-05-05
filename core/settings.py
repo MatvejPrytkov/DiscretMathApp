@@ -66,6 +66,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'base.context_processors.notifications_count',
                 'base.context_processors.test_type_context',
+                'base.context_processors.has_final_test',
+                'base.context_processors.has_test_results',
             ],
         },
     },

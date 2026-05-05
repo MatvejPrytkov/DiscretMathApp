@@ -4,53 +4,21 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="be9a2357-744f-40ee-abdc-3c06ce9324fa" name="Changes" comment="requirements.txt">
-      <change afterPath="$PROJECT_DIR$/base/chat_teacher_views.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/base/chat_views.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/static/images/discrete-math.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/chat/teacher_student_chat_detail_student.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/chat/teacher_student_chat_detail_teacher.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/errors.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/student/chat_detail.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/student/groupmates.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/student/teacher_chat_list.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/edit_test_assignment.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/result_detail.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/student_chat_list.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/teacher_student_stats.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/teacher/teacher_students_list.html" afterDir="false" />
+    <list default="true" id="be9a2357-744f-40ee-abdc-3c06ce9324fa" name="Changes" comment="Chats">
+      <change afterPath="$PROJECT_DIR$/templates/student/test_results.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/base/context_processors.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/context_processors.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/decorators.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/decorators.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/base/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/base/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/base/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/core/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/static/css/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/core/static/css/style.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/staticfiles/css/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/staticfiles/css/style.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/includes/notifications.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/includes/notifications.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/register.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/register.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/student/Profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/Profile.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/student/base_student.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/base_student.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/change_password.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/change_password.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/delete_account.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/delete_account.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/lab.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/lab.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/profile_update.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/profile_update.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/student/final.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/final.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/student/result_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/result_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/student_labs.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/student_labs.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/student/take_teacher_test.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/take_teacher_test.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/student/teacher_tests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/teacher_tests.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/base_teacher.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/base_teacher.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/create_teacher_test.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/create_teacher_test.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/lab_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/lab_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/manage_tests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/manage_tests.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/student_results.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/student_results.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/students_lab_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/students_lab_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_dashboard.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_labs.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_labs.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/test_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/test_detail.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/student_chat_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/student_chat_list.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -169,7 +137,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776053297597</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Chats">
+      <option name="closed" value="true" />
+      <created>1777967247946</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1777967247946</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -186,34 +162,35 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Add_DataBase" />
     <MESSAGE value="requirements.txt" />
-    <option name="LAST_COMMIT_MESSAGE" value="requirements.txt" />
+    <MESSAGE value="Chats" />
+    <option name="LAST_COMMIT_MESSAGE" value="Chats" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>137</line>
+          <line>138</line>
           <option name="timeStamp" value="14" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>1243</line>
+          <line>1262</line>
           <option name="timeStamp" value="15" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>1517</line>
+          <line>1533</line>
           <option name="timeStamp" value="16" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>1726</line>
+          <line>1742</line>
           <option name="timeStamp" value="17" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>1686</line>
+          <line>1702</line>
           <option name="timeStamp" value="18" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -223,12 +200,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>798</line>
+          <line>817</line>
           <option name="timeStamp" value="20" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>2061</line>
+          <line>2077</line>
           <option name="timeStamp" value="21" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -248,8 +225,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/utils.py</url>
-          <line>63</line>
+          <line>76</line>
           <option name="timeStamp" value="25" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/base/views.py</url>
+          <line>1559</line>
+          <option name="timeStamp" value="26" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

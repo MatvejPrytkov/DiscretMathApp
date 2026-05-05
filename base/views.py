@@ -43,6 +43,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from .context_processors import has_final_test
 # Добавьте эту функцию в views.py после импортов
 
 @login_required
@@ -492,6 +493,10 @@ def profile(request):
         else:
             teacher_name = teacher.get_full_name() or teacher.username
 
+    # Получаем информацию о итоговом тесте через контекстный процессор
+    final_test_context = has_final_test(request)
+
+    # СОЗДАЁМ СЛОВАРЬ КОНТЕКСТА
     context = {
         'user': user,
         'lab_grades': lab_submissions,
@@ -506,7 +511,11 @@ def profile(request):
         'current_grade_filter': grade_filter,
         'current_status_filter': status_filter,
         'anchor': anchor,  # Передаем якорь в шаблон
+        # ДОБАВЛЯЕМ ПЕРЕМЕННЫЕ ДЛЯ ИТОГОВОГО ТЕСТА
+        'has_final_test': final_test_context.get('has_final_test', False),
+        'final_test_result_obj': final_test_context.get('final_test_result', None),
     }
+
     return render(request, 'student/Profile.html', context)
 
 
@@ -574,7 +583,16 @@ def result_detail(request, pk):
         template_name = 'student/result_detail.html'
         back_url = 'profile'
         back_text = 'Назад в профиль'
-
+    active_nav = None
+    if is_teacher:
+        active_nav = 'teacher'
+    else:
+        # Для студента определяем тип теста
+        if result.test_type == 'final':
+            active_nav = 'final_result'
+        else:
+            # Все остальные тесты (start и teacher) ведут на страницу результатов
+            active_nav = 'test_results'
     return render(request, template_name, {
         'result': result,
         'answers': answers,
@@ -582,7 +600,8 @@ def result_detail(request, pk):
         'form': form,
         'is_teacher': is_teacher,
         'back_url': back_url,
-        'back_text': back_text
+        'back_text': back_text,
+        'active_nav': active_nav,
     })
 @login_required
 def profile_update(request):
@@ -1465,39 +1484,32 @@ def lab_detail(request, lab_id):
     })
 
 
+# views.py — обновленный вызов в submit_lab
+
 @login_required
 @student_required
 def submit_lab(request, lab_id):
-    """Сдача лабораторной работы (с возможностью перезаписи)"""
+    """Сдача лабораторной работы"""
     lab = get_object_or_404(LabWork, id=lab_id, is_active=True)
-
-    # Проверяем, что это лабораторная преподавателя ученика
-    if lab.created_by != request.user.profile.teacher:
-        messages.error(request, 'У вас нет доступа к этой лабораторной')
-        return redirect('student_labs')
-
-    # Проверяем, есть ли уже сдача
-    existing_submission = LabSubmission.objects.filter(
-        lab_work=lab,
-        student=request.user
-    ).first()
 
     if request.method == 'POST':
         submitted_file = request.FILES.get('submitted_file')
         comment = request.POST.get('comment', '').strip()
 
         if submitted_file:
+            existing_submission = LabSubmission.objects.filter(
+                lab_work=lab,
+                student=request.user
+            ).first()
+
             if existing_submission:
-                # ✅ ОБНОВЛЯЕМ существующую сдачу, а не создаем новую
                 existing_submission.submitted_file = submitted_file
                 existing_submission.comment = comment
-                existing_submission.status = 'under_review'  # Сбрасываем статус на "на проверке"
-                existing_submission.submitted_at = timezone.now()  # Обновляем дату сдачи
+                existing_submission.status = 'under_review'
+                existing_submission.submitted_at = timezone.now()
                 existing_submission.save()
-
                 messages.success(request, 'Работа успешно перезаписана и отправлена на проверку!')
             else:
-                # Создаем новую сдачу
                 submission = LabSubmission.objects.create(
                     lab_work=lab,
                     student=request.user,
@@ -1505,13 +1517,17 @@ def submit_lab(request, lab_id):
                     comment=comment,
                     status='under_review'
                 )
-                # Передаем submission.id в функцию
-                notify_teacher_about_submission(lab.created_by, request.user, lab, submission.id)
+                # ✅ ПЕРЕДАЁМ REQUEST
+                notify_teacher_about_submission(
+                    lab.created_by,
+                    request.user,
+                    lab,
+                    submission.id,
+                    request=request  # ← Добавлено!
+                )
                 messages.success(request, 'Работа сдана на проверку!')
 
             return redirect('student_labs')
-        else:
-            messages.error(request, 'Прикрепите файл!')
 
     return render(request, 'student/lab.html', {'lab': lab})
 @login_required
@@ -1624,7 +1640,7 @@ def create_teacher_test(request):
 
             # Отправляем уведомления
             for student in test.assigned_to.all():
-                notify_student_about_new_test(request.user, student, test)
+                notify_student_about_new_test(request.user, student, test,  request=request)
 
             messages.success(request, f'Тест "{test.title}" успешно создан!')
             return redirect('teacher_manage_tests')
@@ -1776,7 +1792,7 @@ def take_teacher_test(request, test_id):
                 correct_answer_text=_get_answer_text(answer['question'], answer['correct_answer']),
                 is_correct=answer['is_correct']
             )
-        notify_teacher_about_test_completion(test.teacher, request.user, result)
+        notify_teacher_about_test_completion(test.teacher, request.user, result, request=request)
         messages.success(request, f'Тест завершен! Ваш результат: {correct}/{total} ({percent}%)')
         return redirect('result_detail', pk=result.id)
 
@@ -1838,7 +1854,7 @@ def submission_detail(request, submission_id):
         submission.graded_at = timezone.now()
         submission.graded_by = request.user
         submission.save()
-        notify_student_about_lab_grade(request.user, submission.student, submission)
+        notify_student_about_lab_grade(request.user, submission.student, submission, request=request)
         messages.success(request, 'Оценка за лабораторную работу сохранена.')
         return redirect('submission_detail', submission_id=submission.id)
     student_profile = getattr(submission.student, 'profile', None)
@@ -2639,3 +2655,70 @@ def add_message_reaction(request):
         import traceback
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@student_required
+def student_test_results(request):
+    """Страница со списком всех пройденных тестов студента"""
+    user = request.user
+
+    # Получаем все результаты тестов пользователя
+    test_results = TestResult.objects.filter(user=user).order_by('-date_completed')
+
+    # Добавляем дополнительную информацию для каждого теста
+    for result in test_results:
+        # Определяем URL для просмотра результата
+        result.detail_url = f'/student/result/{result.id}/'
+
+        # Определяем иконку в зависимости от типа
+        if result.test_type == 'start':
+            result.icon = '📥'
+            result.type_name = 'Входное тестирование'
+        elif result.test_type == 'final':
+            result.icon = '📤'
+            result.type_name = 'Итоговое тестирование'
+        elif result.test_type == 'teacher':
+            result.icon = '📝'
+            result.type_name = result.teacher_test.title if result.teacher_test else 'Тест от учителя'
+        else:
+            result.icon = '📊'
+            result.type_name = 'Тест'
+
+        # Преобразуем оценку в читаемый формат
+        if result.grade:
+            if result.grade == 5:
+                result.grade_display = '5 (Отлично)'
+            elif result.grade == 4:
+                result.grade_display = '4 (Хорошо)'
+            elif result.grade == 3:
+                result.grade_display = '3 (Удовлетворительно)'
+            elif result.grade == 2:
+                result.grade_display = '2 (Неудовлетворительно)'
+            else:
+                result.grade_display = str(result.grade)
+        else:
+            result.grade_display = 'На проверке'
+
+    # Статистика
+    total_tests = test_results.count()
+    avg_score = test_results.aggregate(Avg('score'))['score__avg']
+    avg_percent = test_results.aggregate(Avg('percent'))['percent__avg']
+
+    # Распределение по типам
+    start_count = test_results.filter(test_type='start').count()
+    final_count = test_results.filter(test_type='final').count()
+    teacher_count = test_results.filter(test_type='teacher').count()
+
+    context = {
+        'test_results': test_results,
+        'total_tests': total_tests,
+        'avg_score': round(avg_score, 1) if avg_score else 0,
+        'avg_percent': round(avg_percent, 1) if avg_percent else 0,
+        'start_count': start_count,
+        'final_count': final_count,
+        'teacher_count': teacher_count,
+        'active_nav': 'test_results'
+    }
+
+    return render(request, 'student/test_results.html', context)

@@ -149,10 +149,10 @@
 <hr style="margin: 30px 0;">
 
 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-    <a href="{% url back_url %}{% if back_url == 'profile' and result.test_type == 'final' %}#summary-table{% endif %}" class="btn" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px;">
-        ← {{ back_text }}
-    </a>
 
+<a href="{% url 'student_test_results' %}" class="btn" style="background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px;">
+        📊 Все результаты тестирований
+    </a>
     {% if not is_teacher and result.test_type == 'start' %}
     <a href="{% url 'test_view' 'final' %}" class="btn" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px;">
         📤 Перейти к итоговому тесту →
