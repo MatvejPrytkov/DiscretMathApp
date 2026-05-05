@@ -4,21 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="be9a2357-744f-40ee-abdc-3c06ce9324fa" name="Changes" comment="Chats">
-      <change afterPath="$PROJECT_DIR$/templates/student/test_results.html" afterDir="false" />
+    <list default="true" id="be9a2357-744f-40ee-abdc-3c06ce9324fa" name="Changes" comment="Tests">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/context_processors.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/context_processors.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/Profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/Profile.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/base_student.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/base_student.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/final.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/final.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/student/result_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/result_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/take_teacher_test.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/take_teacher_test.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/teacher_tests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/teacher_tests.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/student_chat_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/student_chat_list.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/student/test_results.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/test_results.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -145,7 +134,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777967247946</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Tests">
+      <option name="closed" value="true" />
+      <created>1777993366988</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1777993366988</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -163,7 +160,8 @@
     <MESSAGE value="Add_DataBase" />
     <MESSAGE value="requirements.txt" />
     <MESSAGE value="Chats" />
-    <option name="LAST_COMMIT_MESSAGE" value="Chats" />
+    <MESSAGE value="Tests" />
+    <option name="LAST_COMMIT_MESSAGE" value="Tests" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

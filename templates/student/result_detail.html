@@ -30,13 +30,30 @@
 
 <!-- Информация о проверке для учеников -->
 {% if not is_teacher and result.grade %}
-<div class="alert alert-success" style="margin-bottom: 20px;">
-    <strong>✅ Работа проверена!</strong><br>
-    Оценка: <strong>{{ result.get_grade_display }}</strong><br>
-    {% if result.teacher_comment %}
-    Комментарий учителя: {{ result.teacher_comment }}<br>
-    {% endif %}
-    <small>Проверил: {{ result.graded_by.profile.full_name|default:result.graded_by.username }} ({{ result.graded_at|date:"d.m.Y H:i" }})</small>
+<div class="grade-checked-info">
+    <div class="grade-checked-header">
+        <span class="grade-checked-icon">✅</span>
+        <strong class="grade-checked-title">Работа проверена!</strong>
+    </div>
+    <div class="grade-checked-details">
+        <div class="grade-checked-row">
+            <span class="grade-checked-label">Оценка:</span>
+            <span class="grade-checked-value grade-badge-value grade-{{ result.grade }}">{{ result.get_grade_display }}</span>
+        </div>
+        {% if result.teacher_comment %}
+        <div class="grade-checked-row">
+            <span class="grade-checked-label">Комментарий:</span>
+            <span class="grade-checked-value">{{ result.teacher_comment }}</span>
+        </div>
+        {% endif %}
+        <div class="grade-checked-row">
+            <span class="grade-checked-label">Проверил:</span>
+            <span class="grade-checked-value">
+                {{ result.graded_by.profile.full_name|default:result.graded_by.username }}
+                ({{ result.graded_at|date:"d.m.Y H:i" }})
+            </span>
+        </div>
+    </div>
 </div>
 {% elif not is_teacher and not result.grade and result.test_type == 'teacher' %}
 <div class="alert alert-warning" style="margin-bottom: 20px;">
@@ -96,20 +113,30 @@
 
     <!-- Показ текущей оценки, если уже выставлена -->
     {% if result.grade %}
-    <div style="margin-bottom: 20px; padding: 15px; background-color: #e9ecef; border-radius: 8px;">
-        <strong>Текущая оценка:</strong>
-        <span style="color:
-            {% if result.grade == 5 %}#28a745
-            {% elif result.grade == 4 %}#17a2b8
-            {% elif result.grade == 3 %}#ffc107
-            {% else %}#dc3545
-            {% endif %}; font-weight: bold; font-size: 1.2em;">
-            {{ result.get_grade_display }}
-        </span>
-        {% if result.teacher_comment %}
-            <br><strong>Комментарий:</strong> {{ result.teacher_comment }}
-        {% endif %}
-        <br><small>Оценку выставил: {{ result.graded_by.profile.full_name|default:result.graded_by.username }} ({{ result.graded_at|date:"d.m.Y H:i" }})</small>
+    <div class="current-grade-info">
+        <div class="current-grade-header">
+            <span class="current-grade-icon">⭐</span>
+            <strong>Текущая оценка:</strong>
+        </div>
+        <div class="current-grade-details">
+            <div class="current-grade-row">
+                <span class="current-grade-label">Оценка:</span>
+                <span class="current-grade-value grade-badge-value grade-{{ result.grade }}">{{ result.get_grade_display }}</span>
+            </div>
+            {% if result.teacher_comment %}
+            <div class="current-grade-row">
+                <span class="current-grade-label">Комментарий:</span>
+                <span class="current-grade-value">{{ result.teacher_comment }}</span>
+            </div>
+            {% endif %}
+            <div class="current-grade-row">
+                <span class="current-grade-label">Проверил:</span>
+                <span class="current-grade-value">
+                    {{ result.graded_by.profile.full_name|default:result.graded_by.username }}
+                    ({{ result.graded_at|date:"d.m.Y H:i" }})
+                </span>
+            </div>
+        </div>
     </div>
     {% endif %}
 
@@ -132,7 +159,7 @@
             {% endif %}
         </div>
 
-        <div style="display: flex; gap: 15px;">
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
             <button type="submit" class="btn btn-primary" style="background-color: #28a745; color: white; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer;">
                 💾 Сохранить оценку
             </button>
@@ -149,8 +176,7 @@
 <hr style="margin: 30px 0;">
 
 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-
-<a href="{% url 'student_test_results' %}" class="btn" style="background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px;">
+    <a href="{% url 'student_test_results' %}" class="btn" style="background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px;">
         📊 Все результаты тестирований
     </a>
     {% if not is_teacher and result.test_type == 'start' %}
@@ -192,6 +218,140 @@
     .percent-average { color: #f59e0b; font-weight: bold; }
     .percent-poor { color: #ef4444; font-weight: bold; }
 
+    /* ========== НОВЫЕ СТИЛИ ДЛЯ БЛОКА ПРОВЕРКИ ========== */
+    .grade-checked-info {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .grade-checked-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(5, 150, 105, 0.2);
+    }
+
+    .grade-checked-icon {
+        font-size: 20px;
+    }
+
+    .grade-checked-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #064e3b;
+    }
+
+    .grade-checked-details {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .grade-checked-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .grade-checked-label {
+        font-weight: 600;
+        color: #065f46;
+        min-width: 100px;
+        font-size: 14px;
+    }
+
+    .grade-checked-value {
+        color: #064e3b;
+        font-size: 14px;
+    }
+
+    .grade-badge-value {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .grade-5 {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .grade-4 {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+    }
+
+    .grade-3 {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+
+    .grade-2 {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+
+    /* ========== СТИЛИ ДЛЯ ТЕКУЩЕЙ ОЦЕНКИ УЧИТЕЛЯ ========== */
+    .current-grade-info {
+        background: #fef3c7;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+    .current-grade-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .current-grade-icon {
+        font-size: 20px;
+    }
+
+    .current-grade-header strong {
+        font-size: 16px;
+        font-weight: 700;
+        color: #92400e;
+    }
+
+    .current-grade-details {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .current-grade-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .current-grade-label {
+        font-weight: 600;
+        color: #92400e;
+        min-width: 100px;
+        font-size: 14px;
+    }
+
+    .current-grade-value {
+        color: #78350f;
+        font-size: 14px;
+    }
+
     .answers-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -225,6 +385,10 @@
         border-radius: 8px;
         border: 1px solid #ddd;
     }
+    .grade-form h2 {
+        color: #92400e;
+        margin-top: 0;
+    }
 
     @media (max-width: 768px) {
         .answers-grid {
@@ -235,6 +399,29 @@
         }
         .result-header {
             padding: 20px;
+        }
+        .grade-checked-row {
+            flex-direction: column;
+            gap: 4px;
+        }
+        .current-grade-row {
+            flex-direction: column;
+            gap: 4px;
+        }
+        .grade-checked-label {
+            min-width: auto;
+        }
+        .current-grade-label {
+            min-width: auto;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .grade-checked-details {
+            gap: 10px;
+        }
+        .current-grade-details {
+            gap: 10px;
         }
     }
 </style>
