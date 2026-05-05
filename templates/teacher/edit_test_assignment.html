@@ -1,0 +1,353 @@
+{% extends 'teacher/base_teacher.html' %}
+
+{% block teacher_content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Назначение теста: {{ test.title }}</h1>
+        <p class="text-muted">Выберите учеников, которым будет доступен этот тест</p>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" id="assignmentForm">
+                {% csrf_token %}
+
+                <div class="form-group mb-4">
+                    <div class="alert alert-info">
+                        <strong>ℹ️ Информация:</strong>
+                        Если ни один ученик не выбран, тест будет доступен ВСЕМ вашим ученикам
+                        (включая тех, кто зарегистрируется позже).
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="auto_assign"
+                               name="auto_assign_new_students" {% if test.auto_assign_new_students %}checked{% endif %}>
+                        <label class="custom-control-label" for="auto_assign">
+                            🔄 Автоматически назначать этот тест новым ученикам
+                        </label>
+                        <small class="form-text text-muted">
+                            Если включено, то при регистрации нового ученика он автоматически получит доступ к этому тесту.
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Блок фильтрации -->
+                <div class="form-group mb-4">
+                    <label class="font-weight-bold mb-3">🔍 Фильтрация учеников:</label>
+                    <div class="filter-row" style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                        <div class="filter-group">
+                            <label for="groupFilter" style="font-size: 12px; margin-bottom: 4px; display: block;">Группа:</label>
+                            <select id="groupFilter" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd;">
+                                <option value="">Все группы</option>
+                                {% for student in all_students %}
+                                    {% if student.profile.group %}
+                                        <option value="{{ student.profile.group }}">{{ student.profile.group }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="courseFilter" style="font-size: 12px; margin-bottom: 4px; display: block;">Курс:</label>
+                            <select id="courseFilter" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd;">
+                                <option value="">Все курсы</option>
+                                {% for student in all_students %}
+                                    {% if student.profile.course %}
+                                        <option value="{{ student.profile.course }}">{{ student.profile.course }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="searchInput" style="font-size: 12px; margin-bottom: 4px; display: block;">Поиск по ФИО:</label>
+                            <input type="text" id="searchInput" placeholder="Введите имя..." style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd; width: 200px;">
+                        </div>
+                        <div class="filter-actions" style="display: flex; align-items: flex-end; gap: 8px;">
+                            <button type="button" id="applyFiltersBtn" class="btn btn-sm btn-primary">Применить фильтры</button>
+                            <button type="button" id="resetFiltersBtn" class="btn btn-sm btn-secondary">Сбросить</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <label class="font-weight-bold mb-0">👨‍🎓 Выберите учеников:</label>
+                        <div class="selection-tools">
+                            <button type="button" id="selectAllVisible" class="btn btn-sm btn-outline-primary">Выбрать видимых</button>
+                            <button type="button" id="selectAll" class="btn btn-sm btn-outline-primary">Выбрать всех</button>
+                            <button type="button" id="deselectAll" class="btn btn-sm btn-outline-secondary">Снять все</button>
+                        </div>
+                    </div>
+                    <div class="students-list" style="max-height: 450px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 15px;">
+                        {% if all_students %}
+                            <div class="filter-stats mb-2" id="filterStats" style="font-size: 12px; color: #6c757d;"></div>
+                            <hr>
+                            <div id="studentsContainer">
+                                {% for student in all_students %}
+                                <div class="student-item mb-2"
+                                     data-student-id="{{ student.id }}"
+                                     data-student-group="{{ student.profile.group|default:'' }}"
+                                     data-student-course="{{ student.profile.course|default:'' }}"
+                                     data-student-name="{{ student.profile.full_name|lower }}">
+                                    <label class="checkbox-inline d-flex align-items-center">
+                                        <input type="checkbox" name="selected_students" value="{{ student.id }}"
+                                               class="mr-3 student-checkbox"
+                                               {% if student.id in assigned_ids %}checked{% endif %}>
+                                        <div>
+                                            <strong>{{ student.profile.full_name }}</strong><br>
+                                            <small class="text-muted">Группа: {{ student.profile.group|default:"—" }} |
+                                            Курс: {{ student.profile.course|default:"—" }}</small>
+                                        </div>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">У вас пока нет учеников</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">💾 Сохранить изменения</button>
+                    <a href="{% url 'teacher_test_detail' test.id %}" class="btn btn-secondary">← Назад к тесту</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .students-list {
+        background: #f8f9fa;
+    }
+    .student-item {
+        padding: 10px;
+        border-bottom: 1px solid #e9ecef;
+        transition: background 0.2s;
+    }
+    .student-item:hover {
+        background: white;
+    }
+    .student-item:last-child {
+        border-bottom: none;
+    }
+    .student-checkbox {
+        transform: scale(1.2);
+        margin-right: 15px;
+    }
+    .custom-checkbox {
+        padding-left: 1.5rem;
+    }
+    .custom-control-input {
+        width: 1.2rem;
+        height: 1.2rem;
+        margin-top: 0.1rem;
+    }
+    .custom-control-label {
+        font-weight: 500;
+    }
+    .filter-row {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+    .filter-group label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #495057;
+    }
+    .filter-group select,
+    .filter-group input {
+        background: white;
+    }
+    .selection-tools {
+        display: flex;
+        gap: 8px;
+    }
+    .btn-outline-primary {
+        border: 1px solid #007bff;
+        background: transparent;
+        color: #007bff;
+    }
+    .btn-outline-primary:hover {
+        background: #007bff;
+        color: white;
+    }
+    .btn-outline-secondary {
+        border: 1px solid #6c757d;
+        background: transparent;
+        color: #6c757d;
+    }
+    .btn-outline-secondary:hover {
+        background: #6c757d;
+        color: white;
+    }
+    .filter-stats {
+        padding: 5px 10px;
+        background: #e9ecef;
+        border-radius: 5px;
+        display: inline-block;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('select-all');
+    const selectAllVisibleBtn = document.getElementById('selectAllVisible');
+    const selectAllBtn = document.getElementById('selectAll');
+    const deselectAllBtn = document.getElementById('deselectAll');
+    const studentCheckboxes = document.querySelectorAll('.student-checkbox');
+    const studentsContainer = document.getElementById('studentsContainer');
+    const filterStats = document.getElementById('filterStats');
+
+    // Элементы фильтрации
+    const groupFilter = document.getElementById('groupFilter');
+    const courseFilter = document.getElementById('courseFilter');
+    const searchInput = document.getElementById('searchInput');
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+
+    // Убираем дубликаты в выпадающих списках
+    if (groupFilter) {
+        const options = groupFilter.querySelectorAll('option');
+        const seenGroups = new Set();
+        options.forEach(option => {
+            const groupValue = option.value;
+            if (groupValue && seenGroups.has(groupValue)) {
+                option.remove();
+            } else if (groupValue) {
+                seenGroups.add(groupValue);
+            }
+        });
+    }
+
+    if (courseFilter) {
+        const options = courseFilter.querySelectorAll('option');
+        const seenCourses = new Set();
+        options.forEach(option => {
+            const courseValue = option.value;
+            if (courseValue && seenCourses.has(courseValue)) {
+                option.remove();
+            } else if (courseValue) {
+                seenCourses.add(courseValue);
+            }
+        });
+    }
+
+    // Функция фильтрации учеников
+    function filterStudents() {
+        const groupValue = groupFilter.value;
+        const courseValue = courseFilter.value;
+        const searchTerm = searchInput.value.toLowerCase().trim();
+
+        const studentItems = document.querySelectorAll('.student-item');
+        let visibleCount = 0;
+
+        studentItems.forEach(item => {
+            const studentGroup = item.getAttribute('data-student-group') || '';
+            const studentCourse = item.getAttribute('data-student-course') || '';
+            const studentName = item.getAttribute('data-student-name') || '';
+
+            const matchesGroup = groupValue === '' || studentGroup === groupValue;
+            const matchesCourse = courseValue === '' || studentCourse === courseValue;
+            const matchesSearch = searchTerm === '' || studentName.includes(searchTerm);
+
+            if (matchesGroup && matchesCourse && matchesSearch) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Обновляем счетчик
+        if (filterStats) {
+            const totalVisible = visibleCount;
+            const totalStudents = studentItems.length;
+            filterStats.textContent = `Показано: ${totalVisible} из ${totalStudents} учеников`;
+        }
+
+        return visibleCount;
+    }
+
+    // Функция сброса фильтров
+    function resetFilters() {
+        groupFilter.value = '';
+        courseFilter.value = '';
+        searchInput.value = '';
+        filterStudents();
+    }
+
+    // Функция выбора всех видимых учеников
+    function selectAllVisible() {
+        const visibleItems = document.querySelectorAll('.student-item[style="display: "]');
+        visibleItems.forEach(item => {
+            const checkbox = item.querySelector('.student-checkbox');
+            if (checkbox) checkbox.checked = true;
+        });
+
+        // Обновляем состояние "Выбрать всех" если нужно
+        const allCheckboxes = document.querySelectorAll('.student-checkbox');
+        const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+        if (selectAllCheckbox) selectAllCheckbox.checked = allChecked;
+    }
+
+    // Функция выбора всех учеников
+    function selectAll() {
+        studentCheckboxes.forEach(cb => {
+            cb.checked = true;
+        });
+        if (selectAllCheckbox) selectAllCheckbox.checked = true;
+    }
+
+    // Функция снятия всех выбранных
+    function deselectAll() {
+        studentCheckboxes.forEach(cb => {
+            cb.checked = false;
+        });
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+    }
+
+    // Добавляем обработчики событий для фильтрации
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', filterStudents);
+    }
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', resetFilters);
+    }
+
+    // Фильтрация при изменении полей (опционально - автоматическая)
+    if (groupFilter) groupFilter.addEventListener('change', filterStudents);
+    if (courseFilter) courseFilter.addEventListener('change', filterStudents);
+    if (searchInput) searchInput.addEventListener('input', filterStudents);
+
+    // Кнопки выбора
+    if (selectAllVisibleBtn) selectAllVisibleBtn.addEventListener('click', selectAllVisible);
+    if (selectAllBtn) selectAllBtn.addEventListener('click', selectAll);
+    if (deselectAllBtn) deselectAllBtn.addEventListener('click', deselectAll);
+
+    // Инициализация фильтрации
+    filterStudents();
+
+    // Обновляем состояние чекбокса "Выбрать всех"
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            studentCheckboxes.forEach(cb => {
+                cb.checked = selectAllCheckbox.checked;
+            });
+        });
+
+        studentCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                const allChecked = Array.from(studentCheckboxes).every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+                selectAllCheckbox.indeterminate = !allChecked && Array.from(studentCheckboxes).some(cb => cb.checked);
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

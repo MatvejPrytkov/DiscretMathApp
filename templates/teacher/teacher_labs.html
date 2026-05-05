@@ -1,4 +1,5 @@
 {% extends 'teacher/base_teacher.html' %}
+{% block title %}Управление лабораторными работами{% endblock %}
 {% block teacher_content %}
 
 <style>
@@ -55,7 +56,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 25px;
-        justify-content: flex-start; /* Изменено с center на flex-start */
+        justify-content: flex-start;
     }
 
     /* Карточки лабораторных работ - по 2 в ряд на больших экранах */
@@ -74,7 +75,6 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
-    /* Стили для карточки лабораторной работы с центрированием */
     .labs-container .card .card-body {
         display: flex;
         flex-direction: column;
@@ -135,81 +135,133 @@
         background: #555;
     }
 
-    .filter-form {
-        background-color: white;
+    .filter-section {
+        background: #f8f9fa;
         padding: 20px;
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         margin-bottom: 25px;
+        border: 1px solid #e5e7eb;
     }
 
-    .teacher-filter-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
-        gap: 32px;
-        align-items: start;
-    }
-
-    .status-filter-block,
-    .search-filter-block {
-        width: 100%;
-    }
-
-    .filter-main-title {
-        margin: 0 0 12px 0;
+    .filter-title {
         font-weight: 600;
+        margin-bottom: 15px;
+        color: #1f2937;
+        font-size: 14px;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 8px;
     }
 
-    .status-filter-title {
-        display: block;
-        margin-bottom: 12px;
-        font-weight: 600;
-    }
-
-    .search-filter-title {
-        display: block;
-        margin: 0 0 12px 0;
-        font-weight: 600;
-    }
-
-    .status-options-grid {
-        display: grid;
-        grid-template-columns: max-content 40px;
-        column-gap: 18px;
-        row-gap: 12px;
-        align-items: center;
-    }
-
-    .status-option-text {
-        margin: 0;
-        line-height: 1.2;
-        cursor: pointer;
-    }
-
-    .status-option-input {
+    .filter-row {
         display: flex;
-        align-items: center;
-        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: flex-end;
     }
 
-    .status-option-input .form-check-input {
-        margin: 0;
-        float: none;
-        width: 18px;
-        height: 18px;
-        cursor: pointer;
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
     }
 
-    .search-filter-block {
-        max-width: 430px;
-        justify-self: end;
+    .filter-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .filter-group select,
+    .filter-group input {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        background: white;
+        font-size: 14px;
+        min-width: 160px;
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+        outline: none;
+        border-color: #2f66ff;
     }
 
     .filter-actions {
-        margin-top: 14px;
         display: flex;
         gap: 10px;
+        margin-bottom: 0;
+    }
+
+    .btn-filter, .btn-reset {
+        padding: 8px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        border: none;
+        font-weight: 500;
+        transition: all 0.2s;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-filter {
+        background: #2f66ff;
+        color: white;
+    }
+
+    .btn-filter:hover {
+        background: #1d4ed8;
+    }
+
+    .btn-reset {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-reset:hover {
+        background: #5a6268;
+    }
+
+    .active-filters {
+        margin-top: 15px;
+        padding-top: 12px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
         flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .active-filters-label {
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .filter-badge {
+        background: #2f66ff;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .filter-badge .remove {
+        cursor: pointer;
+        font-weight: bold;
+        margin-left: 4px;
+        text-decoration: none;
+        color: white;
+    }
+
+    .filter-badge .remove:hover {
+        opacity: 0.8;
     }
 
     .badge-checked {
@@ -227,25 +279,6 @@
         padding: 4px 8px;
     }
 
-    .scroll-notice {
-        font-size: 0.9em;
-        color: #6c757d;
-        text-align: center;
-        padding: 10px;
-        border-top: 1px solid #dee2e6;
-        margin-top: 10px;
-    }
-
-    /* Стили для уведомления о скролле */
-    .labs-scroll-notice {
-        font-size: 0.85em;
-        color: #6c757d;
-        text-align: center;
-        padding: 8px;
-        border-top: 1px solid #dee2e6;
-        margin-top: 10px;
-    }
-
     /* Адаптивность */
     @media (max-width: 992px) {
         .submission-card {
@@ -259,19 +292,22 @@
     }
 
     @media (max-width: 768px) {
-        .teacher-filter-layout {
-            grid-template-columns: 1fr;
-            gap: 20px;
+        .filter-row {
+            flex-direction: column;
+            align-items: stretch;
         }
 
-        .status-filter-block,
-        .search-filter-block {
-            max-width: 100%;
-            justify-self: stretch;
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
         }
 
-        .status-options-grid {
-            grid-template-columns: 1fr 40px;
+        .filter-actions {
+            flex-direction: column;
+        }
+
+        .btn-filter, .btn-reset {
+            width: 100%;
         }
 
         .labs-container .card {
@@ -283,25 +319,35 @@
             flex: 0 0 100%;
         }
     }
+    /* Исправление: кнопки "Подробнее" и "Удалить" в одну строку */
+.labs-container .card .btn-group {
+    display: flex;
+    flex-direction: row !important;  /* Горизонтальное расположение */
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+    margin-top: 10px;
+}
 
-    @media (max-width: 576px) {
-        .filter-actions {
-            flex-direction: column;
-            align-items: stretch;
-        }
+.labs-container .card .btn-group .btn {
+    flex: 0 1 auto;  /* Кнопки занимают только нужную ширину */
+    min-width: 100px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    white-space: nowrap;  /* Текст не переносится */
+}
 
-        .filter-actions .btn {
-            width: 100%;
-        }
-
-        .labs-container .card .btn-group {
-            flex-direction: column;
-        }
-
-        .labs-container .card .btn-group .btn {
-            width: 100%;
-        }
+/* Для мобильных устройств на маленьких экранах можно оставить вертикально */
+@media (max-width: 480px) {
+    .labs-container .card .btn-group {
+        flex-direction: column !important;
     }
+
+    .labs-container .card .btn-group .btn {
+        width: 100%;
+    }
+}
 </style>
 
 <div class="container">
@@ -314,10 +360,10 @@
     <h3>Ваши лабораторные ({{ labs.count }})</h3>
 
     {% if labs %}
-        <div class="labs-container {% if labs.count <= 2 %}no-scroll{% endif %}">
-            <div class="cards-grid">
+        <div class="labs-container" id="labsContainer">
+            <div class="cards-grid" id="labsGrid">
                 {% for lab in labs %}
-                <div class="card">
+                <div class="card lab-card" data-lab-title="{{ lab.title|lower }}" data-lab-theme="{{ lab.theme|lower }}">
                     <div class="card-body">
                         <h5>{{ lab.title }}</h5>
                         <p><strong>Тема:</strong> {{ lab.theme }} | <strong>Сложность:</strong> {{ lab.get_difficulty_display }}</p>
@@ -335,100 +381,111 @@
                 </div>
                 {% endfor %}
             </div>
-
         </div>
     {% else %}
         <p>У вас пока нет лабораторных работ.</p>
     {% endif %}
 
-    <div class="filter-form">
-        <form method="GET" action="{% url 'teacher_labs' %}" class="teacher-filter-layout">
-            <div class="status-filter-block">
-                <h4 class="filter-main-title">📋 Фильтрация сданных работ</h4>
-                <label class="form-label status-filter-title">Статус проверки:</label>
+    <!-- Блок фильтрации -->
+    <!-- Блок фильтрации -->
+<div class="filter-section">
+    <div class="filter-title">🔍 Фильтрация сданных работ</div>
 
-                <div class="status-options-grid">
-                    <label class="status-option-text" for="all">Все работы</label>
-                    <div class="status-option-input">
-                        <input class="form-check-input" type="radio" name="checked" id="all" value="" {% if not checked_filter %}checked{% endif %}>
-                    </div>
+    <div class="filter-row">
+        <div class="filter-group">
+            <label for="statusFilter">Статус проверки:</label>
+            <select id="statusFilter">
+                <option value="">Все работы</option>
+                <option value="checked" {% if checked_filter == 'true' %}selected{% endif %}>Только проверенные</option>
+                <option value="unchecked" {% if checked_filter == 'false' %}selected{% endif %}>Только непроверенные</option>
+            </select>
+        </div>
 
-                    <label class="status-option-text" for="checked_true">Только проверенные</label>
-                    <div class="status-option-input">
-                        <input class="form-check-input" type="radio" name="checked" id="checked_true" value="true" {% if checked_filter == 'true' %}checked{% endif %}>
-                    </div>
+        <div class="filter-group">
+            <label for="groupFilter">Группа:</label>
+            <select id="groupFilter">
+                <option value="">Все группы</option>
+                {% for group in available_groups %}
+                <option value="{{ group }}" {% if group_filter == group %}selected{% endif %}>{{ group }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-                    <label class="status-option-text" for="checked_false">Только непроверенные</label>
-                    <div class="status-option-input">
-                        <input class="form-check-input" type="radio" name="checked" id="checked_false" value="false" {% if checked_filter == 'false' %}checked{% endif %}>
-                    </div>
-                </div>
-            </div>
+        <div class="filter-group">
+            <label for="courseFilter">Курс:</label>
+            <select id="courseFilter">
+                <option value="">Все курсы</option>
+                {% for course in available_courses %}
+                <option value="{{ course }}" {% if course_filter|stringformat:"s" == course|stringformat:"s" %}selected{% endif %}>{{ course }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-            <div class="search-filter-block">
-                <label for="search_name" class="form-label search-filter-title">Поиск по ФИО студента:</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="search_name"
-                    name="search_name"
-                    placeholder="Введите ФИО студента..."
-                    value="{{ search_name }}"
-                >
+        <div class="filter-group">
+            <label for="searchNameInput">Поиск по ФИО студента:</label>
+            <input type="text" id="searchNameInput" placeholder="Введите ФИО студента..." value="{{ search_name }}">
+        </div>
 
-                <div class="filter-actions">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-filter"></i> Применить фильтры
-                    </button>
-                    <a href="{% url 'teacher_labs' %}" class="btn btn-secondary">
-                        <i class="fas fa-times"></i> Сбросить
-                    </a>
-                </div>
-            </div>
-        </form>
+        <div class="filter-actions">
+
+            <button id="resetFiltersBtn" class="btn-reset">✖ Сбросить фильтры</button>
+        </div>
     </div>
 
-    <h3>📥 Сданные работы: ({{ total_submissions }})</h3>
+    <div class="active-filters" id="activeFilters" style="display: none;">
+        <span class="active-filters-label">Активные фильтры:</span>
+        <span id="activeFiltersList"></span>
+    </div>
 
-    <div class="submissions-container {% if total_submissions <= 2 %}no-scroll{% endif %}">
-        {% if submissions %}
-            {% for submission in submissions %}
-                <a href="{% url 'submission_detail' submission.id %}" class="submission-card">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="card-title mb-1">{{ submission.lab_work.title }}</h6>
-                                    <p class="card-text mb-1">
-                                        <strong>Студент:</strong> {{ submission.student.profile.full_name }}
-                                    </p>
-                                    <p class="card-text mb-1">
-                                        <strong>Дата сдачи:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}
-                                    </p>
-                                    {% if submission.grade %}
-                                    <p class="card-text mb-1">
-                                        <strong>Оценка:</strong> {{ submission.grade }}
-                                    </p>
-                                    {% endif %}
-                                </div>
-                                <div class="text-end">
-                                    {% if submission.grade %}
-                                        <span class="badge badge-checked status-badge">✓ Проверено</span>
-                                    {% else %}
-                                        <span class="badge badge-unchecked status-badge">✗ Не проверено</span>
-                                    {% endif %}
-                                    <br>
-                                    <small class="text-muted mt-2 d-block">Нажмите для деталей</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            {% endfor %}
+</div>
+    </div>
 
+    <h3>📥 Сданные работы: <span id="totalSubmissionsCount">{{ total_submissions }}</span></h3>
 
-
-        {% endif %}
+    <div class="submissions-container" id="submissionsContainer">
+        {% for submission in submissions %}
+            <a href="{% url 'submission_detail' submission.id %}" class="submission-card"
+   data-student-name="{{ submission.student.profile.full_name|lower }}"
+   data-status="{% if submission.grade %}checked{% else %}unchecked{% endif %}"
+   data-student-group="{{ submission.student.profile.group|default:'' }}"
+   data-student-course="{{ submission.student.profile.course|default:'' }}">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="card-title mb-1">{{ submission.lab_work.title }}</h6>
+                    <p class="card-text mb-1">
+                        <strong>Студент:</strong> {{ submission.student.profile.full_name }}
+                    </p>
+                    <p class="card-text mb-1">
+                        <strong>Группа:</strong> {{ submission.student_group|default:"—" }} |
+                        <strong>Курс:</strong> {{ submission.student_course|default:"—" }}
+                    </p>
+                    <p class="card-text mb-1">
+                        <strong>Дата сдачи:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}
+                    </p>
+                    {% if submission.grade %}
+                    <p class="card-text mb-1">
+                        <strong>Оценка:</strong> {{ submission.grade }}
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="text-end">
+                    {% if submission.grade %}
+                        <span class="badge badge-checked status-badge">✓ Проверено</span>
+                    {% else %}
+                        <span class="badge badge-unchecked status-badge">✗ Не проверено</span>
+                    {% endif %}
+                    <br>
+                    <small class="text-muted mt-2 d-block">Нажмите для деталей</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</a>
+        {% empty %}
+            <p id="noSubmissionsMsg" style="text-align: center; width: 100%; color: #6c757d;">Нет сданных работ</p>
+        {% endfor %}
     </div>
 
     <div style="margin-top: 30px;">
@@ -438,4 +495,183 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Элементы фильтрации
+    const statusFilter = document.getElementById('statusFilter');
+    const groupFilter = document.getElementById('groupFilter');
+    const courseFilter = document.getElementById('courseFilter');
+    const searchInput = document.getElementById('searchNameInput');
+    const resetBtn = document.getElementById('resetFiltersBtn');
+    const submissionsContainer = document.getElementById('submissionsContainer');
+    const totalSubmissionsSpan = document.getElementById('totalSubmissionsCount');
+    const activeFiltersDiv = document.getElementById('activeFilters');
+    const activeFiltersList = document.getElementById('activeFiltersList');
+
+    // Получаем все карточки сданных работ
+    const submissionCards = Array.from(document.querySelectorAll('.submission-card'));
+    const totalSubmissions = submissionCards.length;
+
+    // Функция обновления активных фильтров
+    function updateActiveFilters() {
+        const filters = [];
+
+        const statusValue = statusFilter.value;
+        if (statusValue === 'checked') {
+            filters.push({ name: 'Проверенные', type: 'status', value: statusValue });
+        } else if (statusValue === 'unchecked') {
+            filters.push({ name: 'Непроверенные', type: 'status', value: statusValue });
+        }
+
+        const groupValue = groupFilter.value;
+        if (groupValue) {
+            filters.push({ name: `Группа: ${groupValue}`, type: 'group', value: groupValue });
+        }
+
+        const courseValue = courseFilter.value;
+        if (courseValue) {
+            filters.push({ name: `Курс: ${courseValue}`, type: 'course', value: courseValue });
+        }
+
+        const searchValue = searchInput.value.trim();
+        if (searchValue) {
+            filters.push({ name: `Поиск: "${searchValue}"`, type: 'search', value: searchValue });
+        }
+
+        if (filters.length > 0) {
+            activeFiltersDiv.style.display = 'flex';
+            activeFiltersList.innerHTML = filters.map(filter => `
+                <span class="filter-badge">
+                    ${filter.name}
+                    <span class="remove" data-type="${filter.type}" data-value="${filter.value}">✕</span>
+                </span>
+            `).join('');
+
+            // Добавляем обработчики для кнопок удаления
+            document.querySelectorAll('.filter-badge .remove').forEach(removeBtn => {
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const type = this.dataset.type;
+                    if (type === 'status') {
+                        statusFilter.value = '';
+                    } else if (type === 'group') {
+                        groupFilter.value = '';
+                    } else if (type === 'course') {
+                        courseFilter.value = '';
+                    } else if (type === 'search') {
+                        searchInput.value = '';
+                    }
+                    applyFilters();
+                });
+            });
+        } else {
+            activeFiltersDiv.style.display = 'none';
+        }
+    }
+
+    // Функция применения фильтров (клиентская фильтрация)
+    function applyFilters() {
+        const statusValue = statusFilter.value;
+        const groupValue = groupFilter.value;
+        const courseValue = courseFilter.value;
+        const searchTerm = searchInput.value.toLowerCase().trim();
+
+        let visibleCount = 0;
+
+        submissionCards.forEach(card => {
+            const studentName = card.getAttribute('data-student-name') || '';
+            const cardStatus = card.getAttribute('data-status') || '';
+            const studentGroup = card.getAttribute('data-student-group') || '';
+            const studentCourse = card.getAttribute('data-student-course') || '';
+
+            const matchesStatus = statusValue === '' ||
+                (statusValue === 'checked' && cardStatus === 'checked') ||
+                (statusValue === 'unchecked' && cardStatus === 'unchecked');
+
+            const matchesGroup = groupValue === '' || studentGroup === groupValue;
+            const matchesCourse = courseValue === '' || studentCourse === courseValue;
+            const matchesSearch = searchTerm === '' || studentName.includes(searchTerm);
+
+            if (matchesStatus && matchesGroup && matchesCourse && matchesSearch) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Обновляем счетчик
+        if (totalSubmissionsSpan) {
+            totalSubmissionsSpan.textContent = visibleCount;
+        }
+
+        // Показываем сообщение, если нет результатов
+        let noResultsMsg = document.getElementById('noResultsMsg');
+        if (visibleCount === 0 && totalSubmissions > 0) {
+            if (!noResultsMsg) {
+                noResultsMsg = document.createElement('p');
+                noResultsMsg.id = 'noResultsMsg';
+                noResultsMsg.style.textAlign = 'center';
+                noResultsMsg.style.width = '100%';
+                noResultsMsg.style.color = '#6c757d';
+                noResultsMsg.style.padding = '20px';
+                noResultsMsg.textContent = '🔍 Нет работ, соответствующих фильтрам';
+                submissionsContainer.appendChild(noResultsMsg);
+            }
+        } else if (noResultsMsg) {
+            noResultsMsg.remove();
+        }
+
+        // Обновляем скролл контейнера в зависимости от количества видимых карточек
+        if (submissionsContainer) {
+            if (visibleCount > 4) {
+                submissionsContainer.style.maxHeight = '500px';
+                submissionsContainer.style.overflowY = 'auto';
+            } else {
+                submissionsContainer.style.maxHeight = 'none';
+                submissionsContainer.style.overflowY = 'visible';
+            }
+        }
+
+        updateActiveFilters();
+    }
+
+    // Сброс всех фильтров
+    function resetFilters() {
+        statusFilter.value = '';
+        groupFilter.value = '';
+        courseFilter.value = '';
+        searchInput.value = '';
+        applyFilters();
+    }
+
+    // Добавляем обработчики событий для динамической фильтрации
+    if (statusFilter) {
+        statusFilter.addEventListener('change', applyFilters);
+    }
+    if (groupFilter) {
+        groupFilter.addEventListener('change', applyFilters);
+    }
+    if (courseFilter) {
+        courseFilter.addEventListener('change', applyFilters);
+    }
+    if (searchInput) {
+        searchInput.addEventListener('input', applyFilters);
+    }
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetFilters);
+    }
+
+    // Инициализация фильтрации
+    applyFilters();
+
+    // Управление скроллом для контейнера лабораторных работ
+    const labsContainer = document.getElementById('labsContainer');
+    const labCards = document.querySelectorAll('.lab-card');
+    if (labsContainer && labCards.length > 3) {
+        labsContainer.style.maxHeight = '500px';
+        labsContainer.style.overflowY = 'auto';
+    }
+});
+</script>
 {% endblock %}

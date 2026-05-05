@@ -2,43 +2,51 @@
 
 {% block content %}
 
-    {% if request.user.profile.role == 'student' %}
-    <nav class="student-nav mb-4">
-        <a href="{% url 'profile' %}" class="nav-link">
-            <span class="nav-icon">←</span>
-            Личный кабинет
-        </a>
-        <a href="{% url 'student_labs' %}" class="nav-link">
-            <span class="nav-icon">🧪</span>
-            Лабораторные
-        </a>
-        <a href="{% url 'test_view' 'start' %}" class="nav-link">
-            <span class="nav-icon">📥</span>
-            Входной тест
-        </a>
-         <a href="{% url 'student_teacher_tests' %}" class="nav-link">
-            <span class="nav-icon">👩‍🏫</span>
-            Тесты от учителя
-        </a>
-        <!-- Измененная ссылка для итогового теста -->
-        {% with final_result=request.user.testresult_set.filter|dictsortreversed:"date_completed"|first %}
-        {% if final_result and final_result.test_type == 'final' %}
-            <a href="{% url 'result_detail' final_result.id %}" class="nav-link">
+{% if request.user.profile.role == 'student' %}
+
+<nav class="student-nav mb-4">
+    <a href="{% url 'profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <span class="nav-icon">←</span>
+        Личный кабинет
+    </a>
+    <a href="{% url 'groupmates_list' %}" class="nav-link {% if request.resolver_match.url_name == 'groupmates_list' or request.resolver_match.url_name == 'chat_detail' %}active{% endif %}">
+        <span class="nav-icon">👥</span>
+        Одногруппники
+    </a>
+    <a href="{% url 'student_teacher_chat_list' %}" class="nav-link {% if request.resolver_match.url_name == 'student_teacher_chat_list' or request.resolver_match.url_name == 'student_teacher_chat_detail' %}active{% endif %}">
+        <span class="nav-icon">👩‍🏫</span>
+        Чат с преподавателем
+    </a>
+    <a href="{% url 'student_labs' %}" class="nav-link {% if request.resolver_match.url_name == 'student_labs' or request.resolver_match.url_name == 'lab' or request.resolver_match.url_name == 'submit_lab' %}active{% endif %}">
+        <span class="nav-icon">🧪</span>
+        Лабораторные
+    </a>
+    <a href="{% url 'test_view' 'start' %}" class="nav-link {% if request.resolver_match.url_name == 'test_view' and request.resolver_match.kwargs.test_kind == 'start' %}active{% endif %}">
+        <span class="nav-icon">📥</span>
+        Входной тест
+    </a>
+    <a href="{% url 'student_teacher_tests' %}" class="nav-link {% if request.resolver_match.url_name == 'student_teacher_tests' or request.resolver_match.url_name == 'take_teacher_test' %}active{% endif %}">
+        <span class="nav-icon">👩‍🏫</span>
+        Тесты от учителя
+    </a>
+    {% with final_result=request.user.testresult_set.all|dictsortreversed:"date_completed" %}
+    {% with final_test=final_result|first %}
+        {% if final_test and final_test.test_type == 'final' %}
+            <a href="{% url 'result_detail' final_test.id %}" class="nav-link {% if request.resolver_match.url_name == 'result_detail' and final_test.test_type == 'final' %}active{% endif %}">
                 <span class="nav-icon">📤</span>
-                Результат итогового теста
+                Результат тестирования
             </a>
         {% else %}
-            <a href="{% url 'test_view' 'final' %}" class="nav-link">
+            <a href="{% url 'test_view' 'final' %}" class="nav-link {% if request.resolver_match.url_name == 'test_view' and request.resolver_match.kwargs.test_kind == 'final' %}active{% endif %}">
                 <span class="nav-icon">📤</span>
                 Итоговый тест
             </a>
         {% endif %}
-        {% endwith %}
+    {% endwith %}
+    {% endwith %}
+</nav>
 
+{% endif %}
 
-    </nav>
-    {% endif %}
-
-
-    {% block student_content %}{% endblock %}
+{% block student_content %}{% endblock %}
 {% endblock %}

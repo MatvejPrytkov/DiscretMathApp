@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import migrations, models
@@ -121,7 +122,7 @@ class TestAnswer(models.Model):
         return f"Result#{self.result_id} Q{self.question_id} ({'OK' if self.is_correct else 'NO'})"
 
 
-# 🆕 НОВАЯ МОДЕЛЬ ЛАБОРАТОРНЫХ РАБОТ
+
 class LabWork(models.Model):
     DIFFICULTY_CHOICES = [
         ('easy', 'Легкая'),
@@ -279,11 +280,21 @@ class TeacherTest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True, verbose_name="Активен")
-    assigned_to = models.ManyToManyField(User, related_name='assigned_tests', blank=True, limit_choices_to={'profile__role': 'student'})
 
-    def __str__(self):
-        return f"{self.title} (учитель: {self.teacher.profile.full_name})"
+    # Изменяем: если assigned_to пусто, тест доступен ВСЕМ ученикам учителя
+    assigned_to = models.ManyToManyField(
+        User,
+        related_name='assigned_tests',
+        blank=True,
+        limit_choices_to={'profile__role': 'student'},
+        verbose_name="Конкретные ученики (оставьте пустым для всех)"
+    )
 
+    # Новое поле: назначать автоматически новым ученикам
+    auto_assign_new_students = models.BooleanField(
+        default=True,
+        verbose_name="Автоматически назначать новым ученикам"
+    )
 class TeacherTestQuestion(models.Model):
     test = models.ForeignKey(TeacherTest, on_delete=models.CASCADE)
     question = models.ForeignKey(TestQuestion, on_delete=models.CASCADE)
@@ -305,6 +316,8 @@ class Notification(models.Model):
         ('lab_graded', 'Проверена лабораторная работа'),
         ('test_graded', 'Проверен тест'),
         ('lab_comment', 'Добавлен комментарий к лабораторной'),
+        ('new_student', 'Новый ученик'),
+        ('new_message', 'Новое сообщение'),
     ]
 
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
@@ -321,3 +334,74 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.get_notification_type_display()} для {self.recipient.username}"
+
+
+# Добавьте эту модель в конец файла models.py
+
+class Message(models.Model):
+    """Модель для сообщений между студентами"""
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    content = models.TextField(verbose_name="Текст сообщения")
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Message #{self.id}"
+
+
+# Замените существующий сигнал на этот:
+# Добавьте в models.py после класса Message
+
+class TeacherStudentMessage(models.Model):
+    """Модель для сообщений между учителем и студентом"""
+    MESSAGE_TYPES = [
+        ('text', 'Текст'),
+        ('voice', 'Голосовое сообщение'),
+        ('file', 'Файл'),
+    ]
+
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_teacher_messages')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_teacher_messages')
+    content = models.TextField(verbose_name="Текст сообщения", blank=True, null=True)
+    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPES, default='text')
+    file_attachment = models.FileField(upload_to='chat_files/', blank=True, null=True)
+    file_name = models.CharField(max_length=255, blank=True, null=True)
+    voice_message = models.FileField(upload_to='voice_messages/', blank=True, null=True)
+    voice_duration = models.IntegerField(default=0, help_text="Длительность в секундах")
+    reactions = models.JSONField(default=dict, blank=True)  # {user_id: '👍'}
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Сообщение #{self.id} от {self.sender.username} к {self.recipient.username}"
+@receiver(post_save, sender=UserProfile)
+def assign_tests_to_new_student(sender, instance, created, **kwargs):
+    """При создании нового ученика: уведомление учителю + назначение тестов + уведомление одногруппникам"""
+    if created and instance.role == 'student' and instance.teacher:
+        from .utils import notify_teacher_about_new_student, notify_groupmates_about_new_student, \
+            notify_student_about_new_test
+
+        # ===== 1. УВЕДОМЛЕНИЕ УЧИТЕЛЮ =====
+        notify_teacher_about_new_student(instance.teacher, instance.user)
+
+        # ===== 2. УВЕДОМЛЕНИЕ ОДНОГРУППНИКАМ =====
+        notify_groupmates_about_new_student(instance.user)
+
+        # ===== 3. НАЗНАЧЕНИЕ ТЕСТОВ =====
+        tests = TeacherTest.objects.filter(
+            teacher=instance.teacher,
+            is_active=True
+        ).filter(
+            Q(assigned_to__isnull=True) | Q(auto_assign_new_students=True)
+        ).distinct()
+
+        for test in tests:
+            test.assigned_to.add(instance.user)
+            notify_student_about_new_test(instance.teacher, instance.user, test)

@@ -4,38 +4,41 @@
 {% block title %}Проверка лабораторной работы{% endblock %}
 
 {% block teacher_content %}
-<div class="container mt-4">
-    <div class="row g-4">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
+<div class="lab-detail-container">
+    <div class="two-column-layout">
+        <!-- Левая колонка: информация о работе -->
+        <div class="work-info-column">
+            <div class="info-card">
+                <div class="card-header-custom header-primary">
                     <h5 class="mb-0">
-                        Сданная работа
-                        <small class="float-end">
-                            Статус:
+                        📄 Сданная работа
+                        <span class="status-badge-custom">
                             {% if submission.grade %}
-                                <span class="badge bg-success">Проверено</span>
+                                <span class="badge-success-custom">✅ Проверено</span>
                             {% else %}
-                                <span class="badge bg-warning text-dark">Не проверено</span>
+                                <span class="badge-warning-custom">⏳ Не проверено</span>
                             {% endif %}
-                        </small>
+                        </span>
                     </h5>
                 </div>
+                <div class="card-body-custom">
+                    <h4 class="work-title">{{ lab.title }}</h4>
 
-                <div class="card-body">
-                    <h4 class="card-title mb-3">{{ lab.title }}</h4>
-                    <p><strong>Студент:</strong> {{ student_full_name|default:student_username }}</p>
+                    <div class="info-row">
+                        <span class="info-label-custom">👨‍🎓 Студент:</span>
+                        <span class="info-value-custom">{{ student_full_name|default:student_username }}</span>
+                    </div>
 
-                    <div class="mb-3">
-                        <label class="form-label"><strong>Описание задания:</strong></label>
-                        <div class="border rounded p-3 bg-light">
+                    <div class="info-section">
+                        <div class="section-title">📋 Описание задания:</div>
+                        <div class="section-content">
                             {{ lab.description|linebreaks }}
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label"><strong>Комментарий к работе:</strong></label>
-                        <div class="border rounded p-3 bg-light">
+                    <div class="info-section">
+                        <div class="section-title">💬 Комментарий к работе:</div>
+                        <div class="section-content">
                             {% if submission.comment %}
                                 {{ submission.comment|linebreaks }}
                             {% else %}
@@ -45,147 +48,596 @@
                     </div>
 
                     {% if submission.submitted_file %}
-                    <div class="mb-3">
-                        <label class="form-label"><strong>Файл с отправленной работой:</strong></label>
-                        <div class="border rounded p-3 bg-light">
-                            <p class="mb-2">
-                                <i class="bi bi-file-earmark-{{ submitted_file_extension|cut:'.' }}"></i>
-                                {{ submitted_file_name }}
-                            </p>
-
-                            {% if can_preview %}
-                                <a href="{{ file_download_url }}" class="btn btn-outline-primary btn-sm" target="_blank">
-                                    Открыть файл
-                                </a>
-                            {% else %}
-                                <a href="{{ file_download_url }}" class="btn btn-outline-primary btn-sm">
-                                    Скачать файл
-                                </a>
-                            {% endif %}
-
-
-
-
+                    <div class="info-section">
+                        <div class="section-title">📎 Файл с работой:</div>
+                        <div class="section-content">
+                            <div class="file-info">
+                                <span class="file-name">{{ submitted_file_name }}</span>
+                                {% if can_preview %}
+                                    <a href="{{ file_download_url }}" class="btn-file" target="_blank">👁️ Открыть</a>
+                                {% else %}
+                                    <a href="{{ file_download_url }}" class="btn-file" download>📥 Скачать</a>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                     {% endif %}
 
                     {% if submission.submitted_at %}
-                    <p class="text-muted mb-0">
-                        Сдано: {{ submission.submitted_at|date:"d.m.Y H:i" }}
-                    </p>
+                    <div class="info-row">
+                        <span class="info-label-custom">📅 Сдано:</span>
+                        <span class="info-value-custom">{{ submission.submitted_at|date:"d.m.Y H:i" }}</span>
+                    </div>
                     {% endif %}
 
                     {% if submission.grade %}
-                    <div class="alert alert-info mt-3">
-                        <strong>Оценка:</strong> {{ submission.grade }}<br>
-                        {% if submission.graded_at %}
-                            <strong>Дата проверки:</strong> {{ submission.graded_at|date:"d.m.Y H:i" }}<br>
-                        {% endif %}
-                        {% if submission.graded_by %}
-                            <strong>Проверил:</strong>
-                            {% if submission.graded_by.profile.full_name %}
-                                {{ submission.graded_by.profile.full_name }}
-                            {% else %}
-                                {{ submission.graded_by.username }}
+                    <div class="info-section graded-info">
+                        <div class="section-title">⭐ Результат проверки:</div>
+                        <div class="grade-details">
+                            <div class="grade-value-custom">Оценка: <strong>{{ submission.grade }}</strong></div>
+                            {% if submission.graded_at %}
+                                <div>📅 Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}</div>
                             {% endif %}
-                            <br>
-                        {% endif %}
-                        <strong>Комментарий:</strong><br>
-                        {{ submission.comment|default:"Комментарий отсутствует"|linebreaks }}
+                            {% if submission.graded_by %}
+                                <div>👨‍🏫 Проверил:
+                                    {% if submission.graded_by.profile.full_name %}
+                                        {{ submission.graded_by.profile.full_name }}
+                                    {% else %}
+                                        {{ submission.graded_by.username }}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            <div class="comment-block">
+                                <div class="comment-label-custom">💬 Комментарий преподавателя:</div>
+                                <div class="comment-text-custom">{{ submission.comment|default:"Комментарий отсутствует"|linebreaks }}</div>
+                            </div>
+                        </div>
                     </div>
                     {% endif %}
-                </div>
 
-                <div class="card-footer">
-                    <a href="{% url 'teacher_labs' %}" class="btn btn-secondary">
-                        Назад к списку
-                    </a>
+                    <div class="back-button">
+                        <a href="{% url 'teacher_labs' %}" class="btn-back">← Назад к списку</a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header bg-info text-white">
-                    <h6 class="mb-0">Информация о студенте</h6>
-                </div>
-                <div class="card-body">
-                    <p><strong>ФИО:</strong> {{ student_full_name }}</p>
-                    <p><strong>Группа:</strong> {{ student_profile.group|default:"-" }}</p>
-                    <p><strong>Курс:</strong> {{ student_course|default:"-" }}</p>
-                    <p><strong>Email:</strong> {{ student.email|default:"-" }}</p>
-
-                    <hr>
-
-                    <h6>Статистика по лабораторным:</h6>
-                    <p class="mb-0">Сдано работ: {{ student_submissions_count }}</p>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header {% if submission.grade %}bg-warning{% else %}bg-success{% endif %} text-white">
+        <!-- Правая колонка: выставление оценки -->
+        <div class="grade-column">
+            <div class="info-card">
+                <div class="card-header-custom header-{% if submission.grade %}warning{% else %}success{% endif %}">
                     <h6 class="mb-0">
                         {% if submission.grade %}
-                            Редактирование оценки
+                            ✏️ Редактирование оценки
                         {% else %}
-                            Выставление оценки
+                            📝 Выставление оценки
                         {% endif %}
                     </h6>
                 </div>
-                <div class="card-body">
+                <div class="card-body-custom">
                     {% if submission.grade %}
-                    <div class="alert alert-light border">
-                        <strong>Текущая оценка:</strong> {{ submission.grade }}
+                    <div class="current-grade">
+                        <span class="current-grade-label">Текущая оценка:</span>
+                        <span class="current-grade-value">{{ submission.grade }}</span>
                     </div>
-
-                    <button type="button" class="btn btn-outline-primary mb-3" id="edit-btn" onclick="toggleEditForm()">
-                        Редактировать
+                    <button type="button" class="btn-edit" id="edit-btn" onclick="toggleEditForm()">
+                        ✏️ Редактировать
                     </button>
                     {% endif %}
 
                     <form method="post" id="grade-form" {% if submission.grade %}style="display: none;"{% endif %}>
                         {% csrf_token %}
 
-                        <div class="mb-3">
-                            <label for="grade" class="form-label">Оценка</label>
-                            <select name="grade" id="grade" class="form-select" required>
+                        <div class="form-field">
+                            <label for="grade" class="form-label-custom">⭐ Оценка</label>
+                            <select name="grade" id="grade" class="form-select-custom" required>
                                 <option value="">-- Выберите оценку --</option>
-                                <option value="5" {% if submission.grade == "5" %}selected{% endif %}>5</option>
-                                <option value="4" {% if submission.grade == "4" %}selected{% endif %}>4</option>
-                                <option value="3" {% if submission.grade == "3" %}selected{% endif %}>3</option>
-                                <option value="2" {% if submission.grade == "2" %}selected{% endif %}>2</option>
-                                <option value="н" {% if submission.grade == "н" %}selected{% endif %}>Незачет</option>
+                                <option value="5" {% if submission.grade == "5" %}selected{% endif %}>5 (Отлично)</option>
+                                <option value="4" {% if submission.grade == "4" %}selected{% endif %}>4 (Хорошо)</option>
+                                <option value="3" {% if submission.grade == "3" %}selected{% endif %}>3 (Удовлетворительно)</option>
+                                <option value="2" {% if submission.grade == "2" %}selected{% endif %}>2 (Неудовлетворительно)</option>
+                                <option value="н" {% if submission.grade == "н" %}selected{% endif %}>н (Незачет)</option>
                             </select>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="comment" class="form-label">Комментарий преподавателя</label>
-                            <textarea
-                                name="comment"
-                                id="comment"
-                                class="form-control"
-                                rows="4"
-                                placeholder="Введите комментарий преподавателя...">{% if submission.grade %}{{ submission.comment|default:'' }}{% endif %}</textarea>
+                        <div class="form-field">
+                            <label for="comment" class="form-label-custom">💬 Комментарий</label>
+                            <textarea name="comment" id="comment" class="form-textarea" rows="4"
+                                      placeholder="Введите комментарий преподавателя...">{% if submission.comment %}{{ submission.comment }}{% endif %}</textarea>
                         </div>
 
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                {% if submission.grade %}Сохранить{% else %}Оценить{% endif %}
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-submit">
+                                💾 {% if submission.grade %}Сохранить{% else %}Оценить{% endif %}
                             </button>
-
                             {% if submission.grade %}
-                            <button type="button" class="btn btn-secondary" onclick="toggleEditForm()">
-                                Отмена
+                            <button type="button" class="btn-cancel" onclick="toggleEditForm()">
+                                ❌ Отмена
                             </button>
                             {% endif %}
                         </div>
                     </form>
                 </div>
             </div>
+
+            <!-- Карточка с информацией о студенте -->
+            <div class="info-card student-info-card">
+                <div class="card-header-custom header-info">
+                    <h6 class="mb-0">👤 Информация о студенте</h6>
+                </div>
+                <div class="card-body-custom">
+                    <div class="student-info-row">
+                        <span class="info-label-custom">ФИО:</span>
+                        <span class="info-value-custom">{{ student_full_name }}</span>
+                    </div>
+                    <div class="student-info-row">
+                        <span class="info-label-custom">Группа:</span>
+                        <span class="info-value-custom">{{ student_profile.group|default:"—" }}</span>
+                    </div>
+                    <div class="student-info-row">
+                        <span class="info-label-custom">Курс:</span>
+                        <span class="info-value-custom">{{ student_course|default:"—" }}</span>
+                    </div>
+                    <div class="student-info-row">
+                        <span class="info-label-custom">Email:</span>
+                        <span class="info-value-custom">{{ student.email|default:"—" }}</span>
+                    </div>
+                    <hr class="divider">
+                    <div class="student-info-row">
+                        <span class="info-label-custom">📊 Сдано работ:</span>
+                        <span class="info-value-custom">{{ student_submissions_count }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* Основной контейнер */
+    .lab-detail-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Двухколоночный макет */
+    .two-column-layout {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+    }
+
+    .work-info-column {
+        flex: 2;
+        min-width: 300px;
+    }
+
+    .grade-column {
+        flex: 1;
+        min-width: 320px;
+    }
+
+    /* Карточки */
+    .info-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 20px;
+    }
+
+    /* Заголовки карточек */
+    .card-header-custom {
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .card-header-custom h5,
+    .card-header-custom h6 {
+        margin: 0;
+        color: white;
+    }
+
+    .header-primary {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    }
+
+    .header-success {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .header-warning {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .header-info {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+    }
+
+    /* Бейджи статуса */
+    .status-badge-custom {
+        display: inline-block;
+    }
+
+    .badge-success-custom {
+        background: rgba(255, 255, 255, 0.25);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .badge-warning-custom {
+        background: rgba(255, 255, 255, 0.25);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Тело карточки */
+    .card-body-custom {
+        padding: 20px;
+    }
+
+    .work-title {
+        font-size: 1.3rem;
+        margin: 0 0 16px 0;
+        color: #1f2937;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    /* Строки информации */
+    .info-row {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .info-label-custom {
+        width: 130px;
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 0.85rem;
+    }
+
+    .info-value-custom {
+        flex: 1;
+        color: #1f2937;
+        font-size: 0.9rem;
+    }
+
+    /* Секции с контентом */
+    .info-section {
+        margin: 16px 0;
+    }
+
+    .section-title {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .section-content {
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: #334155;
+    }
+
+    /* Файл */
+    .file-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .file-name {
+        font-size: 0.85rem;
+        color: #4b5563;
+        word-break: break-all;
+    }
+
+    .btn-file {
+        padding: 6px 14px;
+        background: #e2e8f0;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #1d4ed8;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    }
+
+    .btn-file:hover {
+        background: #cbd5e1;
+        transform: translateY(-1px);
+    }
+
+    /* Информация о проверке */
+    .graded-info {
+        background: #f0fdf4;
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 16px;
+    }
+
+    .grade-details {
+        font-size: 0.85rem;
+        color: #065f46;
+    }
+
+    .grade-value-custom {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    .grade-value-custom strong {
+        font-size: 1.3rem;
+        color: #059669;
+    }
+
+    .comment-block {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(5, 150, 105, 0.2);
+    }
+
+    .comment-label-custom {
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .comment-text-custom {
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    /* Кнопка назад */
+    .back-button {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .btn-back {
+        display: inline-block;
+        padding: 8px 20px;
+        background: #6c757d;
+        border-radius: 8px;
+        text-decoration: none;
+        color: white;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .btn-back:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+    }
+
+    /* Форма оценки */
+    .current-grade {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: #fef3c7;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    .current-grade-label {
+        font-weight: 600;
+        color: #92400e;
+    }
+
+    .current-grade-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #d97706;
+    }
+
+    .btn-edit {
+        width: 100%;
+        padding: 10px;
+        background: #e2e8f0;
+        border: none;
+        border-radius: 8px;
+        color: #1f2937;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 16px;
+    }
+
+    .btn-edit:hover {
+        background: #cbd5e1;
+        transform: translateY(-1px);
+    }
+
+    .form-field {
+        margin-bottom: 16px;
+    }
+
+    .form-label-custom {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #374151;
+    }
+
+    .form-select-custom {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: white;
+    }
+
+    .form-select-custom:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .btn-submit {
+        flex: 1;
+        padding: 10px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-cancel {
+        flex: 1;
+        padding: 10px;
+        background: #6c757d;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+    }
+
+    /* Карточка студента */
+    .student-info-card {
+        margin-top: 0;
+    }
+
+    .student-info-row {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 6px 0;
+    }
+
+    .divider {
+        margin: 12px 0;
+        border: none;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 992px) {
+        .two-column-layout {
+            flex-direction: column;
+        }
+
+        .work-info-column,
+        .grade-column {
+            flex: auto;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .lab-detail-container {
+            padding: 12px;
+        }
+
+        .card-body-custom {
+            padding: 16px;
+        }
+
+        .info-label-custom {
+            width: 100%;
+            margin-bottom: 4px;
+        }
+
+        .info-row {
+            flex-direction: column;
+        }
+
+        .student-info-row {
+            flex-direction: column;
+        }
+
+        .file-info {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .btn-file {
+            width: 100%;
+            text-align: center;
+        }
+
+        .form-buttons {
+            flex-direction: column;
+        }
+
+        .card-header-custom {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .work-title {
+            font-size: 1.1rem;
+        }
+
+        .section-content {
+            font-size: 0.85rem;
+        }
+
+        .grade-value-custom strong {
+            font-size: 1.1rem;
+        }
+    }
+</style>
 
 <script>
 function toggleEditForm() {
@@ -197,7 +649,6 @@ function toggleEditForm() {
         if (editBtn) {
             editBtn.style.display = 'none';
         }
-
         const gradeField = document.getElementById('grade');
         if (gradeField) {
             gradeField.focus();
@@ -218,7 +669,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const grade = document.getElementById('grade');
         if (grade && !grade.value) {
             e.preventDefault();
-            alert('Выберите оценку');
+            alert('Пожалуйста, выберите оценку');
         }
     });
 });

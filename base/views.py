@@ -1,8 +1,8 @@
 import os
 
 from django.template.loader import render_to_string
-
-from .utils import notify_teacher_about_submission, notify_teacher_about_test_completion, notify_students_about_new_lab, notify_students_about_new_test, notify_student_about_lab_grade, notify_student_about_test_grade
+import json
+from .utils import notify_teacher_about_submission, notify_teacher_about_test_completion, notify_students_about_new_lab, notify_students_about_new_test, notify_student_about_lab_grade, notify_student_about_test_grade, notify_student_about_new_test
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect
@@ -17,7 +17,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from .models import TestAnswer
 from .forms import UserUpdateForm, PasswordChangeForm, TeacherTestForm, TestQuestionForm
-from .decorators import student_required, teacher_required
+from .decorators import student_required, teacher_required, check_test_result_access, any_user_required
 from django.db.models import Count, Sum, Avg, Max, CharField, Case, When, FloatField, Value
 from django.db.models.functions import Round, Cast
 from django.http import HttpResponse, JsonResponse
@@ -25,13 +25,66 @@ from django.utils import timezone
 from .forms import MyLoginForm, LabWorkForm, AddQuestionForm, CreateTeacherTestForm
 from django.db.models import Q
 from django.core.paginator import Paginator
-from .models import TestCategory, TestQuestion, TeacherTest, TeacherTestQuestion
+from .models import TestCategory, TestQuestion, TeacherTest, TeacherTestQuestion, UserProfile, Message, TeacherStudentMessage
 from django.forms import formset_factory
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from django.http import HttpResponse
 from io import BytesIO
+from .chat_views import groupmates_list, chat_detail, send_message, get_unread_messages_count, get_chat_users_list
+from .chat_teacher_views import (
+    student_teacher_chat_list,
+    teacher_student_chat_list,
+    teacher_student_chat_detail,
+    send_teacher_student_message,
+    get_teacher_student_messages
+)
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+# Добавьте эту функцию в views.py после импортов
 
+@login_required
+def search_teachers_api(request):
+    """API для поиска преподавателей по ФИО (для регистрации)"""
+    query = request.GET.get('q', '').strip()
+
+    # Базовый запрос - все пользователи с ролью teacher
+    teachers = User.objects.filter(profile__role='teacher').select_related('profile')
+
+    if query:
+        # Поиск по ФИО (full_name), email и username
+        teachers = teachers.filter(
+            Q(profile__full_name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(username__icontains=query)
+        )
+
+    # Ограничиваем количество результатов
+    teachers = teachers[:10]
+
+    # Формируем ответ
+    teachers_data = []
+    for teacher in teachers:
+        full_name = ''
+        if hasattr(teacher, 'profile') and teacher.profile:
+            full_name = teacher.profile.full_name
+        if not full_name:
+            full_name = teacher.get_full_name() or teacher.username
+
+        teachers_data.append({
+            'id': teacher.id,
+            'full_name': full_name,
+            'email': teacher.email,
+            'username': teacher.username
+        })
+
+    return JsonResponse({
+        'success': True,
+        'teachers': teachers_data,
+        'query': query
+    })
 
 def get_file_response(file_field, filename):
     """Возвращает правильный HTTP ответ для файла в зависимости от его типа"""
@@ -83,16 +136,28 @@ def index(request):
 @login_required
 @student_required
 def test_view(request, test_kind: str):
-    """
-    test_kind: 'start' или 'final' (код из TestKindConfig)
-    Полностью работает с данными из БД
-    """
     # Получаем конфигурацию теста из БД
     try:
         test_config = TestKindConfig.objects.get(code=test_kind, is_active=True)
     except TestKindConfig.DoesNotExist:
         messages.error(request, f"Тест '{test_kind}' не найден или неактивен")
         return redirect('profile')
+
+    # ========== НОВАЯ ПРОВЕРКА ДЛЯ ИТОГОВОГО ТЕСТА ==========
+    if test_kind == 'final':
+        # Проверяем, был ли уже пройден итоговый тест
+        existing_result = TestResult.objects.filter(
+            user=request.user,
+            test_type='final'
+        ).exists()
+
+        if existing_result:
+            messages.warning(request, 'Вы уже прошли итоговое тестирование. Повторное прохождение невозможно.')
+            # Если есть результат, перенаправляем на страницу с результатами
+            final_result = TestResult.objects.filter(user=request.user, test_type='final').first()
+            if final_result:
+                return redirect('result_detail', pk=final_result.id)
+            return redirect('profile')
 
     # =============== POST (проверка и сохранение) ===============
     if request.method == 'POST':
@@ -203,7 +268,7 @@ def test_view(request, test_kind: str):
                 notification_type='test_completed',
                 title=f'📊 Пройден тест: {test_name}',
                 message=f'Студент {request.user.profile.full_name} прошел {test_name}. Результат: {total_correct}/{total_questions_all} ({round((total_correct / total_questions_all) * 100, 2)}%).',
-                link=f'/result/{test_result.id}/'
+                link=f'/teacher/result/{test_result.id}/'
             )
 
         # Рендерим результаты
@@ -274,6 +339,7 @@ def test_view(request, test_kind: str):
         'questions': questions_to_render,
         'test_title': test_config.title,
         'test_kind': test_kind,
+        'test_type': test_kind,
         'test_config': test_config,
         'categories': test_categories
     })
@@ -443,15 +509,43 @@ def profile(request):
     }
     return render(request, 'student/Profile.html', context)
 
-@login_required
-def result_detail(request, pk):
-    result = get_object_or_404(TestResult, pk=pk)
 
-    # Проверка прав: либо владелец, либо учитель
-    is_teacher = getattr(request.user.profile, 'role', '') == 'teacher'
-    if result.user != request.user and not is_teacher:
-        messages.error(request, "У вас нет прав для просмотра этого результата.")
+
+@login_required
+@check_test_result_access
+def result_detail(request, pk):
+    try:
+        result = TestResult.objects.get(pk=pk)
+    except TestResult.DoesNotExist:
+        messages.error(request, "Результат теста не найден")
+        if hasattr(request.user, 'profile') and request.user.profile.role == 'teacher':
+            return redirect('teacher_dashboard')
         return redirect('profile')
+
+    # Определяем роль пользователя
+    is_teacher = getattr(request.user.profile, 'role', '') == 'teacher'
+    is_student = getattr(request.user.profile, 'role', '') == 'student'
+
+    # СТРОГАЯ ПРОВЕРКА ПРАВ ДОСТУПА
+    has_access = False
+
+    if is_student:
+        if result.user == request.user:
+            has_access = True
+        else:
+            messages.error(request, "Вы не можете просматривать результаты других учеников")
+            return redirect('profile')
+
+    elif is_teacher:
+        if hasattr(result.user, 'profile') and result.user.profile.teacher == request.user:
+            has_access = True
+        else:
+            messages.error(request, "Этот результат теста принадлежит не вашему ученику")
+            return redirect('teacher_dashboard')
+
+    if not has_access:
+        messages.error(request, "У вас нет прав для просмотра этого результата")
+        return redirect('teacher_dashboard' if is_teacher else 'profile')
 
     # Обработка формы оценки (только для учителей)
     if is_teacher and request.method == 'POST':
@@ -463,27 +557,28 @@ def result_detail(request, pk):
             saved_result.save()
             notify_student_about_test_grade(request.user, result.user, saved_result)
             messages.success(request, 'Оценка успешно сохранена!')
-            return redirect('result_detail', pk=pk)
+            # ✅ ПРАВИЛЬНЫЙ РЕДИРЕКТ ДЛЯ УЧИТЕЛЯ
+            return redirect('teacher_result_detail', pk=pk)
     else:
         form = GradeTestForm(instance=result)
 
     answers = result.answers.all().order_by('question_id')
-
-    # Получаем результаты по темам из JSON-поля
     results_by_category = result.category_results
 
-    # Определяем URL для кнопки "Назад"
-    if result.user == request.user:
+    # ✅ ВЫБИРАЕМ ШАБЛОН В ЗАВИСИМОСТИ ОТ РОЛИ
+    if is_teacher:
+        template_name = 'teacher/result_detail.html'
+        back_url = 'student_results'
+        back_text = 'Назад к результатам учеников'
+    else:
+        template_name = 'student/result_detail.html'
         back_url = 'profile'
         back_text = 'Назад в профиль'
-    else:
-        back_url = 'teacher_dashboard'
-        back_text = 'Назад в панель учителя'
 
-    return render(request, 'student/result_detail.html', {
+    return render(request, template_name, {
         'result': result,
         'answers': answers,
-        'results_by_category': results_by_category,  # Добавьте эту строку
+        'results_by_category': results_by_category,
         'form': form,
         'is_teacher': is_teacher,
         'back_url': back_url,
@@ -491,19 +586,22 @@ def result_detail(request, pk):
     })
 @login_required
 def profile_update(request):
-    """Редактирование профиля"""
     if request.method == 'POST':
         form = UserUpdateForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Профиль успешно обновлён!')
+            # Перенаправляем в зависимости от роли
+            if hasattr(request.user, 'profile') and request.user.profile.role == 'teacher':
+                return redirect('teacher_dashboard')
             return redirect('profile')
     else:
         form = UserUpdateForm(instance=request.user)
 
-    return render(request, 'student/profile_update.html', {'form': form})
-
+    # Используем универсальный шаблон (создадим его ниже)
+    return render(request, 'profile_update.html', {'form': form})
 @login_required
+@any_user_required
 def change_password(request):
     """Смена пароля"""
     if request.method == 'POST':
@@ -513,18 +611,21 @@ def change_password(request):
             if user.check_password(form.cleaned_data['old_password']):
                 user.set_password(form.cleaned_data['new_password1'])
                 user.save()
-                update_session_auth_hash(request, user)  # не выкидывает из сессии
+                update_session_auth_hash(request, user)
                 messages.success(request, 'Пароль успешно изменён!')
+                # Перенаправляем в зависимости от роли
+                if hasattr(request.user, 'profile') and request.user.profile.role == 'teacher':
+                    return redirect('teacher_dashboard')
                 return redirect('profile')
             else:
                 form.add_error('old_password', 'Неверный текущий пароль')
     else:
         form = PasswordChangeForm()
 
-    return render(request, 'student/change_password.html', {'form': form})
-
+    return render(request, 'change_password.html', {'form': form})
 
 @login_required
+@any_user_required
 def delete_account(request):
     """Удаление аккаунта"""
     if request.method == 'POST':
@@ -534,9 +635,7 @@ def delete_account(request):
         messages.success(request, f'Аккаунт {username} удалён.')
         return redirect('initial')
 
-    return render(request, 'student/delete_account.html')
-
-
+    return render(request, 'delete_account.html', {'user': request.user})
 @login_required
 @teacher_required
 def student_results(request):
@@ -544,6 +643,8 @@ def student_results(request):
     student_id = request.GET.get('student_id')
     type_filter = request.GET.get('type_filter', '')
     grade_filter = request.GET.get('grade_filter', '')
+    group_filter = request.GET.get('group_filter', '')
+    course_filter = request.GET.get('course_filter', '')
 
     # Базовый фильтр: только ученики, привязанные к данному учителю
     students = User.objects.filter(
@@ -551,10 +652,32 @@ def student_results(request):
         profile__teacher=request.user
     ).select_related('profile')
 
-    # Если выбран конкретный ученик
+    # Получаем уникальные группы и курсы для выпадающих списков
+    available_groups = sorted(set(
+        student.profile.group for student in students
+        if student.profile and student.profile.group
+    ))
+    available_courses = sorted(set(
+        student.profile.course for student in students
+        if student.profile and student.profile.course
+    ))
+
+    # Если выбран конкретный ученик - проверяем, что он принадлежит учителю
     selected_student = None
     if student_id:
-        selected_student = get_object_or_404(students, id=student_id)
+        try:
+            # Пытаемся найти ученика среди своих
+            selected_student = students.get(id=student_id)
+        except User.DoesNotExist:
+            # Ученик не найден или не принадлежит учителю
+            messages.error(request, "Выбранный ученик не найден или не принадлежит вам")
+            # Очищаем параметр student_id
+            student_id = None
+            # Перенаправляем на ту же страницу без student_id
+            return redirect('student_results')
+        except User.MultipleObjectsReturned:
+            messages.error(request, "Ошибка: найдено несколько учеников")
+            student_id = None
 
     # Результаты тестов учеников
     test_results = TestResult.objects.filter(
@@ -571,21 +694,33 @@ def student_results(request):
         test_results = test_results.filter(user_id=student_id)
         lab_results = lab_results.filter(student_id=student_id)
 
+    # Фильтрация по группе
+    if group_filter:
+        test_results = test_results.filter(user__profile__group=group_filter)
+        lab_results = lab_results.filter(student__profile__group=group_filter)
+
+    # Фильтрация по курсу
+    if course_filter:
+        test_results = test_results.filter(user__profile__course=course_filter)
+        lab_results = lab_results.filter(student__profile__course=course_filter)
+
     # Применяем фильтр по типу
     if type_filter == 'test':
         lab_results = lab_results.none()
     elif type_filter == 'lab':
         test_results = test_results.none()
+    elif type_filter in ['start', 'final', 'teacher']:
+        # Фильтруем тесты по подтипу
+        test_results = test_results.filter(test_type=type_filter)
+        lab_results = lab_results.none()
 
     # Применяем фильтр по оценке
     if grade_filter:
         if grade_filter == 'pending':
-            # Непроверенные работы
             test_results = test_results.filter(grade__isnull=True)
             lab_results = lab_results.filter(grade__isnull=True)
         else:
-            # Конкретная оценка
-            test_results = test_results.filter(grade=grade_filter)
+            test_results = test_results.filter(grade=int(grade_filter))
             lab_results = lab_results.filter(grade=grade_filter)
 
     # Преобразуем лабораторные работы в формат, похожий на TestResult для единого отображения
@@ -593,21 +728,26 @@ def student_results(request):
 
     # Добавляем результаты тестов
     for result in test_results:
+        profile = result.user.profile
         combined_results.append({
             'type': 'test',
+            'test_subtype': result.test_type,
             'user': result.user,
-            'user_name': result.user.profile.full_name or result.user.username,
+            'user_name': profile.full_name or result.user.username,
             'title': result.get_test_type_display(),
             'score': f"{result.score}/{result.total_questions}",
             'percent': result.percent,
             'grade': result.get_grade_display() if result.grade else None,
             'grade_value': result.grade,
             'date': result.date_completed,
-            'detail_url': f'/result/{result.id}/'
+            'detail_url': f'/teacher/result/{result.id}/',
+            'group': profile.group if profile and profile.group else '—',
+            'course': profile.course if profile and profile.course else '—',
         })
 
     # Добавляем результаты лабораторных работ
     for submission in lab_results:
+        profile = submission.student.profile
         grade_num = None
         if submission.grade == '5':
             grade_num = 5
@@ -621,7 +761,7 @@ def student_results(request):
         combined_results.append({
             'type': 'lab',
             'user': submission.student,
-            'user_name': submission.student.profile.full_name or submission.student.username,
+            'user_name': profile.full_name or submission.student.username,
             'title': f"Лабораторная: {submission.lab_work.title}",
             'score': submission.grade or "—",
             'percent': None,
@@ -629,7 +769,9 @@ def student_results(request):
             'grade_value': grade_num,
             'date': submission.submitted_at,
             'status': submission.get_status_display(),
-            'detail_url': f'/teacher/lab/submission/{submission.id}/'
+            'detail_url': f'/teacher/lab/submission/{submission.id}/',
+            'group': profile.group if profile and profile.group else '—',
+            'course': profile.course if profile and profile.course else '—',
         })
 
     # Сортируем по дате (сначала новые)
@@ -640,8 +782,11 @@ def student_results(request):
         'students': students,
         'selected_student': selected_student,
         'student_id': student_id,
+        'group_filter': group_filter,
+        'course_filter': course_filter,
+        'available_groups': available_groups,
+        'available_courses': available_courses,
     })
-
 @teacher_required
 def manage_tests(request):
     """Управление тестами (добавление/редактирование вопросов)"""
@@ -656,28 +801,79 @@ def teacher_dashboard(request):
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied
 
+    from django.db.models import Avg, Count, Q, Value, IntegerField, Case, When, Sum
+    from django.db.models.functions import Coalesce
+
+    # Получаем всех учеников учителя
     my_students = User.objects.filter(
         profile__role='student',
         profile__teacher=request.user
-    ).select_related('profile').annotate(
-        test_count=Count('testresult', distinct=True),
-        lab_submission_count=Count(
-            'lab_submissions__lab_work',
-            filter=Q(lab_submissions__status__in=['submitted', 'under_review', 'graded']),
-            distinct=True
-        )
-    )
+    ).select_related('profile')
+
+    # Общее количество лабораторных работ учителя
+    total_labs_count_value = LabWork.objects.filter(created_by=request.user, is_active=True).count()
+
+    # Аннотируем каждого ученика
+    students_annotated = []
+    for student in my_students:
+        # Все пройденные тесты (все типы)
+        all_test_results = TestResult.objects.filter(user=student)
+        total_tests_passed = all_test_results.count()
+
+        # Количество сданных лабораторных
+        lab_submission_count = LabSubmission.objects.filter(
+            student=student,
+            lab_work__created_by=request.user,
+            status__in=['submitted', 'under_review', 'graded']
+        ).count()
+
+        # Средний балл за все тесты
+        test_scores = [r.grade for r in all_test_results if r.grade and r.grade != 0]
+        avg_grade = round(sum(test_scores) / len(test_scores), 1) if test_scores else None
+
+        # Общее количество доступных тестов (входной + итоговый + тесты учителя)
+        # Входной и итоговый тесты считаются как 2 доступных теста (если еще не пройдены, но они всегда доступны)
+        # Тесты от учителя, назначенные ученику
+        teacher_tests_count = TeacherTest.objects.filter(
+            assigned_to=student,
+            is_active=True
+        ).count()
+
+        # Всего доступных тестов = входной(1) + итоговый(1) + тесты учителя
+        total_all_tests_available = 2 + teacher_tests_count
+        # Количество пройденных тестов от учителя
+        teacher_tests_passed = TestResult.objects.filter(
+            user=student,
+            test_type='teacher'
+        ).count()
+
+        # Количество назначенных тестов от учителя
+        teacher_tests_count = TeacherTest.objects.filter(
+            assigned_to=student,
+            is_active=True
+        ).count()
+
+        students_annotated.append({
+            'id': student.id,
+            'profile': student.profile,
+            'email': student.email,
+            'total_tests_passed': total_tests_passed,
+            'teacher_tests_passed': teacher_tests_passed,
+            'teacher_tests_count': teacher_tests_count,
+            'lab_submission_count': lab_submission_count,
+            'total_labs_count': total_labs_count_value,
+            'total_all_tests_available': total_all_tests_available,
+            'avg_grade': avg_grade,
+        })
 
     # 📊 ДАННЫЕ ДЛЯ ГРАФИКОВ
     test_stats = TestResult.objects.filter(
         user__profile__teacher=request.user
     ).values('test_type').annotate(
-        count=Count('id'),
-        avg_score=Round(Avg('percent'), 1),
-        max_score=Max('percent')
+        count=Count('id')
     )
 
-    # Распределение оценок за ТЕСТЫ (исправлено)
+    # Распределение оценок за ТЕСТЫ
     test_grade_counts = TestResult.objects.filter(
         user__profile__teacher=request.user
     ).values('grade').annotate(count=Count('id'))
@@ -698,7 +894,6 @@ def teacher_dashboard(request):
         elif item['grade'] == 2:
             test_grade_2_count = item['count']
 
-    # Непроверенные тесты
     test_grade_pending_count = TestResult.objects.filter(
         user__profile__teacher=request.user,
         grade__isnull=True
@@ -715,20 +910,7 @@ def teacher_dashboard(request):
     lab_grade_2_count = lab_submissions.filter(grade='2').count()
     lab_grade_pending_count = lab_submissions.filter(grade__isnull=True).count()
 
-    # Статистика по лабораторным работам (для графика)
-    lab_stats = []
-    labs = LabWork.objects.filter(created_by=request.user, is_active=True)
-    for lab in labs:
-        submissions = LabSubmission.objects.filter(lab_work=lab, student__profile__teacher=request.user)
-        total = submissions.count()
-        graded_count = submissions.filter(grade__isnull=False).exclude(grade='').count()
-        lab_stats.append({
-            'name': lab.title[:20],
-            'total': total,
-            'graded_count': graded_count
-        })
-
-    # Статистика по темам (из category_results)
+    # Статистика по темам
     theme_stats = {}
     TRANSLATIONS = {
         'graphs': 'Графы',
@@ -736,7 +918,7 @@ def teacher_dashboard(request):
         'plenty': 'Множества',
         'final': 'Итоговый',
         'start': 'Входной',
-        'teacher_test':'Тест от учителя'
+        'teacher_test': 'Тест от учителя'
     }
     all_results = TestResult.objects.filter(user__profile__teacher=request.user)
     for result in all_results:
@@ -748,19 +930,24 @@ def teacher_dashboard(request):
                 theme_stats[theme]['correct'] += data.get('correct', 0)
                 theme_stats[theme]['total'] += data.get('total', 0)
 
-    total_tests_passed = my_students.aggregate(total=Sum('test_count'))['total'] or 0
-    total_labs_submitted = my_students.aggregate(total=Sum('lab_submission_count'))['total'] or 0
-    lab_count = LabWork.objects.filter(created_by=request.user).count()
+    total_tests_passed_all = sum(s['total_tests_passed'] for s in students_annotated)
+    total_labs_submitted_all = sum(s['lab_submission_count'] for s in students_annotated)
+
+    lab_count = total_labs_count_value
     pending_submissions = LabSubmission.objects.filter(
         status='under_review',
         lab_work__created_by=request.user
     ).count()
+    groups_list = list(set(
+        student['profile'].group for student in students_annotated
+        if student['profile'] and student['profile'].group
+    ))
 
     return render(request, 'teacher/teacher_dashboard.html', {
-        'students': my_students,
-        'student_count': my_students.count(),
-        'total_tests_passed': total_tests_passed,
-        'total_labs_submitted': total_labs_submitted,
+        'students': students_annotated,
+        'students_count': len(students_annotated),
+        'total_tests_passed': total_tests_passed_all,
+        'total_labs_submitted': total_labs_submitted_all,
         'test_stats': test_stats,
         'test_grade_5_count': test_grade_5_count,
         'test_grade_4_count': test_grade_4_count,
@@ -773,9 +960,9 @@ def teacher_dashboard(request):
         'lab_grade_2_count': lab_grade_2_count,
         'lab_grade_pending_count': lab_grade_pending_count,
         'theme_stats': list(theme_stats.items()),
-        'lab_stats': lab_stats,
         'lab_count': lab_count,
         'pending_submissions': pending_submissions,
+        'groups_list': groups_list
     })
 @login_required
 def view_student_results(request):
@@ -805,78 +992,255 @@ def student_detail(request, student_id):
         'student': student,
         'results': student_results
     })
+
+
 @login_required
 @teacher_required
 def download_report(request):
-    # Берём все результаты учеников, закреплённых за учителем
-    results = (
-        TestResult.objects
-        .filter(user__profile__teacher=request.user)
-        .select_related('user', 'user__profile')
-        .prefetch_related('answers')
-        .order_by('user__profile__full_name', '-date_completed')
+    """Экспорт отчёта в Excel с 4 страницами: Тесты от учителя, Входное тестирование, Итоговое тестирование, Лабораторные работы"""
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    # Создаём новую книгу
+    wb = Workbook()
+
+    # Удаляем стандартный лист (создадим свои)
+    wb.remove(wb.active)
+
+    # Стили для заголовков
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="2f66ff", end_color="2f66ff", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    center_alignment = Alignment(horizontal="center", vertical="center")
+    left_alignment = Alignment(horizontal="left", vertical="center")
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
     )
 
+    # Получаем всех учеников учителя
+    students = User.objects.filter(
+        profile__role='student',
+        profile__teacher=request.user
+    ).select_related('profile').order_by('profile__full_name')
+
+    # ==================== 1. ТЕСТЫ ОТ УЧИТЕЛЯ ====================
+    ws_teacher_tests = wb.create_sheet("Тесты от учителя")
+
+    # Заголовки
+    teacher_test_headers = ['№', 'Ученик', 'Группа', 'Курс', 'Название теста', 'Результат', '%', 'Оценка',
+                            'Дата прохождения']
+    for col, header in enumerate(teacher_test_headers, 1):
+        cell = ws_teacher_tests.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = border
+
+    row = 2
+    for student in students:
+        # Получаем все тесты от учителя для этого ученика
+        teacher_tests_results = TestResult.objects.filter(
+            user=student,
+            test_type='teacher'
+        ).select_related('teacher_test').order_by('-date_completed')
+
+        for result in teacher_tests_results:
+            ws_teacher_tests.cell(row=row, column=1, value=row - 1).border = border
+            ws_teacher_tests.cell(row=row, column=2,
+                                  value=student.profile.full_name or student.username).border = border
+            ws_teacher_tests.cell(row=row, column=3, value=student.profile.group or '—').border = border
+            ws_teacher_tests.cell(row=row, column=4, value=student.profile.course or '—').border = border
+            ws_teacher_tests.cell(row=row, column=5,
+                                  value=result.teacher_test.title if result.teacher_test else result.get_test_type_display()).border = border
+            ws_teacher_tests.cell(row=row, column=6, value=f"{result.score}/{result.total_questions}").border = border
+            ws_teacher_tests.cell(row=row, column=7, value=f"{result.percent}%").border = border
+            ws_teacher_tests.cell(row=row, column=8,
+                                  value=result.get_grade_display() if result.grade else '—').border = border
+            ws_teacher_tests.cell(row=row, column=9,
+                                  value=result.date_completed.strftime("%d.%m.%Y %H:%M")).border = border
+            row += 1
+
+    # Автоширина для страницы "Тесты от учителя"
+    for col in range(1, 10):
+        ws_teacher_tests.column_dimensions[get_column_letter(col)].auto_width = True
+
+    # ==================== 2. ВХОДНОЕ ТЕСТИРОВАНИЕ ====================
+    ws_start = wb.create_sheet("Входное тестирование")
+
+    start_headers = ['№', 'Ученик', 'Группа', 'Курс', 'Результат', '%', 'Оценка', 'Дата прохождения',
+                     'Комментарий учителя']
+    for col, header in enumerate(start_headers, 1):
+        cell = ws_start.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = border
+
+    row = 2
+    for student in students:
+        start_result = TestResult.objects.filter(
+            user=student,
+            test_type='start'
+        ).first()
+
+        if start_result:
+            ws_start.cell(row=row, column=1, value=row - 1).border = border
+            ws_start.cell(row=row, column=2, value=student.profile.full_name or student.username).border = border
+            ws_start.cell(row=row, column=3, value=student.profile.group or '—').border = border
+            ws_start.cell(row=row, column=4, value=student.profile.course or '—').border = border
+            ws_start.cell(row=row, column=5,
+                          value=f"{start_result.score}/{start_result.total_questions}").border = border
+            ws_start.cell(row=row, column=6, value=f"{start_result.percent}%").border = border
+            ws_start.cell(row=row, column=7,
+                          value=start_result.get_grade_display() if start_result.grade else '—').border = border
+            ws_start.cell(row=row, column=8,
+                          value=start_result.date_completed.strftime("%d.%m.%Y %H:%M")).border = border
+            ws_start.cell(row=row, column=9, value=start_result.teacher_comment or '—').border = border
+            row += 1
+        else:
+            ws_start.cell(row=row, column=1, value=row - 1).border = border
+            ws_start.cell(row=row, column=2, value=student.profile.full_name or student.username).border = border
+            ws_start.cell(row=row, column=3, value=student.profile.group or '—').border = border
+            ws_start.cell(row=row, column=4, value=student.profile.course or '—').border = border
+            ws_start.cell(row=row, column=5, value="Не пройден").border = border
+            ws_start.cell(row=row, column=6, value="—").border = border
+            ws_start.cell(row=row, column=7, value="—").border = border
+            ws_start.cell(row=row, column=8, value="—").border = border
+            ws_start.cell(row=row, column=9, value="—").border = border
+            row += 1
+
+    for col in range(1, 10):
+        ws_start.column_dimensions[get_column_letter(col)].auto_width = True
+
+    # ==================== 3. ИТОГОВОЕ ТЕСТИРОВАНИЕ ====================
+    ws_final = wb.create_sheet("Итоговое тестирование")
+
+    final_headers = ['№', 'Ученик', 'Группа', 'Курс', 'Результат', '%', 'Оценка', 'Дата прохождения',
+                     'Комментарий учителя']
+    for col, header in enumerate(final_headers, 1):
+        cell = ws_final.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = border
+
+    row = 2
+    for student in students:
+        final_result = TestResult.objects.filter(
+            user=student,
+            test_type='final'
+        ).first()
+
+        if final_result:
+            ws_final.cell(row=row, column=1, value=row - 1).border = border
+            ws_final.cell(row=row, column=2, value=student.profile.full_name or student.username).border = border
+            ws_final.cell(row=row, column=3, value=student.profile.group or '—').border = border
+            ws_final.cell(row=row, column=4, value=student.profile.course or '—').border = border
+            ws_final.cell(row=row, column=5,
+                          value=f"{final_result.score}/{final_result.total_questions}").border = border
+            ws_final.cell(row=row, column=6, value=f"{final_result.percent}%").border = border
+            ws_final.cell(row=row, column=7,
+                          value=final_result.get_grade_display() if final_result.grade else '—').border = border
+            ws_final.cell(row=row, column=8,
+                          value=final_result.date_completed.strftime("%d.%m.%Y %H:%M")).border = border
+            ws_final.cell(row=row, column=9, value=final_result.teacher_comment or '—').border = border
+            row += 1
+        else:
+            ws_final.cell(row=row, column=1, value=row - 1).border = border
+            ws_final.cell(row=row, column=2, value=student.profile.full_name or student.username).border = border
+            ws_final.cell(row=row, column=3, value=student.profile.group or '—').border = border
+            ws_final.cell(row=row, column=4, value=student.profile.course or '—').border = border
+            ws_final.cell(row=row, column=5, value="Не пройден").border = border
+            ws_final.cell(row=row, column=6, value="—").border = border
+            ws_final.cell(row=row, column=7, value="—").border = border
+            ws_final.cell(row=row, column=8, value="—").border = border
+            ws_final.cell(row=row, column=9, value="—").border = border
+            row += 1
+
+    for col in range(1, 10):
+        ws_final.column_dimensions[get_column_letter(col)].auto_width = True
+
+    # ==================== 4. ЛАБОРАТОРНЫЕ РАБОТЫ ====================
+    ws_labs = wb.create_sheet("Лабораторные работы")
+
+    lab_headers = ['№', 'Ученик', 'Группа', 'Курс', 'Название работы', 'Статус', 'Оценка', 'Комментарий', 'Дата сдачи',
+                   'Дата проверки']
+    for col, header in enumerate(lab_headers, 1):
+        cell = ws_labs.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = border
+
+    row = 2
+    for student in students:
+        lab_submissions = LabSubmission.objects.filter(
+            student=student,
+            lab_work__created_by=request.user
+        ).select_related('lab_work', 'graded_by__profile').order_by('-submitted_at')
+
+        for submission in lab_submissions:
+            status_display = {
+                'submitted': 'Сдано',
+                'under_review': 'На проверке',
+                'graded': 'Проверено',
+                'rejected': 'Отклонено'
+            }.get(submission.status, submission.status)
+
+            ws_labs.cell(row=row, column=1, value=row - 1).border = border
+            ws_labs.cell(row=row, column=2, value=student.profile.full_name or student.username).border = border
+            ws_labs.cell(row=row, column=3, value=student.profile.group or '—').border = border
+            ws_labs.cell(row=row, column=4, value=student.profile.course or '—').border = border
+            ws_labs.cell(row=row, column=5, value=submission.lab_work.title).border = border
+            ws_labs.cell(row=row, column=6, value=status_display).border = border
+            ws_labs.cell(row=row, column=7, value=submission.grade or '—').border = border
+            ws_labs.cell(row=row, column=8, value=submission.comment or '—').border = border
+            ws_labs.cell(row=row, column=9, value=submission.submitted_at.strftime("%d.%m.%Y %H:%M")).border = border
+            ws_labs.cell(row=row, column=10, value=submission.graded_at.strftime(
+                "%d.%m.%Y %H:%M") if submission.graded_at else '—').border = border
+            row += 1
+
+    for col in range(1, 11):
+        ws_labs.column_dimensions[get_column_letter(col)].auto_width = True
+
+    # Формируем имя файла
     now = timezone.localtime(timezone.now())
-    lines = []
-    lines.append("ОТЧЁТ ПО ТЕСТАМ")
-    lines.append(f"Преподаватель: {request.user.profile.full_name}")
-    lines.append(f"Дата формирования: {now.strftime('%d.%m.%Y %H:%M:%S')}")
-    lines.append("=" * 60)
-    lines.append("")
+    filename = f"full_report_{now.strftime('%Y-%m-%d_%H-%M')}.xlsx"
 
-    if not results.exists():
-        lines.append("Нет данных для отчёта.")
-    else:
-        current_student = None
+    # Сохраняем в response
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    # Например, для страницы "Тесты от учителя" - добавить строку с итогами
+    if row > 2:
+        # Пустая строка-разделитель
+        ws_teacher_tests.cell(row=row, column=1, value="").border = border
+        row += 1
 
-        for r in results:
-            student_name = getattr(r.user.profile, "full_name", r.user.username)
+        # Строка с итогами
+        total_students_with_results = len(set(
+            TestResult.objects.filter(
+                user__profile__teacher=request.user,
+                test_type='teacher'
+            ).values_list('user_id', flat=True).distinct()
+        ))
 
-            # Заголовок ученика
-            if student_name != current_student:
-                current_student = student_name
-                lines.append(f"Ученик: {student_name}")
-                lines.append(f"Email: {r.user.email}")
-                grp = r.user.profile.group or "-"
-                course = r.user.profile.course or "-"
-                lines.append(f"Группа: {grp} | Курс: {course}")
-                lines.append("-" * 60)
+        summary_row = row
+        ws_teacher_tests.cell(row=summary_row, column=2, value="ИТОГО:").font = Font(bold=True)
+        ws_teacher_tests.cell(row=summary_row, column=5, value=f"Всего сдач: {row - 2}").font = Font(bold=True)
+        ws_teacher_tests.cell(row=summary_row, column=6,
+                              value=f"Учеников с результатами: {total_students_with_results}").font = Font(bold=True)
 
-            # Строка теста
-            test_type_display = "Входной" if r.test_type == "start" else "Итоговый" if r.test_type == "final" else r.test_type
-            dt = timezone.localtime(r.date_completed).strftime('%d.%m.%Y %H:%M')
-            percent = r.percent if r.percent is not None else r.percentage
-
-            lines.append(f"[{dt}] {test_type_display}: {r.score}/{r.total_questions} ({round(percent, 2)}%)")
-
-            # Результаты по темам (из JSON category_results)
-            if r.category_results:
-                lines.append("  По темам:")
-                for key, data in r.category_results.items():
-                    name = data.get("name") or key
-                    correct = data.get("correct", 0)
-                    total = data.get("total", 0)
-                    p = round((correct / total) * 100, 2) if total else 0
-                    lines.append(f"   - {name}: {correct}/{total} ({p}%)")
-
-            # (опционально) детализация по каждому вопросу
-            # если не нужно — удалите этот блок целиком
-            ans = list(r.answers.all().order_by('question_id'))
-            if ans:
-                lines.append("  Детализация ответов:")
-                for a in ans:
-                    status = "OK" if a.is_correct else "NO"
-                    ua = a.user_answer or "-"
-                    ca = a.correct_answer or "-"
-                    lines.append(f"   Q{a.question_id}: {status} | ваш: {ua} | верный: {ca}")
-            lines.append("")
-
-    content = "\n".join(lines)
-    filename = f"report_{now.strftime('%Y-%m-%d_%H-%M')}.txt"
-
-    response = HttpResponse(content, content_type="text/plain; charset=utf-8")
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        # Объединяем ячейки для итогов
+        ws_teacher_tests.merge_cells(f'A{summary_row}:A{summary_row + 1}')
+        ws_teacher_tests.merge_cells(f'B{summary_row}:D{summary_row + 1}')
+    wb.save(response)
     return response
 
 
@@ -917,9 +1281,8 @@ def teacher_labs(request):
         lab_work__created_by=request.user
     ).select_related('student__profile', 'lab_work')
 
-    # Фильтрация по проверенности через grade, а не checked
+    # Фильтрация по проверенности через grade
     checked_filter = request.GET.get('checked')
-
     if checked_filter == 'true':
         submissions = submissions.filter(
             Q(grade__isnull=False) & ~Q(grade='')
@@ -936,8 +1299,34 @@ def teacher_labs(request):
             student__profile__full_name__icontains=search_name
         )
 
+    # НОВЫЕ ФИЛЬТРЫ: по группе и курсу
+    group_filter = request.GET.get('group', '').strip()
+    if group_filter:
+        submissions = submissions.filter(student__profile__group=group_filter)
+
+    course_filter = request.GET.get('course', '').strip()
+    if course_filter:
+        submissions = submissions.filter(student__profile__course=course_filter)
+
     submissions = submissions.order_by('-submitted_at')
     total_submissions = submissions.count()
+
+    # Получаем уникальные группы и курсы для выпадающих списков
+    students = User.objects.filter(profile__teacher=request.user, profile__role='student')
+    available_groups = sorted(set(
+        student.profile.group for student in students
+        if student.profile and student.profile.group
+    ))
+    available_courses = sorted(set(
+        student.profile.course for student in students
+        if student.profile and student.profile.course
+    ))
+
+    # Добавляем информацию о группе и курсе для каждой сдачи
+    for submission in submissions:
+        profile = submission.student.profile
+        submission.student_group = profile.group if profile and profile.group else '—'
+        submission.student_course = profile.course if profile and profile.course else '—'
 
     return render(request, 'teacher/teacher_labs.html', {
         'labs': labs,
@@ -945,8 +1334,11 @@ def teacher_labs(request):
         'total_submissions': total_submissions,
         'checked_filter': checked_filter,
         'search_name': search_name,
+        'group_filter': group_filter,
+        'course_filter': course_filter,
+        'available_groups': available_groups,
+        'available_courses': available_courses,
     })
-
 @login_required
 @teacher_required
 def delete_lab_work(request, lab_id):
@@ -1020,10 +1412,15 @@ def create_lab_work(request):
 
 @login_required
 def lab_view(request, lab_id):
+    try:
+        lab = LabWork.objects.get(id=lab_id, is_active=True)
+        if lab.created_by != request.user.profile.teacher:
+            messages.error(request, "У вас нет доступа к этой лабораторной работе")
+            return redirect('student_labs')
+    except LabWork.DoesNotExist:
+        messages.error(request, "Запрашиваемая лабораторная работа не найдена или недоступна")
+        return redirect('student_labs')
 
-    lab = get_object_or_404(LabWork, id=lab_id)
-    if lab.created_by != request.user.profile.teacher:
-        raise PermissionDenied("У вас нет доступа к этой лабораторной")
     existing_submission = lab.submissions.filter(
         student=request.user,
         lab_work=lab
@@ -1035,11 +1432,15 @@ def lab_view(request, lab_id):
     }
     return render(request, 'student/lab.html', context)
 
-
 @login_required
 @teacher_required
 def lab_detail(request, lab_id):
-    lab = get_object_or_404(LabWork, id=lab_id, created_by=request.user)
+    try:
+        lab = LabWork.objects.get(id=lab_id, created_by=request.user)
+    except LabWork.DoesNotExist:
+        messages.error(request, "Лабораторная работа не найдена или у вас нет доступа к ней")
+        return redirect('teacher_labs')
+
     submissions = lab.submissions.select_related('student__profile').order_by('-submitted_at')
 
     if request.method == 'POST':
@@ -1067,7 +1468,7 @@ def lab_detail(request, lab_id):
 @login_required
 @student_required
 def submit_lab(request, lab_id):
-    """Сдача лабораторной работы"""
+    """Сдача лабораторной работы (с возможностью перезаписи)"""
     lab = get_object_or_404(LabWork, id=lab_id, is_active=True)
 
     # Проверяем, что это лабораторная преподавателя ученика
@@ -1075,29 +1476,44 @@ def submit_lab(request, lab_id):
         messages.error(request, 'У вас нет доступа к этой лабораторной')
         return redirect('student_labs')
 
+    # Проверяем, есть ли уже сдача
+    existing_submission = LabSubmission.objects.filter(
+        lab_work=lab,
+        student=request.user
+    ).first()
+
     if request.method == 'POST':
         submitted_file = request.FILES.get('submitted_file')
         comment = request.POST.get('comment', '').strip()
 
         if submitted_file:
-            submission = LabSubmission.objects.create(
-                lab_work=lab,
-                student=request.user,
-                submitted_file=submitted_file,
-                comment=comment,
-                status='under_review'
-            )
+            if existing_submission:
+                # ✅ ОБНОВЛЯЕМ существующую сдачу, а не создаем новую
+                existing_submission.submitted_file = submitted_file
+                existing_submission.comment = comment
+                existing_submission.status = 'under_review'  # Сбрасываем статус на "на проверке"
+                existing_submission.submitted_at = timezone.now()  # Обновляем дату сдачи
+                existing_submission.save()
 
-            # Передаем submission.id в функцию
-            notify_teacher_about_submission(lab.created_by, request.user, lab, submission.id)
+                messages.success(request, 'Работа успешно перезаписана и отправлена на проверку!')
+            else:
+                # Создаем новую сдачу
+                submission = LabSubmission.objects.create(
+                    lab_work=lab,
+                    student=request.user,
+                    submitted_file=submitted_file,
+                    comment=comment,
+                    status='under_review'
+                )
+                # Передаем submission.id в функцию
+                notify_teacher_about_submission(lab.created_by, request.user, lab, submission.id)
+                messages.success(request, 'Работа сдана на проверку!')
 
-            messages.success(request, 'Работа сдана на проверку!')
             return redirect('student_labs')
         else:
             messages.error(request, 'Прикрепите файл!')
 
     return render(request, 'student/lab.html', {'lab': lab})
-
 @login_required
 @teacher_required
 def add_question(request):
@@ -1126,13 +1542,25 @@ def manage_questions(request):
 @login_required
 @teacher_required
 def create_teacher_test(request):
+    # Получаем профили учеников учителя
+    students = UserProfile.objects.filter(
+        role='student',
+        teacher=request.user
+    ).select_related('user')
+
+    # Получаем уникальные группы и курсы для фильтров
+    unique_groups = sorted(set(
+        student.group for student in students
+        if student and student.group
+    ))
+    unique_courses = sorted(set(
+        student.course for student in students
+        if student and student.course
+    ))
+
     if request.method == 'POST':
         test_form = TeacherTestForm(request.POST)
-        question_formset = formset_factory(TestQuestionForm, extra=0)
-
-        # Обработка выбранных вопросов из БД
-        selected_question_ids = request.POST.getlist('existing_questions')
-        selected_questions = TestQuestion.objects.filter(id__in=selected_question_ids)
+        # ... остальной код обработки формы ...
 
         if test_form.is_valid():
             test = test_form.save(commit=False)
@@ -1140,25 +1568,24 @@ def create_teacher_test(request):
             test.save()
 
             # Добавляем выбранные вопросы из БД
+            selected_question_ids = request.POST.getlist('existing_questions')
+            selected_questions = TestQuestion.objects.filter(id__in=selected_question_ids)
             test.questions.add(*selected_questions)
 
             # Обрабатываем динамически добавленные вопросы
             i = 0
             while f'question_form-{i}-question_text' in request.POST:
                 question_text = request.POST.get(f'question_form-{i}-question_text')
-                if question_text:  # Проверяем, что вопрос не пустой
-                    # Получаем категорию
+                if question_text:
                     category_id = request.POST.get(f'question_form-{i}-category')
                     try:
                         category = TestCategory.objects.get(id=category_id)
                     except (TestCategory.DoesNotExist, ValueError):
-                        # Если категория не выбрана, берем первую доступную
                         category = TestCategory.objects.first()
                         if not category:
                             messages.error(request, 'Нет доступных категорий вопросов')
                             return redirect('create_teacher_test')
 
-                    # Преобразуем правильный ответ из '1','2','3','4' в 'a','b','c','d'
                     correct_option_raw = request.POST.get(f'question_form-{i}-correct_answer')
                     correct_option_map = {'1': 'a', '2': 'b', '3': 'c', '4': 'd'}
                     correct_option = correct_option_map.get(correct_option_raw, 'a')
@@ -1166,28 +1593,39 @@ def create_teacher_test(request):
                     question = TestQuestion.objects.create(
                         category=category,
                         question_text=question_text,
-                        option_a=request.POST.get(f'question_form-{i}-option1'),
-                        option_b=request.POST.get(f'question_form-{i}-option2'),
-                        option_c=request.POST.get(f'question_form-{i}-option3'),
-                        option_d=request.POST.get(f'question_form-{i}-option4'),
+                        option_a=request.POST.get(f'question_form-{i}-option1', ''),
+                        option_b=request.POST.get(f'question_form-{i}-option2', ''),
+                        option_c=request.POST.get(f'question_form-{i}-option3', ''),
+                        option_d=request.POST.get(f'question_form-{i}-option4', ''),
                         correct_option=correct_option,
                         created_by=request.user
                     )
                     test.questions.add(question)
                 i += 1
 
-            # ОБРАБОТКА ВЫБРАННЫХ УЧЕНИКОВ
+            # Обработка выбранных учеников
             selected_student_ids = request.POST.getlist('selected_students')
             if selected_student_ids:
                 # Добавляем только выбранных учеников
-                students = User.objects.filter(id__in=selected_student_ids, profile__teacher=request.user)
-                test.assigned_to.set(students)
+                selected_students = User.objects.filter(
+                    id__in=selected_student_ids,
+                    profile__teacher=request.user
+                )
+                test.assigned_to.set(selected_students)
             else:
                 # Если никого не выбрано - добавляем всех учеников учителя
-                students = User.objects.filter(profile__teacher=request.user, profile__role='student')
-                test.assigned_to.set(students)
-                messages.info(request, 'Тест назначен всем вашим ученикам')
-            notify_students_about_new_test(request.user, students, test)
+                all_students = User.objects.filter(
+                    profile__teacher=request.user,
+                    profile__role='student'
+                )
+                test.assigned_to.set(all_students)
+                if all_students.exists():
+                    messages.info(request, 'Тест назначен всем вашим ученикам')
+
+            # Отправляем уведомления
+            for student in test.assigned_to.all():
+                notify_student_about_new_test(request.user, student, test)
+
             messages.success(request, f'Тест "{test.title}" успешно создан!')
             return redirect('teacher_manage_tests')
 
@@ -1203,6 +1641,9 @@ def create_teacher_test(request):
         'test_form': test_form,
         'all_questions': all_questions,
         'categories': categories,
+        'students': students,  # Здесь объекты UserProfile
+        'unique_groups': unique_groups,
+        'unique_courses': unique_courses,
     }
     return render(request, 'teacher/create_teacher_test.html', context)
 @login_required
@@ -1217,9 +1658,13 @@ def teacher_manage_tests(request):
 @teacher_required
 def teacher_test_detail(request, test_id):
     """Детали теста от учителя"""
-    test = get_object_or_404(TeacherTest, id=test_id, teacher=request.user)
-    return render(request, 'teacher/test_detail.html', {'test': test})
+    try:
+        test = TeacherTest.objects.get(id=test_id, teacher=request.user)
+    except TeacherTest.DoesNotExist:
+        messages.error(request, "Тест не найден или у вас нет доступа к нему")
+        return redirect('teacher_manage_tests')
 
+    return render(request, 'teacher/test_detail.html', {'test': test})
 
 @login_required
 @teacher_required
@@ -1242,6 +1687,10 @@ def delete_teacher_test(request, test_id):
 def student_teacher_tests(request):
     teacher = request.user.profile.teacher
 
+    # Исправлено: убрали Q(assigned_to__exact='') и Q(assigned_to__isnull=True)
+    # Тесты доступны если:
+    # 1. Назначены конкретному ученику (assigned_to=студент)
+    # 2. Не назначены никому (assigned_to__isnull=True) - это и есть "доступно всем"
     tests = TeacherTest.objects.filter(
         teacher=teacher,
         is_active=True
@@ -1249,7 +1698,7 @@ def student_teacher_tests(request):
         Q(assigned_to=request.user) | Q(assigned_to__isnull=True)
     ).distinct()
 
-    # Получаем ID тестов, которые уже пройдены (используя новое поле)
+    # Получаем ID тестов, которые уже пройдены
     completed_test_ids = set(
         TestResult.objects.filter(
             user=request.user,
@@ -1277,9 +1726,14 @@ def student_teacher_tests(request):
 @student_required
 def take_teacher_test(request, test_id):
     """Прохождение теста от учителя"""
-    test = get_object_or_404(TeacherTest, id=test_id, is_active=True)
-    if not test.assigned_to.filter(id=request.user.id).exists():
-        raise PermissionDenied("Вам не назначен этот тест")
+    try:
+        test = TeacherTest.objects.get(id=test_id, is_active=True)
+        if not test.assigned_to.filter(id=request.user.id).exists():
+            messages.error(request, "Вам не назначен этот тест")
+            return redirect('student_teacher_tests')
+    except TeacherTest.DoesNotExist:
+        messages.error(request, "Запрашиваемый тест не найден или недоступен")
+        return redirect('student_teacher_tests')
 
     if request.method == 'POST':
         correct = 0
@@ -1355,15 +1809,18 @@ def teacher_lab_detail(request, lab_id):
 @login_required
 @teacher_required
 def submission_detail(request, submission_id):
-    submission = get_object_or_404(
-        LabSubmission.objects.select_related(
+    try:
+        submission = LabSubmission.objects.select_related(
             'student__profile',
             'lab_work',
             'graded_by__profile'
-        ),
-        id=submission_id,
-        lab_work__created_by=request.user
-    )
+        ).get(
+            id=submission_id,
+            lab_work__created_by=request.user
+        )
+    except LabSubmission.DoesNotExist:
+        messages.error(request, "Сданная работа не найдена или у вас нет доступа к ней")
+        return redirect('teacher_labs')
 
     if request.method == 'POST':
         grade = request.POST.get('grade')
@@ -1422,6 +1879,8 @@ def export_student_results_excel(request):
     student_id = request.GET.get('student_id')
     type_filter = request.GET.get('type_filter', '')
     grade_filter = request.GET.get('grade_filter', '')
+    group_filter = request.GET.get('group_filter', '')  # НОВОЕ
+    course_filter = request.GET.get('course_filter', '')  # НОВОЕ
 
     # Получаем данные с теми же фильтрами, что и на странице
     students_qs = User.objects.filter(
@@ -1440,6 +1899,15 @@ def export_student_results_excel(request):
     if student_id:
         test_results = test_results.filter(user_id=student_id)
         lab_results = lab_results.filter(student_id=student_id)
+
+    # НОВАЯ ФИЛЬТРАЦИЯ
+    if group_filter:
+        test_results = test_results.filter(user__profile__group=group_filter)
+        lab_results = lab_results.filter(student__profile__group=group_filter)
+
+    if course_filter:
+        test_results = test_results.filter(user__profile__course=course_filter)
+        lab_results = lab_results.filter(student__profile__course=course_filter)
 
     if type_filter == 'test':
         lab_results = lab_results.none()
@@ -1470,8 +1938,8 @@ def export_student_results_excel(request):
         bottom=Side(style='thin')
     )
 
-    # Заголовки
-    headers = ['Тип', 'Ученик', 'Название', 'Результат', 'Процент', 'Оценка', 'Дата']
+    # Заголовки (добавлены колонки Группа и Курс)
+    headers = ['Тип', 'Ученик', 'Группа', 'Курс', 'Название', 'Результат', 'Процент', 'Оценка', 'Дата']
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=header)
         cell.font = header_font
@@ -1484,42 +1952,52 @@ def export_student_results_excel(request):
 
     # Тесты
     for result in test_results:
-        user_name = result.user.profile.full_name or result.user.username
+        profile = result.user.profile
+        user_name = profile.full_name or result.user.username
         title = result.get_test_type_display()
         score = f"{result.score}/{result.total_questions}"
         percent = f"{result.percent}%" if result.percent else "—"
         grade = result.get_grade_display() if result.grade else "—"
         date = result.date_completed.strftime("%d.%m.%Y %H:%M")
+        group = profile.group if profile and profile.group else "—"
+        course = profile.course if profile and profile.course else "—"
 
         ws.cell(row=row, column=1, value="Тест").border = border
         ws.cell(row=row, column=2, value=user_name).border = border
-        ws.cell(row=row, column=3, value=title).border = border
-        ws.cell(row=row, column=4, value=score).border = border
-        ws.cell(row=row, column=5, value=percent).border = border
-        ws.cell(row=row, column=6, value=grade).border = border
-        ws.cell(row=row, column=7, value=date).border = border
+        ws.cell(row=row, column=3, value=group).border = border
+        ws.cell(row=row, column=4, value=course).border = border
+        ws.cell(row=row, column=5, value=title).border = border
+        ws.cell(row=row, column=6, value=score).border = border
+        ws.cell(row=row, column=7, value=percent).border = border
+        ws.cell(row=row, column=8, value=grade).border = border
+        ws.cell(row=row, column=9, value=date).border = border
         row += 1
 
     # Лабораторные работы
     for submission in lab_results:
-        user_name = submission.student.profile.full_name or submission.student.username
+        profile = submission.student.profile
+        user_name = profile.full_name or submission.student.username
         title = f"Лабораторная: {submission.lab_work.title}"
         score = submission.grade or "—"
         percent = "—"
         grade = submission.grade or "—"
         date = submission.submitted_at.strftime("%d.%m.%Y %H:%M")
+        group = profile.group if profile and profile.group else "—"
+        course = profile.course if profile and profile.course else "—"
 
         ws.cell(row=row, column=1, value="Лабораторная").border = border
         ws.cell(row=row, column=2, value=user_name).border = border
-        ws.cell(row=row, column=3, value=title).border = border
-        ws.cell(row=row, column=4, value=score).border = border
-        ws.cell(row=row, column=5, value=percent).border = border
-        ws.cell(row=row, column=6, value=grade).border = border
-        ws.cell(row=row, column=7, value=date).border = border
+        ws.cell(row=row, column=3, value=group).border = border
+        ws.cell(row=row, column=4, value=course).border = border
+        ws.cell(row=row, column=5, value=title).border = border
+        ws.cell(row=row, column=6, value=score).border = border
+        ws.cell(row=row, column=7, value=percent).border = border
+        ws.cell(row=row, column=8, value=grade).border = border
+        ws.cell(row=row, column=9, value=date).border = border
         row += 1
 
     # Автоматическая ширина колонок
-    for col in range(1, 8):
+    for col in range(1, 10):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].auto_width = True
 
     # Формируем имя файла
@@ -1532,13 +2010,13 @@ def export_student_results_excel(request):
     wb.save(response)
     return response
 
+
+@login_required
 @login_required
 def get_notifications(request):
-    """Получение уведомлений пользователя (AJAX)"""
     notifications = Notification.objects.filter(recipient=request.user)[:20]
     html = render_to_string('includes/notifications.html', {'notifications': notifications}, request=request)
     return JsonResponse({'html': html})
-
 @login_required
 def mark_notification_read(request, notification_id):
     """Отметить уведомление как прочитанное"""
@@ -1579,9 +2057,336 @@ def delete_all_notifications(request):
     return JsonResponse({'status': 'ok'})
 
 
+@login_required
+@teacher_required
+def teacher_students_list(request):
+    """Страница со списком всех учеников учителя и статистикой по сданным/несданным работам"""
+    students = User.objects.filter(
+        profile__role='student',
+        profile__teacher=request.user
+    ).select_related('profile').order_by('profile__full_name')
+
+    students_data = []
+    total_labs_count_value = LabWork.objects.filter(created_by=request.user, is_active=True).count() or 1  # избегаем деления на 0
+
+    for student in students:
+        # ВСЕ пройденные тесты (всех типов)
+        all_test_results = TestResult.objects.filter(user=student)
+        completed_tests = all_test_results.count()
+
+        # Сданные лабораторные
+        submitted_labs = LabSubmission.objects.filter(
+            student=student,
+            lab_work__created_by=request.user
+        ).count()
+
+        # Общее количество доступных тестов = входной(1) + итоговый(1) + тесты учителя
+        teacher_tests_count = TeacherTest.objects.filter(
+            assigned_to=student,
+            is_active=True
+        ).count() or 0
+        total_available_tests = 2 + teacher_tests_count  # 2 - входной и итоговый
+
+        # Средний балл за все тесты
+        test_scores = [r.grade for r in all_test_results if r.grade and r.grade != 0]
+        avg_grade = round(sum(test_scores) / len(test_scores), 1) if test_scores else None
+        teacher_tests_passed = TestResult.objects.filter(
+            user=student,
+            test_type='teacher'
+        ).count()
+
+        # Количество назначенных тестов от учителя
+        teacher_tests_count = TeacherTest.objects.filter(
+            assigned_to=student,
+            is_active=True
+        ).count()
+        students_data.append({
+            'student': student,
+            'full_name': student.profile.full_name or student.username,
+            'group': student.profile.group or '—',
+            'course': student.profile.course or '—',
+            'teacher_tests_passed': teacher_tests_passed,
+            'teacher_tests_count': teacher_tests_count,
+            'completed_tests': completed_tests,
+            'submitted_labs': submitted_labs,
+            'total_labs': total_labs_count_value,
+            'total_available_tests': total_available_tests,
+            'avg_grade': avg_grade,
+        })
+
+    total_students = len(students)
+    total_test_assignments = sum(s['total_available_tests'] for s in students_data)
+    total_test_completions = sum(s['completed_tests'] for s in students_data)
+    total_lab_submissions = sum(s['submitted_labs'] for s in students_data)
+
+    context = {
+        'students_data': students_data,
+        'total_students': total_students,
+        'total_test_assignments': total_test_assignments,
+        'total_test_completions': total_test_completions,
+        'total_lab_submissions': total_lab_submissions,
+    }
+    return render(request, 'teacher/teacher_students_list.html', context)
 
 
+@login_required
+@teacher_required
+def teacher_student_stats(request, student_id):
+    """Детальная страница статистики по выбранному ученику"""
+    student = get_object_or_404(
+        User,
+        id=student_id,
+        profile__role='student',
+        profile__teacher=request.user
+    )
 
+    profile = student.profile
+
+    # ========== ВСЕ ТЕСТЫ ==========
+    # Входной и итоговый тесты
+    start_test_result = TestResult.objects.filter(user=student, test_type='start').first()
+    final_test_result = TestResult.objects.filter(user=student, test_type='final').first()
+
+    # Тесты от учителя
+    assigned_tests = TeacherTest.objects.filter(
+        assigned_to=student,
+        is_active=True
+    ).order_by('-created_at')
+
+    completed_teacher_test_results = TestResult.objects.filter(
+        user=student,
+        test_type='teacher'
+    ).select_related('teacher_test').order_by('-date_completed')
+
+    results_by_teacher_test_id = {r.teacher_test_id: r for r in completed_teacher_test_results if r.teacher_test_id}
+
+    # Собираем все тесты в один список
+    all_tests_data = []
+
+    # Входной тест
+    all_tests_data.append({
+        'title': 'Входное тестирование',
+        'description': 'Тест для определения начального уровня знаний',
+        'is_completed': start_test_result is not None,
+        'result': start_test_result,
+        'score': f"{start_test_result.score}/{start_test_result.total_questions}" if start_test_result else None,
+        'percent': start_test_result.percent if start_test_result else None,
+        'grade': start_test_result.get_grade_display() if start_test_result and start_test_result.grade else None,
+        'completed_at': start_test_result.date_completed if start_test_result else None,
+        'detail_url': f'/teacher/result/{start_test_result.id}/' if start_test_result else None,
+    })
+
+    # Итоговый тест
+    all_tests_data.append({
+        'title': 'Итоговое тестирование',
+        'description': 'Финальный тест по всему курсу',
+        'is_completed': final_test_result is not None,
+        'result': final_test_result,
+        'score': f"{final_test_result.score}/{final_test_result.total_questions}" if final_test_result else None,
+        'percent': final_test_result.percent if final_test_result else None,
+        'grade': final_test_result.get_grade_display() if final_test_result and final_test_result.grade else None,
+        'completed_at': final_test_result.date_completed if final_test_result else None,
+        'detail_url': f'/teacher/result/{final_test_result.id}/' if final_test_result else None,
+    })
+
+    # Тесты от учителя
+    for test in assigned_tests:
+        result = results_by_teacher_test_id.get(test.id)
+        all_tests_data.append({
+            'title': test.title,
+            'description': test.description or 'Описание отсутствует',
+            'is_completed': result is not None,
+            'result': result,
+            'score': f"{result.score}/{result.total_questions}" if result else None,
+            'percent': result.percent if result else None,
+            'grade': result.get_grade_display() if result and result.grade else None,
+            'completed_at': result.date_completed if result else None,
+            'detail_url': f'/teacher/result/{result.id}/' if result else None,
+        })
+
+    # Статистика по всем тестам
+    total_tests_available = len(all_tests_data)
+    total_tests_completed = len([t for t in all_tests_data if t['is_completed']])
+    all_test_grades = [t['result'].grade for t in all_tests_data if
+                       t['is_completed'] and t['result'] and t['result'].grade]
+    all_tests_avg_grade = round(sum(all_test_grades) / len(all_test_grades), 1) if all_test_grades else None
+
+    # Статистика только по тестам учителя
+    tests_data = []
+    for test in assigned_tests:
+        result = results_by_teacher_test_id.get(test.id)
+        tests_data.append({
+            'test': test,
+            'is_completed': result is not None,
+            'result': result,
+            'score': f"{result.score}/{result.total_questions}" if result else None,
+            'percent': result.percent if result else None,
+            'grade': result.get_grade_display() if result and result.grade else None,
+            'completed_at': result.date_completed if result else None,
+        })
+
+    completed_tests_count = len([t for t in tests_data if t['is_completed']])
+    not_completed_tests_count = len([t for t in tests_data if not t['is_completed']])
+    test_grades = [t['result'].grade for t in tests_data if t['is_completed'] and t['result'].grade]
+    test_avg_grade = round(sum(test_grades) / len(test_grades), 1) if test_grades else None
+
+    # ========== ЛАБОРАТОРНЫЕ ==========
+    all_labs = LabWork.objects.filter(
+        created_by=request.user,
+        is_active=True
+    ).order_by('-created_at')
+
+    submitted_labs = LabSubmission.objects.filter(
+        student=student,
+        lab_work__created_by=request.user
+    ).select_related('lab_work', 'graded_by__profile')
+
+    submitted_by_lab_id = {s.lab_work_id: s for s in submitted_labs}
+
+    labs_data = []
+    for lab in all_labs:
+        submission = submitted_by_lab_id.get(lab.id)
+        labs_data.append({
+            'lab': lab,
+            'is_submitted': submission is not None,
+            'submission': submission,
+            'grade': submission.grade if submission else None,
+            'status': submission.get_status_display() if submission else None,
+            'submitted_at': submission.submitted_at if submission else None,
+            'comment': submission.comment if submission else None,
+        })
+
+    submitted_labs_count = len([l for l in labs_data if l['is_submitted']])
+    not_submitted_labs_count = len([l for l in labs_data if not l['is_submitted']])
+
+    # ========== ВСЕ РАБОТЫ (для сводной таблицы) ==========
+    test_results_all = []
+
+    # Все тесты (включая входной и итоговый)
+    for test_data in all_tests_data:
+        if test_data['is_completed'] and test_data['result']:
+            result = test_data['result']
+            test_results_all.append({
+                'type': 'test',
+                'type_name': 'Тестирование' if result.test_type in ['start', 'final'] else 'Тест от учителя',
+                'title': test_data['title'],
+                'score': test_data['score'],
+                'percent': test_data['percent'],
+                'grade': test_data['grade'],
+                'grade_value': result.grade,
+                'date': test_data['completed_at'],
+                'detail_url': test_data['detail_url'],
+            })
+
+    lab_results_all = []
+    for submission in submitted_labs:
+        lab_results_all.append({
+            'type': 'lab',
+            'type_name': 'Лабораторная работа',
+            'title': submission.lab_work.title,
+            'score': submission.grade or "—",
+            'percent': None,
+            'grade': submission.grade,
+            'grade_value': int(submission.grade) if submission.grade and submission.grade.isdigit() else None,
+            'date': submission.submitted_at,
+            'status': submission.get_status_display(),
+            'detail_url': f'/teacher/lab/submission/{submission.id}/',
+        })
+
+    all_works = test_results_all + lab_results_all
+    all_works.sort(key=lambda x: x['date'], reverse=True)
+
+    context = {
+        'student': student,
+        'profile': profile,
+        'full_name': profile.full_name or student.username,
+        'group': profile.group or '—',
+        'course': profile.course or '—',
+        'email': student.email,
+
+        # Все тесты
+        'all_tests_data': all_tests_data,
+        'total_tests_available': total_tests_available,
+        'total_tests_completed': total_tests_completed,
+        'all_tests_avg_grade': all_tests_avg_grade,
+
+        # Тесты от учителя
+        'tests_data': tests_data,
+        'completed_tests_count': completed_tests_count,
+        'not_completed_tests_count': not_completed_tests_count,
+        'test_avg_grade': test_avg_grade,
+
+        # Лабораторные
+        'labs_data': labs_data,
+        'submitted_labs_count': submitted_labs_count,
+        'not_submitted_labs_count': not_submitted_labs_count,
+
+        # Сводная таблица
+        'all_works': all_works,
+    }
+
+    return render(request, 'teacher/teacher_student_stats.html', context)
+
+
+@login_required
+@teacher_required
+def edit_test_assignment(request, test_id):
+    """Редактирование назначения учеников для существующего теста"""
+    from .utils import notify_student_about_new_test
+
+    test = get_object_or_404(TeacherTest, id=test_id, teacher=request.user)
+
+    # Получаем всех учеников учителя
+    all_students = User.objects.filter(
+        profile__role='student',
+        profile__teacher=request.user
+    ).select_related('profile')
+
+    # Получаем старых назначенных учеников
+    old_assigned_ids = set(test.assigned_to.values_list('id', flat=True))
+
+    if request.method == 'POST':
+        selected_student_ids = request.POST.getlist('selected_students')
+        new_assigned_ids = set(int(id) for id in selected_student_ids if id)
+        auto_assign = request.POST.get('auto_assign_new_students') == 'on'
+
+        # Находим новых учеников
+        new_student_ids = new_assigned_ids - old_assigned_ids
+
+        # Обновляем назначение
+        test.assigned_to.clear()
+        if selected_student_ids:
+            test.assigned_to.add(*selected_student_ids)
+
+        test.auto_assign_new_students = auto_assign
+        test.save()
+
+        # Отправляем уведомления каждому новому ученику
+        notification_count = 0
+        for student_id in new_student_ids:
+            try:
+                student = User.objects.get(id=student_id, profile__teacher=request.user)
+                if student != request.user:  # Не отправляем уведомление самому себе
+                    notify_student_about_new_test(request.user, student, test)
+                    notification_count += 1
+                    print(f"✅ Уведомление отправлено: {student.profile.full_name}")
+            except User.DoesNotExist:
+                print(f"❌ Студент с ID {student_id} не найден")
+
+        if notification_count > 0:
+            messages.success(request,
+                             f'Назначение теста обновлено! Уведомления отправлены {notification_count} ученикам.')
+        else:
+            messages.success(request, f'Назначение теста "{test.title}" обновлено!')
+
+        return redirect('teacher_test_detail', test_id=test.id)
+
+    context = {
+        'test': test,
+        'all_students': all_students,
+        'assigned_ids': old_assigned_ids,
+    }
+    return render(request, 'teacher/edit_test_assignment.html', context)
 @login_required
 def serve_submission_file(request, submission_id):
     """Отдельный view для отдачи файла с правильной обработкой"""
@@ -1596,3 +2401,241 @@ def serve_submission_file(request, submission_id):
 
     filename = os.path.basename(submission.submitted_file.name)
     return get_file_response(submission.submitted_file, filename)
+
+
+def custom_404(request, exception=None):
+    """Кастомная страница 404 с учетом роли пользователя"""
+    context = {}
+
+    # Добавляем информацию о роли для правильной навигации
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        context['user_role'] = request.user.profile.role
+        context['user_is_authenticated'] = True
+    else:
+        context['user_is_authenticated'] = False
+
+    # Убедитесь, что шаблон существует по этому пути
+    return render(request, 'errors.html', context, status=404)
+
+
+@login_required
+def get_chat_messages(request, user_id):
+    """API для получения новых сообщений (без перезагрузки страницы)"""
+    other_user = get_object_or_404(User, id=user_id)
+
+    # Проверяем, что это одногруппник
+    user_profile = request.user.profile
+    other_profile = other_user.profile
+
+    if (user_profile.group != other_profile.group or
+            user_profile.course != other_profile.course or
+            user_profile.teacher != other_profile.teacher):
+        return JsonResponse({'error': 'Доступ запрещен'}, status=403)
+
+    last_id = request.GET.get('last_id')
+
+    messages = Message.objects.filter(
+        sender__in=[request.user, other_user],
+        recipient__in=[request.user, other_user]
+    )
+
+    if last_id and last_id != 'null' and last_id != '0':
+        try:
+            last_id_int = int(last_id)
+            messages = messages.filter(id__gt=last_id_int)
+        except ValueError:
+            pass
+
+    messages = messages.order_by('created_at')
+
+    # Помечаем сообщения от другого пользователя как прочитанные
+    Message.objects.filter(
+        sender=other_user,
+        recipient=request.user,
+        is_read=False
+    ).update(is_read=True)
+
+    messages_data = []
+    for msg in messages:
+        messages_data.append({
+            'id': msg.id,
+            'content': msg.content,
+            'created_at': msg.created_at.strftime("%H:%M %d.%m.%Y"),
+            'sender_id': msg.sender_id,
+        })
+
+    return JsonResponse({'messages': messages_data})
+
+
+@login_required
+@require_http_methods(["POST"])
+@csrf_exempt
+def send_teacher_student_file(request):
+    """API для отправки файла между учителем и учеником"""
+    try:
+        recipient_id = request.POST.get('recipient_id')
+        file = request.FILES.get('file')
+
+        if not file:
+            return JsonResponse({'error': 'Файл не выбран'}, status=400)
+
+        recipient = get_object_or_404(User, id=recipient_id)
+        current_user = request.user
+
+        # Проверяем права
+        is_teacher = current_user.profile.role == 'teacher'
+        is_student = current_user.profile.role == 'student'
+
+        if is_student and recipient != current_user.profile.teacher:
+            return JsonResponse({'error': 'Вы можете отправлять файлы только своему преподавателю'}, status=403)
+        elif is_teacher and recipient.profile.teacher != current_user:
+            return JsonResponse({'error': 'Этот ученик не принадлежит вам'}, status=403)
+
+        # Сохраняем файл
+        file_name = file.name
+        file_path = default_storage.save(f'chat_files/{current_user.id}_{recipient.id}_{file_name}',
+                                         ContentFile(file.read()))
+
+        # Создаем сообщение
+        message = TeacherStudentMessage.objects.create(
+            sender=current_user,
+            recipient=recipient,
+            message_type='file',
+            file_attachment=file_path,
+            file_name=file_name,
+            content=f'📎 {file_name}'
+        )
+
+        # Отправляем уведомление
+        from .utils import notify_about_teacher_message_with_file
+        notify_about_teacher_message_with_file(recipient, current_user, file_name)
+
+        sender_name = current_user.profile.full_name or current_user.username
+        if is_teacher:
+            sender_name = f"👩‍🏫 {sender_name}"
+        else:
+            sender_name = f"👨‍🎓 {sender_name}"
+
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'content': message.content,
+                'message_type': 'file',
+                'file_url': message.file_attachment.url,
+                'file_name': file_name,
+                'created_at': message.created_at.strftime("%H:%M %d.%m.%Y"),
+                'sender_id': message.sender_id,
+                'sender_name': sender_name
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+@csrf_exempt
+def send_teacher_student_voice(request):
+    """API для отправки голосового сообщения"""
+    try:
+        recipient_id = request.POST.get('recipient_id')
+        voice_file = request.FILES.get('voice')
+        duration = request.POST.get('duration', 0)
+
+        if not voice_file:
+            return JsonResponse({'error': 'Голосовое сообщение не записано'}, status=400)
+
+        recipient = get_object_or_404(User, id=recipient_id)
+        current_user = request.user
+
+        # Проверяем права (аналогично файлам)
+        is_teacher = current_user.profile.role == 'teacher'
+        is_student = current_user.profile.role == 'student'
+
+        if is_student and recipient != current_user.profile.teacher:
+            return JsonResponse({'error': 'Доступ запрещен'}, status=403)
+        elif is_teacher and recipient.profile.teacher != current_user:
+            return JsonResponse({'error': 'Доступ запрещен'}, status=403)
+
+        # Сохраняем голосовое сообщение
+        voice_path = default_storage.save(f'voice_messages/{current_user.id}_{recipient.id}_{voice_file.name}',
+                                          ContentFile(voice_file.read()))
+
+        message = TeacherStudentMessage.objects.create(
+            sender=current_user,
+            recipient=recipient,
+            message_type='voice',
+            voice_message=voice_path,
+            voice_duration=int(duration),
+            content='🎤 Голосовое сообщение'
+        )
+
+        sender_name = current_user.profile.full_name or current_user.username
+        if is_teacher:
+            sender_name = f"👩‍🏫 {sender_name}"
+        else:
+            sender_name = f"👨‍🎓 {sender_name}"
+
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'content': message.content,
+                'message_type': 'voice',
+                'voice_url': message.voice_message.url,
+                'voice_duration': message.voice_duration,
+                'created_at': message.created_at.strftime("%H:%M %d.%m.%Y"),
+                'sender_id': message.sender_id,
+                'sender_name': sender_name
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+@csrf_exempt
+def add_message_reaction(request):
+    """API для добавления реакции на сообщение"""
+    try:
+        data = json.loads(request.body)
+        message_id = data.get('message_id')
+        reaction = data.get('reaction')
+
+        message = get_object_or_404(TeacherStudentMessage, id=message_id)
+
+        # Проверяем права доступа к сообщению
+        current_user = request.user
+        if current_user not in [message.sender, message.recipient]:
+            return JsonResponse({'error': 'Нет доступа к этому сообщению'}, status=403)
+
+        # Обновляем реакции
+        reactions = message.reactions or {}
+        user_id_str = str(current_user.id)
+
+        if reaction and reactions.get(user_id_str) == reaction:
+            # Убираем реакцию, если нажали ту же
+            del reactions[user_id_str]
+            print(f"Removed reaction {reaction} from user {user_id_str}")
+        elif reaction:
+            reactions[user_id_str] = reaction
+            print(f"Added reaction {reaction} from user {user_id_str}")
+
+        message.reactions = reactions
+        message.save()
+
+        # Возвращаем обновлённые реакции
+        return JsonResponse({
+            'success': True,
+            'reactions': reactions
+        })
+
+    except Exception as e:
+        print(f"Error in add_message_reaction: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)

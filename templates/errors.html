@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Страница не найдена - 404{% endblock %}
+
+{% block content %}
+<div class="container" style="text-align: center; padding: 60px 20px;">
+    <div style="font-size: 80px; color: #dc3545;">🔍</div>
+    <h1 style="font-size: 48px; margin: 20px 0;">404</h1>
+    <h2 style="color: #666; margin-bottom: 20px;">Страница не найдена</h2>
+    <p style="color: #999; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
+        Запрашиваемая страница, тест или лабораторная работа не существует или была удалена.
+    </p>
+
+    <div class="actions">
+        {% if user_is_authenticated %}
+            {% if user_role == 'teacher' %}
+                <a href="{% url 'teacher_dashboard' %}" class="btn btn-primary" style="margin-right: 10px;">📊 В панель учителя</a>
+            {% else %}
+                <a href="{% url 'profile' %}" class="btn btn-primary" style="margin-right: 10px;">📱 Перейти в профиль</a>
+            {% endif %}
+        {% endif %}
+        <a href="{% url 'initial' %}" class="btn btn-secondary">🏠 На главную</a>
+    </div>
+
+    {% if not user_is_authenticated %}
+    <div style="margin-top: 30px;">
+        <p>Вернуться к <a href="{% url 'login' %}">входу</a> или
+        <a href="{% url 'register' %}">регистрации</a></p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

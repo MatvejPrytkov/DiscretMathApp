@@ -49,65 +49,6 @@
 <p>Нет доступных тестов от учителя.</p>
 {% endif %}
 
-<style>
-.test-list-container {
-    max-height: 300px;
-    overflow-y: hidden;
-    border-radius: 4px;
-}
-
-.test-list-container.scroll-active {
-    overflow-y: auto;
-}
-
-/* Стили для скроллбара */
-.test-list-container::-webkit-scrollbar {
-    width: 8px;
-}
-
-.test-list-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-.test-list-container::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
-}
-
-.test-list-container::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-.list-group-item-success {
-    background-color: #d4edda;
-    border-color: #c3e6cb;
-}
-
-.list-group-item-success:hover {
-    background-color: #c3e6cb !important;
-}
-
-.badge {
-    font-size: 0.75rem;
-    padding: 0.35em 0.65em;
-    border-radius: 0.25rem;
-}
-
-.bg-success {
-    background-color: #28a745;
-    color: white;
-}
-
-.bg-primary {
-    background-color: #007bff;
-    color: white;
-}
-
-.text-end {
-    text-align: right;
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

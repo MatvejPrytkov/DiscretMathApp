@@ -3,158 +3,55 @@
 {% block title %}Личный кабинет{% endblock %}
 
 {% block content %}
-<style>
-    .grade-badge {
-        display: inline-block;
-        padding: 0.35em 0.65em;
-        font-size: 0.875rem;
-        font-weight: 600;
-        line-height: 1;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        border-radius: 0.25rem;
-        color: #fff;
-    }
 
-    .grade-2 {
-        background-color: #dc3545;
-    }
-
-    .grade-3 {
-        background-color: #ffc107;
-        color: #212529;
-    }
-
-    .grade-4 {
-        background-color: #007bff;
-    }
-
-    .grade-5 {
-        background-color: #28a745;
-    }
-
-    /* Бледные цвета строк сводной таблицы */
-    .summary-row-2 {
-        background-color: #f8d7da !important;
-    }
-
-    .summary-row-3 {
-        background-color: #fff3cd !important;
-    }
-
-    .summary-row-4 {
-        background-color: #dbeafe !important;
-    }
-
-    .summary-row-5 {
-        background-color: #d4edda !important;
-    }
-
-    /* Чтобы цвет применялся ко всей строке, включая ячейки */
-    .summary-row-2 td,
-    .summary-row-3 td,
-    .summary-row-4 td,
-    .summary-row-5 td {
-        background-color: inherit !important;
-    }
-
-    /* Небольшой hover для кликабельных строк */
-    .summary-row-2:hover td {
-        background-color: #f1c2c7 !important;
-    }
-
-    .summary-row-3:hover td {
-        background-color: #ffe69c !important;
-    }
-
-    .summary-row-4:hover td {
-        background-color: #cfe2ff !important;
-    }
-
-    .summary-row-5:hover td {
-        background-color: #badbcc !important;
-    }
-
-    /* Стили для фильтров */
-    .filter-section {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        border: 1px solid #dee2e6;
-    }
-
-    .filter-group {
-        display: inline-block;
-        margin-right: 20px;
-        margin-bottom: 10px;
-    }
-
-    .filter-group label {
-        margin-right: 10px;
-        font-weight: 500;
-    }
-
-    .filter-group select, .filter-group input {
-        padding: 5px 10px;
-        border-radius: 4px;
-        border: 1px solid #ced4da;
-    }
-
-    .filter-buttons {
-        display: inline-block;
-    }
-
-    .btn-clear {
-        background-color: #6c757d;
-        color: white;
-        padding: 5px 15px;
-        border-radius: 4px;
-        text-decoration: none;
-        font-size: 14px;
-        display: inline-block;
-    }
-
-    .btn-clear:hover {
-        background-color: #5a6268;
-        color: white;
-    }
-
-    .filter-badge {
-        background-color: #007bff;
-        color: white;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        margin-left: 8px;
-    }
-
-    .hidden-row {
-        display: none;
-    }
-</style>
 
 <h1>Личный кабинет: {{ user.username }}</h1>
 
-<div class="teacher-info mb-4" style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff;">
-    <h4 style="margin-bottom: 10px;">👨‍🏫 Ваш преподаватель</h4>
-    {% if teacher_name %}
-        <p style="font-size: 1.1rem; margin-bottom: 5px;">
-            <strong>{{ teacher_name }}</strong>
-        </p>
-        {% if teacher.email %}
-            <p class="text-muted" style="margin-bottom: 0;">
-                <small>Email: {{ teacher.email }}</small>
+<!-- Горизонтальные карточки информации -->
+<div class="profile-info-row">
+    <div class="teacher-info mb-4">
+        <h4 style="margin-bottom: 10px;">Ваш преподаватель</h4>
+        {% if teacher_name %}
+            <p style="font-size: 1.1rem; margin-bottom: 5px;">
+                <strong>{{ teacher_name }}</strong>
+            </p>
+            {% if teacher.email %}
+                <p class="text-muted" style="margin-bottom: 0;">
+                    <small>Email: {{ teacher.email }}</small>
+                </p>
+            {% endif %}
+        {% else %}
+            <p class="text-muted" style="font-style: italic;">
+                Преподаватель не назначен
             </p>
         {% endif %}
-    {% else %}
-        <p class="text-muted" style="font-style: italic;">
-            Преподаватель не назначен
-        </p>
-    {% endif %}
-</div>
+    </div>
 
+    <div class="student-info mb-4">
+        <h4 style="margin-bottom: 10px;">Информация обо мне</h4>
+         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 10px;">
+        <div>
+            <p style="font-size: 1.1rem; margin-bottom: 5px;">
+                <strong>Группа:</strong>
+                {% if user.profile.group %}
+                    {{ user.profile.group }}
+                {% else %}
+                    <span class="text-muted">Не указана</span>
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'groupmates_list' %}" class="btn btn-info" style="white-space: nowrap;">👥 Мои одногруппники</a>
+        </div>
+    </div>
+        {% if user.profile.course %}
+            <p class="text-muted" style="margin-bottom: 0;">
+                <small>Курс: {{ user.profile.course }}</small>
+            </p>
+        {% endif %}
+    </div>
+</div>
+<br>
 <div class="profile-actions">
     <h3>Управление аккаунтом</h3>
     <div style="width: 100%; display: flex; gap: 10px; flex-wrap: wrap;">
@@ -167,7 +64,7 @@
 </div>
 
 <div class="test-banners">
-    <h3>🎯 Выполнить работу</h3>
+    <h3> Выполнить работу</h3>
     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
         <a href="{% url 'test_view' 'start' %}" class="btn btn-success">📥 Входное тестирование</a>
 
@@ -184,12 +81,10 @@
 
         <a href="{% url 'student_teacher_tests' %}" class="btn btn-success">📝 Тесты от учителя</a>
         <div class="lab_works">
-    <a href="{% url 'student_labs' %}" class="btn btn-success"> 🧪 Посмотреть список доступных лабораторных работ </a>
-</div>
+            <a href="{% url 'student_labs' %}" class="btn btn-success"> 🧪 Посмотреть список доступных лабораторных работ </a>
+        </div>
     </div>
 </div>
-
-
 
 <div class="mt-5">
     <h2>📊 Все мои работы</h2>
@@ -262,62 +157,57 @@
             {% endif %}
         </div>
 
-        <!-- Сводная таблица всех оценок с фильтрацией -->
-        <!-- Добавляем якорь с id="summary-table" -->
+        <!-- Сводная таблица всех оценок с динамической фильтрацией -->
         <div id="summary-table" class="mt-4">
             <h5>
                 Сводная таблица
-                {% if current_type_filter or current_grade_filter or current_status_filter %}
-                    <span class="filter-badge">Фильтр активен</span>
-                {% endif %}
+                <span id="resultsCount" class="results-count"></span>
             </h5>
 
-            <!-- Форма фильтрации -->
+            <!-- Блок фильтрации (без формы submit) -->
             <div class="filter-section">
-                <!-- Добавляем скрытое поле для сохранения якоря -->
-                <input type="hidden" name="anchor" value="summary-table">
-                <form method="get" id="filterForm">
-                    <div class="filter-group">
-                        <label for="typeFilter">Тип:</label>
-                        <select name="type" id="typeFilter">
-                            <option value="">Все типы</option>
-                            <option value="lab" {% if current_type_filter == 'lab' %}selected{% endif %}>Лабораторные</option>
-                            <option value="start" {% if current_type_filter == 'start' %}selected{% endif %}>Входное тестирование</option>
-                            <option value="final" {% if current_type_filter == 'final' %}selected{% endif %}>Итоговое тестирование</option>
-                            <option value="teacher" {% if current_type_filter == 'teacher' %}selected{% endif %}>Тесты учителя</option>
-                        </select>
-                    </div>
+                <div class="filter-group">
+                    <label for="typeFilter">Тип:</label>
+                    <select id="typeFilter">
+                        <option value="">Все типы</option>
+                        <option value="lab">Лабораторные</option>
+                        <option value="start">Входное тестирование</option>
+                        <option value="final">Итоговое тестирование</option>
+                        <option value="teacher">Тесты учителя</option>
+                    </select>
+                </div>
 
-                    <div class="filter-group">
-                        <label for="gradeFilter">Оценка:</label>
-                        <select name="grade" id="gradeFilter">
-                            <option value="">Все оценки</option>
-                            <option value="5" {% if current_grade_filter == '5' %}selected{% endif %}>5 (Отлично)</option>
-                            <option value="4" {% if current_grade_filter == '4' %}selected{% endif %}>4 (Хорошо)</option>
-                            <option value="3" {% if current_grade_filter == '3' %}selected{% endif %}>3 (Удовлетворительно)</option>
-                            <option value="2" {% if current_grade_filter == '2' %}selected{% endif %}>2 (Неудовлетворительно)</option>
-                            <option value="pending" {% if current_grade_filter == 'pending' %}selected{% endif %}>На проверке</option>
-                        </select>
-                    </div>
+                <div class="filter-group">
+                    <label for="gradeFilter">Оценка:</label>
+                    <select id="gradeFilter">
+                        <option value="">Все оценки</option>
+                        <option value="5">5 (Отлично)</option>
+                        <option value="4">4 (Хорошо)</option>
+                        <option value="3">3 (Удовлетворительно)</option>
+                        <option value="2">2 (Неудовлетворительно)</option>
+                        <option value="pending">На проверке</option>
+                    </select>
+                </div>
 
-                    <div class="filter-group">
-                        <label for="statusFilter">Статус:</label>
-                        <select name="status" id="statusFilter">
-                            <option value="">Все статусы</option>
-                            <option value="graded" {% if current_status_filter == 'graded' %}selected{% endif %}>Проверено</option>
-                            <option value="pending" {% if current_status_filter == 'pending' %}selected{% endif %}>На проверке</option>
-                            <option value="submitted" {% if current_status_filter == 'submitted' %}selected{% endif %}>Сдано</option>
-                            <option value="under_review" {% if current_status_filter == 'under_review' %}selected{% endif %}>На рассмотрении</option>
-                        </select>
-                    </div>
+                <div class="filter-group">
+                    <label for="statusFilter">Статус:</label>
+                    <select id="statusFilter">
+                        <option value="">Все статусы</option>
+                        <option value="graded">Проверено</option>
+                        <option value="pending">На проверке</option>
 
-                    <div class="filter-buttons">
-                        <button type="submit" class="btn btn-primary btn-sm">Применить</button>
-                        {% if current_type_filter or current_grade_filter or current_status_filter %}
-                            <a href="{% url 'profile' %}" class="btn-clear" id="clearFiltersBtn">✖ Сбросить фильтры</a>
-                        {% endif %}
-                    </div>
-                </form>
+                    </select>
+                </div>
+
+                <div class="filter-buttons">
+                    <button id="resetFiltersBtn" class="btn-clear">✖ Сбросить фильтры</button>
+                </div>
+            </div>
+
+            <!-- Активные фильтры -->
+            <div class="active-filters" id="activeFilters" style="display: none;">
+                <span class="active-filters-label">Активные фильтры:</span>
+                <span id="activeFiltersList"></span>
             </div>
 
             {% with lab_grades|length as lab_count %}
@@ -343,23 +233,12 @@
                         <tbody id="summaryTableBody">
                             {% for submission in lab_grades %}
                                 <tr
-                                    onclick="window.location.href='{% url 'lab' submission.lab_work.id %}'"
-                                    class="
-                                        {% if submission.grade == '2' or submission.grade == 2 %}
-                                            summary-row-2
-                                        {% elif submission.grade == '3' or submission.grade == 3 %}
-                                            summary-row-3
-                                        {% elif submission.grade == '4' or submission.grade == 4 %}
-                                            summary-row-4
-                                        {% elif submission.grade == '5' or submission.grade == 5 %}
-                                            summary-row-5
-                                        {% endif %}
-                                    "
-                                    style="cursor: pointer;"
-                                    data-type="lab"
-                                    data-grade="{% if submission.grade %}{{ submission.grade }}{% else %}pending{% endif %}"
-                                    data-status="{{ submission.status }}"
-                                >
+    onclick="window.location.href='{% url 'lab' submission.lab_work.id %}'"
+    data-grade="{% if submission.grade %}{{ submission.grade }}{% else %}pending{% endif %}"
+    data-type="lab"
+    data-status="{{ submission.status }}"
+    style="cursor: pointer;"
+>
                                     <td style="width: 15%;">Лабораторная</td>
                                     <td style="width: 35%;">
                                         <a href="{% url 'lab' submission.lab_work.id %}" style="text-decoration: none; color: inherit;">
@@ -390,23 +269,12 @@
 
                             {% for result in test_grades %}
                                 <tr
-                                    onclick="window.location.href='{% url 'result_detail' result.id %}'"
-                                    class="
-                                        {% if result.grade == 2 %}
-                                            summary-row-2
-                                        {% elif result.grade == 3 %}
-                                            summary-row-3
-                                        {% elif result.grade == 4 %}
-                                            summary-row-4
-                                        {% elif result.grade == 5 %}
-                                            summary-row-5
-                                        {% endif %}
-                                    "
-                                    style="cursor: pointer;"
-                                    data-type="{{ result.test_type }}"
-                                    data-grade="{% if result.grade %}{{ result.grade }}{% else %}pending{% endif %}"
-                                    data-status="{% if result.grade %}graded{% else %}pending{% endif %}"
-                                >
+    onclick="window.location.href='{% url 'result_detail' result.id %}'"
+    data-grade="{% if result.grade %}{{ result.grade }}{% else %}pending{% endif %}"
+    data-type="{{ result.test_type }}"
+    data-status="{% if result.grade %}graded{% else %}pending{% endif %}"
+    style="cursor: pointer;"
+>
                                     <td style="width: 15%;">
                                         {% if result.test_type == 'teacher' %}Тест учителя{% else %}Тестирование{% endif %}
                                     </td>
@@ -417,7 +285,7 @@
                                             {% elif result.test_type == 'final' %}
                                                 Итоговое
                                             {% elif result.test_type == 'teacher' %}
-                                                {{ result.category_results.teacher_test.name|default:"" }}
+                                                {{ result.category_results.teacher_test.name|default:"Тест учителя" }}
                                             {% else %}
                                                 Тест
                                             {% endif %}
@@ -446,9 +314,7 @@
 
             </div>
 
-            {% if lab_grades|length == 0 and test_grades|length == 0 %}
-                <p class="text-muted text-center mt-3">Нет результатов, соответствующих фильтрам</p>
-            {% endif %}
+            <p id="noResultsMsg" class="text-muted text-center mt-3" style="display: none;">Нет результатов, соответствующих фильтрам</p>
 
             {% endwith %}
             {% endwith %}
@@ -459,65 +325,166 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const filterForm = document.getElementById('filterForm');
+    // Элементы фильтрации
+    const typeFilter = document.getElementById('typeFilter');
+    const gradeFilter = document.getElementById('gradeFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const resetBtn = document.getElementById('resetFiltersBtn');
+    const summaryTableBody = document.getElementById('summaryTableBody');
+    const resultsCountSpan = document.getElementById('resultsCount');
+    const activeFiltersDiv = document.getElementById('activeFilters');
+    const activeFiltersList = document.getElementById('activeFiltersList');
+    const noResultsMsg = document.getElementById('noResultsMsg');
 
-    // Функция для прокрутки к сводной таблице
-    function scrollToSummaryTable() {
-        const summaryTable = document.getElementById('summary-table');
-        if (summaryTable) {
-            const offset = 20; // Небольшой отступ сверху
-            const elementPosition = summaryTable.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - offset;
+    // Получаем все строки таблицы
+    const resultRows = Array.from(document.querySelectorAll('#summaryTableBody tr'));
+    const totalResults = resultRows.length;
 
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: 'smooth'
+    // Функция обновления активных фильтров
+    function updateActiveFilters() {
+        const filters = [];
+
+        const typeValue = typeFilter.value;
+        if (typeValue === 'lab') {
+            filters.push({ name: 'Тип: Лабораторные', type: 'type', value: typeValue });
+        } else if (typeValue === 'start') {
+            filters.push({ name: 'Тип: Входное тестирование', type: 'type', value: typeValue });
+        } else if (typeValue === 'final') {
+            filters.push({ name: 'Тип: Итоговое тестирование', type: 'type', value: typeValue });
+        } else if (typeValue === 'teacher') {
+            filters.push({ name: 'Тип: Тесты учителя', type: 'type', value: typeValue });
+        }
+
+        const gradeValue = gradeFilter.value;
+        if (gradeValue === '5') {
+            filters.push({ name: 'Оценка: 5', type: 'grade', value: gradeValue });
+        } else if (gradeValue === '4') {
+            filters.push({ name: 'Оценка: 4', type: 'grade', value: gradeValue });
+        } else if (gradeValue === '3') {
+            filters.push({ name: 'Оценка: 3', type: 'grade', value: gradeValue });
+        } else if (gradeValue === '2') {
+            filters.push({ name: 'Оценка: 2', type: 'grade', value: gradeValue });
+        } else if (gradeValue === 'pending') {
+            filters.push({ name: 'Оценка: На проверке', type: 'grade', value: gradeValue });
+        }
+
+        const statusValue = statusFilter.value;
+        if (statusValue === 'graded') {
+            filters.push({ name: 'Статус: Проверено', type: 'status', value: statusValue });
+        } else if (statusValue === 'pending') {
+            filters.push({ name: 'Статус: На проверке', type: 'status', value: statusValue });
+        } else if (statusValue === 'submitted') {
+            filters.push({ name: 'Статус: Сдано', type: 'status', value: statusValue });
+        } else if (statusValue === 'under_review') {
+            filters.push({ name: 'Статус: На рассмотрении', type: 'status', value: statusValue });
+        }
+
+        if (filters.length > 0) {
+            activeFiltersDiv.style.display = 'flex';
+            activeFiltersList.innerHTML = filters.map(filter => `
+                <span class="filter-badge-item">
+                    ${filter.name}
+                    <span class="remove" data-type="${filter.type}" data-value="${filter.value}">✕</span>
+                </span>
+            `).join('');
+
+            document.querySelectorAll('.filter-badge-item .remove').forEach(removeBtn => {
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const type = this.dataset.type;
+                    if (type === 'type') {
+                        typeFilter.value = '';
+                    } else if (type === 'grade') {
+                        gradeFilter.value = '';
+                    } else if (type === 'status') {
+                        statusFilter.value = '';
+                    }
+                    filterTable();
+                });
             });
+        } else {
+            activeFiltersDiv.style.display = 'none';
         }
     }
 
-    if (filterForm) {
-        // Перехватываем отправку формы
-        filterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+    // Функция фильтрации (динамическая)
+    function filterTable() {
+        const typeValue = typeFilter.value;
+        const gradeValue = gradeFilter.value;
+        const statusValue = statusFilter.value;
 
-            // Сохраняем позицию прокрутки в sessionStorage
-            sessionStorage.setItem('scrollToSummary', 'true');
+        let visibleCount = 0;
 
-            // Отправляем форму
-            filterForm.submit();
+        resultRows.forEach(row => {
+            const rowType = row.getAttribute('data-type') || '';
+            const rowGrade = row.getAttribute('data-grade') || '';
+            const rowStatus = row.getAttribute('data-status') || '';
+
+            // Фильтр по типу
+            let matchesType = true;
+            if (typeValue === 'lab') {
+                matchesType = rowType === 'lab';
+            } else if (typeValue === 'start') {
+                matchesType = rowType === 'start';
+            } else if (typeValue === 'final') {
+                matchesType = rowType === 'final';
+            } else if (typeValue === 'teacher') {
+                matchesType = rowType === 'teacher';
+            }
+
+            // Фильтр по оценке
+            let matchesGrade = true;
+            if (gradeValue === 'pending') {
+                matchesGrade = rowGrade === 'pending';
+            } else if (gradeValue !== '') {
+                matchesGrade = rowGrade === gradeValue;
+            }
+
+            // Фильтр по статусу
+            let matchesStatus = true;
+            if (statusValue !== '') {
+                matchesStatus = rowStatus === statusValue;
+            }
+
+            if (matchesType && matchesGrade && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
         });
 
-        // Автоматическая отправка формы при изменении любого фильтра (через submit)
-        const selects = filterForm.querySelectorAll('select');
-        selects.forEach(select => {
-            select.addEventListener('change', function() {
-                sessionStorage.setItem('scrollToSummary', 'true');
-                filterForm.submit();
-            });
-        });
+        // Обновляем счетчик
+        if (resultsCountSpan) {
+            resultsCountSpan.textContent = `(Показано: ${visibleCount} из ${totalResults})`;
+        }
+
+        // Показываем сообщение, если нет результатов
+        if (visibleCount === 0 && totalResults > 0) {
+            noResultsMsg.style.display = 'block';
+        } else {
+            noResultsMsg.style.display = 'none';
+        }
+
+        updateActiveFilters();
     }
 
-    // Проверяем, нужно ли прокрутить к сводной таблице после загрузки страницы
-    if (sessionStorage.getItem('scrollToSummary') === 'true') {
-        sessionStorage.removeItem('scrollToSummary');
-        setTimeout(scrollToSummaryTable, 100); // Небольшая задержка для полной загрузки DOM
+    // Сброс фильтров
+    function resetFilters() {
+        typeFilter.value = '';
+        gradeFilter.value = '';
+        statusFilter.value = '';
+        filterTable();
     }
 
-    // Для кнопки сброса фильтров
-    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
-    if (clearFiltersBtn) {
-        clearFiltersBtn.addEventListener('click', function(e) {
-            sessionStorage.setItem('scrollToSummary', 'true');
-        });
-    }
+    // Добавляем обработчики событий (динамическая фильтрация)
+    if (typeFilter) typeFilter.addEventListener('change', filterTable);
+    if (gradeFilter) gradeFilter.addEventListener('change', filterTable);
+    if (statusFilter) statusFilter.addEventListener('change', filterTable);
+    if (resetBtn) resetBtn.addEventListener('click', resetFilters);
 
-    // Если есть параметр anchor в URL, прокручиваем к указанному элементу
-    const urlParams = new URLSearchParams(window.location.search);
-    const anchor = urlParams.get('anchor');
-    if (anchor === 'summary-table') {
-        setTimeout(scrollToSummaryTable, 100);
-    }
+    // Инициализация
+    filterTable();
 });
 </script>
 

@@ -1,28 +1,66 @@
-{% extends 'base.html' %}
+{% extends 'teacher/base_teacher.html' %}
+{% block title %}Панель управления учителя{% endblock %}
+{% block teacher_content %}
 
-{% block content %}
-<div class="container">
-    <div class="page-header">
+<div class="teacher-dashboard-container">
+    <!-- Заголовок -->
+    <div class="dashboard-header">
         <div>
             <h1>Панель управления учителя</h1>
-            <p class="page-subtitle">{{ request.user.profile.full_name }}</p>
+            <h2 class="teacher-name">{{ request.user.profile.full_name }}</h2>
         </div>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <h3>📊 Статистика</h3>
-            <p class="stat-number">Всего учеников: {{ students.count }}</p>
-            <p class="stat-number">Всего тестов пройдено: {{ total_tests_passed }}</p>
-            <p class="stat-number">Всего лабораторных работ сдано: {{ total_labs_submitted }}</p>
+    <!-- Управление аккаунтом -->
+    <div class="profile-actions">
+        <h3>👤 Управление аккаунтом</h3>
+        <div class="action-buttons-group">
+            <a href="{% url 'profile_update' %}" class="btn btn-primary">✏️ Редактировать профиль</a>
+            <a href="{% url 'change_password' %}" class="btn btn-success">🔐 Сменить пароль</a>
+            <a href="{% url 'delete_account' %}" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите удалить аккаунт? Это действие необратимо!')">🗑️ Удалить аккаунт</a>
+            <a href="{% url 'logout' %}" class="btn btn-secondary">🚪 Выйти</a>
         </div>
+    </div>
+
+    <!-- Карточки статистики (кликабельные) -->
+    <div class="stats-cards">
+        <a href="{% url 'teacher_students_list' %}" class="stat-card-mini stat-link">
+            <div class="stat-icon">👨‍🎓</div>
+            <div class="stat-info">
+                <div class="stat-value">{{ students_count }}</div>
+                <div class="stat-label">Всего учеников</div>
+            </div>
+            <div class="stat-arrow">→</div>
+        </a>
+        <a href="{% url 'student_results' %}?type_filter=test" class="stat-card-mini stat-link">
+            <div class="stat-icon">📝</div>
+            <div class="stat-info">
+                <div class="stat-value">{{ total_tests_passed }}</div>
+                <div class="stat-label">Пройдено тестов (всего)</div>
+            </div>
+            <div class="stat-arrow">→</div>
+        </a>
+        <a href="{% url 'student_results' %}?type_filter=lab" class="stat-card-mini stat-link">
+            <div class="stat-icon">🧪</div>
+            <div class="stat-info">
+                <div class="stat-value">{{ total_labs_submitted }}</div>
+                <div class="stat-label">Сдано лабораторных</div>
+            </div>
+            <div class="stat-arrow">→</div>
+        </a>
+    </div>
+
+    <!-- Кнопки быстрых действий -->
+    <div class="quick-actions">
+        <a href="{% url 'student_results' %}" class="btn btn-success">📊 Результаты работ</a>
+        <a href="{% url 'teacher_manage_tests' %}" class="btn btn-primary">📝 Управление тестами</a>
+        <a href="{% url 'teacher_labs' %}" class="btn btn-primary">🧪 Управление лабораторными</a>
+        <a href="{% url 'download_report' %}" class="btn btn-success">📥 Выгрузить отчет</a>
     </div>
 
     <!-- 📈 ГРАФИКИ -->
     <div class="charts-section">
         <h2>📈 Аналитика результатов</h2>
-
-        <!-- Первая строка: Типы тестов и Успеваемость (Тесты) -->
         <div class="charts-container">
             <div class="chart-card">
                 <h4>Типы тестов</h4>
@@ -33,9 +71,7 @@
                 <canvas id="gradesChart"></canvas>
             </div>
         </div>
-
-        <!-- Вторая строка: Результаты по темам (слева) и Успеваемость (Лабораторные) (справа) -->
-        <div class="charts-container" style="margin-top: 20px;">
+        <div class="charts-container">
             <div class="chart-card">
                 <h4>Результаты по темам (Тесты)</h4>
                 <canvas id="themesChart"></canvas>
@@ -47,307 +83,504 @@
         </div>
     </div>
 
-    <div class="action-buttons">
-        <a href="{% url 'student_results' %}" class="btn btn-success">📊 Результаты работ</a>
-        <a href="{% url 'teacher_manage_tests' %}" class="btn btn-primary">📝 Управление тестами</a>
-        <a href="{% url 'teacher_labs' %}" class="btn btn-primary">🧪 Управление лабораторными</a>
-        <a href="{% url 'download_report' %}" class="btn btn-success">📥 Выгрузить отчет</a>
-        <a href="{% url 'delete_account' %}" class="btn btn-danger" onclick="return confirm('Вы уверены?')">🗑️ Удалить аккаунт</a>
-        <a href="{% url 'logout' %}" class="btn">🚪 Выйти</a>
-    </div>
-
     <!-- Таблица учеников -->
-    <div class="panel">
-        <div class="panel-body">
-            <h3>Мои ученики ({{ student_count }})</h3>
-            <div class="table-wrap">
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>ФИО Ученика</th>
-                            <th>Email</th>
-                            <th>Тестов пройдено</th>
-                            <th>Лабораторных работ сдано</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for student in students %}
-                        <tr class="student-row" data-student-id="{{ student.id }}" data-student-name="{{ student.profile.full_name }}" style="cursor: pointer;">
-                            <td>{{ student.profile.full_name }}</td>
-                            <td>{{ student.email }}</td>
-                            <td class="clickable-count">
-                                <a href="{% url 'student_results' %}?student_id={{ student.id }}&type_filter=test" class="count-link" onclick="event.stopPropagation();">
-                                    {{ student.test_count }}
-                                </a>
-                            </td>
-                            <td class="clickable-count">
-                                <a href="{% url 'student_results' %}?student_id={{ student.id }}&type_filter=lab" class="count-link" onclick="event.stopPropagation();">
-                                    {{ student.lab_submission_count }}
-                                </a>
-                              </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" style="text-align: center; color: #6b7280;">
-                                У вас пока нет прикрепленных учеников
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    <div class="students-section">
+        <h2>👨‍🎓 Мои ученики</h2>
+        <p class="section-subtitle">Всего учеников: {{ students_count }}</p>
+
+        <div class="students-table-wrapper" id="studentsTableWrapper">
+            <table class="students-table">
+                <thead>
+                    <tr>
+                        <th>Ученик</th>
+                        <th>Группа</th>
+                        <th>Курс</th>
+                        <th>Все тесты</th>
+                        <th>Тесты от учителя</th>
+                        <th>Лабораторные</th>
+                        <th>Средний балл</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="studentsTableBody">
+                    {% for student in students %}
+                    <tr class="student-row" data-student-id="{{ student.id }}">
+                        <td class="student-name-cell">
+                            <div class="student-avatar-sm">
+                                {{ student.profile.full_name|first|upper }}
+                            </div>
+                            <div class="student-info-cell">
+                                <div class="student-name">{{ student.profile.full_name }}</div>
+                                <div class="student-email">{{ student.email }}</div>
+                            </div>
+                        </td>
+                        <td>{{ student.profile.group|default:"—" }}</td>
+                        <td>{{ student.profile.course|default:"—" }}</td>
+                        <td class="progress-cell">
+                            <div class="progress-stats">
+                                <span class="progress-completed">{{ student.total_tests_passed }}</span>
+                            </div>
+                            <div class="progress-bar-custom">
+                                <div class="progress-fill" style="width: {% widthratio student.total_tests_passed student.total_all_tests_available 100 %}%"></div>
+                            </div>
+                        </td>
+                        <td class="progress-cell">
+                            <div class="progress-stats">
+                                <span class="progress-completed">{{ student.teacher_tests_passed }}</span>
+                                <span class="progress-sep">/</span>
+                                <span class="progress-total">{{ student.teacher_tests_count }}</span>
+                            </div>
+                            <div class="progress-bar-custom">
+                                <div class="progress-fill" style="width: {% widthratio student.teacher_tests_passed student.teacher_tests_count 100 %}%"></div>
+                            </div>
+                        </td>
+                        <td class="progress-cell">
+                            <div class="progress-stats">
+                                <span class="progress-completed">{{ student.lab_submission_count }}</span>
+                                <span class="progress-sep">/</span>
+                                <span class="progress-total">{{ student.total_labs_count }}</span>
+                            </div>
+                            <div class="progress-bar-custom">
+                                <div class="progress-fill" style="width: {% widthratio student.lab_submission_count student.total_labs_count 100 %}%"></div>
+                            </div>
+                        </td>
+                        <td class="grade-cell">
+                            {% if student.avg_grade %}
+                                <span class="grade-badge grade-{{ student.avg_grade|floatformat:0 }}">
+                                    {{ student.avg_grade|floatformat:1 }}
+                                </span>
+                            {% else %}
+                                <span class="grade-badge grade-none">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="action-cell">
+                            <a href="{% url 'teacher_student_stats' student.id %}" class="btn-detail">
+                                Подробнее →
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="empty-row">
+                            <div class="empty-state">
+                                <div class="empty-icon">👨‍🎓</div>
+                                <h3>У вас пока нет учеников</h3>
+                                <p>Ученики появятся здесь после того, как выберут вас своим преподавателем при регистрации.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <style>
-    /* Стили для кликабельных строк */
-    .student-row {
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    .student-row:hover {
-        background-color: #e8f0fe !important;
+    .teacher-dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
     }
 
-    /* Стили для кликабельных ячеек с числами */
-    .clickable-count {
-        text-align: center;
+    .dashboard-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0 0 8px 0;
+        background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
     }
-    .count-link {
-        display: inline-block;
-        padding: 4px 12px;
-        background: #e9ecef;
+
+    .teacher-name {
+        font-size: 18px;
+        color: #64748b;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .profile-actions {
+        background: white;
         border-radius: 20px;
-        text-decoration: none;
-        color: #2f66ff;
-        font-weight: 600;
-        transition: all 0.2s;
-        pointer-events: auto;
+        padding: 20px 24px;
+        margin-bottom: 28px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
-    .count-link:hover {
-        background: #2f66ff;
+
+    .profile-actions h3 {
+        margin: 0 0 16px 0;
+        font-size: 18px;
+        color: #1e293b;
+    }
+
+    .action-buttons-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary, .btn-success, .btn-danger, .btn-secondary {
+        padding: 10px 20px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        display: inline-block;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #2f66ff, #1d4ed8);
         color: white;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(47, 102, 255, 0.3); color: white; }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+    .btn-success:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); color: white; }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+    .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); color: white; }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    .btn-secondary:hover { background: #5a6268; transform: translateY(-2px); color: white; }
+
+    /* Кликабельные карточки */
+    .stats-cards {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+    }
+
+    .stat-card-mini {
+        background: white;
+        border-radius: 20px;
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        flex: 1;
+        min-width: 180px;
+        transition: all 0.2s;
+        border: 1px solid #e2e8f0;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card-mini:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+        border-color: #cbd5e1;
+    }
+
+    /* Эффект нажатия */
+    .stat-card-mini:active {
+        transform: translateY(-2px);
+        transition: transform 0.05s;
+    }
+
+    .stat-icon {
+        font-size: 42px;
+        transition: transform 0.2s;
+    }
+
+    .stat-card-mini:hover .stat-icon {
         transform: scale(1.05);
     }
 
-    /* Стили для таблицы */
-    .results-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .results-table thead th {
-        background: #f3f4f6;
-        color: #111827;
-        font-weight: 700;
-        font-size: 13px;
-        text-align: left;
-        padding: 12px 14px;
-        border-bottom: 2px solid #e5e7eb;
-    }
-    .results-table tbody td {
-        padding: 12px 14px;
-        border-bottom: 1px solid #eef2f7;
-        font-size: 14px;
-        background-color: #fff;
-    }
-    .results-table tbody tr:hover {
-        background-color: #f8fafc;
-    }
-    .table-wrap {
-        overflow-x: auto;
+    .stat-info {
+        flex: 1;
     }
 
-    /* Стили для контейнера графиков */
-    .charts-container {
+    .stat-value {
+        font-size: 32px;
+        font-weight: 800;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .stat-arrow {
+        font-size: 20px;
+        color: #94a3b8;
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.2s ease;
+    }
+
+    .stat-card-mini:hover .stat-arrow {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* Индивидуальные цвета при наведении на карточки */
+    .stat-card-mini:first-child:hover {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+    }
+    .stat-card-mini:first-child:hover .stat-icon {
+        filter: drop-shadow(0 4px 6px rgba(59, 130, 246, 0.3));
+    }
+
+    .stat-card-mini:nth-child(2):hover {
+        border-color: #10b981;
+        background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);
+    }
+    .stat-card-mini:nth-child(2):hover .stat-icon {
+        filter: drop-shadow(0 4px 6px rgba(16, 185, 129, 0.3));
+    }
+
+    .stat-card-mini:nth-child(3):hover {
+        border-color: #8b5cf6;
+        background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
+    }
+    .stat-card-mini:nth-child(3):hover .stat-icon {
+        filter: drop-shadow(0 4px 6px rgba(139, 92, 246, 0.3));
+    }
+
+    .quick-actions {
         display: flex;
+        gap: 12px;
         flex-wrap: wrap;
+        margin-bottom: 32px;
+    }
+
+    .charts-section { margin-bottom: 40px; }
+    .charts-section h2 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+    .charts-container { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 24px; }
+    .chart-card { flex: 1; min-width: 300px; background: white; border-radius: 20px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0; }
+    .chart-card h4 { text-align: center; margin-bottom: 16px; color: #1e293b; font-size: 16px; }
+    canvas { max-height: 250px; width: 100% !important; }
+
+    .students-section { margin-top: 20px; }
+    .students-section h2 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+    .section-subtitle { color: #64748b; font-size: 14px; margin-bottom: 20px; }
+
+    /* Стили для таблицы с вертикальным скроллом */
+    .students-table-wrapper {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+        overflow: auto;
+    }
+
+    .students-table-wrapper.has-scroll {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .students-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 850px;
+    }
+
+    .students-table-wrapper.has-scroll .students-table thead th {
+        position: sticky;
+        top: 0;
+        background: #f8fafc;
+        z-index: 10;
+        box-shadow: 0 2px 0 0 #e2e8f0;
+    }
+
+    .students-table thead th {
+        background: #f8fafc;
+        padding: 16px 20px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .students-table tbody td {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+    }
+
+    .students-table tbody tr:hover {
+        background: #f8fafc;
+        cursor: pointer;
+    }
+
+    .students-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .students-table-wrapper.has-scroll::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .students-table-wrapper.has-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .students-table-wrapper.has-scroll::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+        border-radius: 10px;
+    }
+
+    .students-table-wrapper.has-scroll::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #94a3b8, #64748b);
+    }
+
+    .students-table-wrapper.has-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: #94a3b8 #f1f1f1;
+    }
+
+    .student-name-cell { display: flex; align-items: center; gap: 12px; }
+    .student-avatar-sm { width: 44px; height: 44px; background: linear-gradient(135deg, #6366f1, #4f46e5); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px; flex-shrink: 0; }
+    .student-info-cell { display: flex; flex-direction: column; }
+    .student-name { font-weight: 600; color: #1e293b; font-size: 15px; }
+    .student-email { font-size: 12px; color: #94a3b8; }
+
+    .progress-cell { min-width: 120px; }
+    .progress-stats { display: flex; align-items: baseline; gap: 4px; margin-bottom: 6px; font-size: 13px; }
+    .progress-completed { font-weight: 700; color: #10b981; font-size: 14px; }
+    .progress-sep { color: #cbd5e1; }
+    .progress-total { color: #64748b; }
+    .progress-bar-custom { width: 100%; height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 10px; transition: width 0.3s ease; }
+
+    .grade-cell { text-align: center; }
+    .grade-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 700; }
+    .grade-5 { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+    .grade-4 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
+    .grade-3 { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+    .grade-2 { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+    .grade-none { background: #f1f5f9; color: #94a3b8; }
+
+    .btn-detail {
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
-        gap: 20px;
-        margin-bottom: 30px;
+        gap: 2px;
+        padding: 4px 8px;
+        background: #f1f5f9;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #3b82f6;
+        font-size: 11px;
+        font-weight: 600;
+        transition: all 0.2s;
+        white-space: nowrap;
+        width: auto;
+        min-width: 65px;
     }
-    .chart-card {
-        flex: 1;
-        min-width: 300px;
-        max-width: 450px;
-        background: #fff;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+
+    .btn-detail:hover {
+        background: #3b82f6;
+        color: white;
+        transform: translateX(0);
+        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
     }
-    .chart-card h4 {
-        text-align: center;
-        margin-bottom: 15px;
-        color: #374151;
+
+    .empty-row td { text-align: center; padding: 60px 20px !important; }
+    .empty-state { text-align: center; }
+    .empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+    .empty-state h3 { font-size: 20px; color: #475569; margin-bottom: 8px; }
+    .empty-state p { color: #94a3b8; }
+
+    @media (max-width: 900px) {
+        .students-table thead th, .students-table tbody td { padding: 12px 14px; }
+        .student-name-cell { flex-direction: column; text-align: center; }
+        .student-info-cell { align-items: center; }
+        .progress-cell { min-width: 100px; }
     }
-    canvas {
-        max-height: 250px;
-        width: 100% !important;
-    }
+
     @media (max-width: 768px) {
-        .charts-container {
-            flex-direction: column;
-            align-items: center;
-        }
-        .chart-card {
-            width: 100%;
-            max-width: 100%;
-        }
+        .stats-cards { flex-direction: column; }
+        .charts-container { flex-direction: column; align-items: center; }
+        .chart-card { width: 100%; }
+        .action-buttons-group { flex-direction: column; }
+        .action-buttons-group .btn { text-align: center; width: 100%; }
     }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // ========== ГРАФИК 1: Типы тестов ==========
     const testCtx = document.getElementById('testTypesChart').getContext('2d');
     new Chart(testCtx, {
         type: 'doughnut',
         data: {
-            labels: [
-                {% for stat in test_stats %}
-                    {% if stat.test_type == 'start' %}'Входной'
-                    {% elif stat.test_type == 'final' %}'Итоговый'
-                    {% else %}'Тест от учителя'
-                    {% endif %},
-                {% endfor %}
-            ],
-            datasets: [{
-                data: [{% for stat in test_stats %}{{ stat.count }},{% endfor %}],
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
-            }]
+            labels: [{% for stat in test_stats %}{% if stat.test_type == 'start' %}'Входной'{% elif stat.test_type == 'final' %}'Итоговый'{% else %}'Тест от учителя'{% endif %},{% endfor %}],
+            datasets: [{ data: [{% for stat in test_stats %}{{ stat.count }},{% endfor %}], backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'] }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { position: 'bottom' } }
-        }
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
     });
 
-    // ========== ГРАФИК 2: Распределение оценок за ТЕСТЫ ==========
     const gradesCtx = document.getElementById('gradesChart').getContext('2d');
     new Chart(gradesCtx, {
         type: 'bar',
         data: {
             labels: ['5 (Отлично)', '4 (Хорошо)', '3 (Удовл.)', '2 (Неудовл.)', 'Не оценено'],
-            datasets: [{
-                label: 'Распределение оценок',
-                data: [
-                    {{ test_grade_5_count|default:0 }},
-                    {{ test_grade_4_count|default:0 }},
-                    {{ test_grade_3_count|default:0 }},
-                    {{ test_grade_2_count|default:0 }},
-                    {{ test_grade_pending_count|default:0 }}
-                ],
-                backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d']
-            }]
+            datasets: [{ label: 'Распределение оценок', data: [{{ test_grade_5_count|default:0 }}, {{ test_grade_4_count|default:0 }}, {{ test_grade_3_count|default:0 }}, {{ test_grade_2_count|default:0 }}, {{ test_grade_pending_count|default:0 }}], backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d'] }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Количество работ' }
-                }
-            },
-            plugins: {
-                legend: { position: 'top' }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'Количество работ' } } }, plugins: { legend: { position: 'top' } } }
     });
 
-    // ========== ГРАФИК 3: Распределение оценок за ЛАБОРАТОРНЫЕ ==========
     const labGradesCtx = document.getElementById('labGradesChart').getContext('2d');
     new Chart(labGradesCtx, {
         type: 'bar',
         data: {
             labels: ['5 (Отлично)', '4 (Хорошо)', '3 (Удовл.)', '2 (Неудовл.)', 'Не оценено'],
-            datasets: [{
-                label: 'Распределение оценок',
-                data: [
-                    {{ lab_grade_5_count|default:0 }},
-                    {{ lab_grade_4_count|default:0 }},
-                    {{ lab_grade_3_count|default:0 }},
-                    {{ lab_grade_2_count|default:0 }},
-                    {{ lab_grade_pending_count|default:0 }}
-                ],
-                backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d']
-            }]
+            datasets: [{ label: 'Распределение оценок', data: [{{ lab_grade_5_count|default:0 }}, {{ lab_grade_4_count|default:0 }}, {{ lab_grade_3_count|default:0 }}, {{ lab_grade_2_count|default:0 }}, {{ lab_grade_pending_count|default:0 }}], backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d'] }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Количество работ' }
-                }
-            },
-            plugins: {
-                legend: { position: 'top' }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'Количество работ' } } }, plugins: { legend: { position: 'top' } } }
     });
 
-    // ========== ГРАФИК 4: Результаты по темам (Тесты) ==========
     const themesCtx = document.getElementById('themesChart').getContext('2d');
-    const themeLabels = [
-        {% for theme_key, theme_data in theme_stats %}
-            "{{ theme_data.name }}",
-        {% endfor %}
-    ];
-    const themeData = [
-        {% for theme_key, theme_data in theme_stats %}
-            {% if theme_data.total > 0 %}
-                {{ theme_data.correct }} / {{ theme_data.total }} * 100,
-            {% else %}
-                0,
-            {% endif %}
-        {% endfor %}
-    ];
+    const themeLabels = [{% for theme_key, theme_data in theme_stats %}"{{ theme_data.name }}",{% endfor %}];
+    const themeData = [{% for theme_key, theme_data in theme_stats %}{% if theme_data.total > 0 %}{{ theme_data.correct }} / {{ theme_data.total }} * 100,{% else %}0,{% endif %}{% endfor %}];
     new Chart(themesCtx, {
         type: 'radar',
-        data: {
-            labels: themeLabels,
-            datasets: [{
-                label: 'Средний % правильных ответов',
-                data: themeData,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                r: {
-                    angleLines: { display: true },
-                    suggestedMin: 0,
-                    suggestedMax: 100,
-                    ticks: {
-                        stepSize: 20,
-                        callback: function(value) { return value + '%'; }
-                    }
-                }
-            },
-            plugins: {
-                legend: { position: 'top' }
-            }
-        }
+        data: { labels: themeLabels, datasets: [{ label: 'Средний % правильных ответов', data: themeData, backgroundColor: 'rgba(75, 192, 192, 0.2)', borderColor: 'rgba(75, 192, 192, 1)', pointBackgroundColor: 'rgba(75, 192, 192, 1)', borderWidth: 2 }] },
+        options: { responsive: true, maintainAspectRatio: true, scales: { r: { angleLines: { display: true }, suggestedMin: 0, suggestedMax: 100, ticks: { stepSize: 20, callback: function(value) { return value + '%'; } } } }, plugins: { legend: { position: 'top' } } }
     });
 
-    // Обработчик клика по строке ученика
     const studentRows = document.querySelectorAll('.student-row');
+    const studentRowsCount = studentRows.length;
+
+    const tableWrapper = document.getElementById('studentsTableWrapper');
+    if (tableWrapper) {
+        if (studentRowsCount > 3) {
+            tableWrapper.classList.add('has-scroll');
+        } else {
+            tableWrapper.classList.remove('has-scroll');
+        }
+    }
+
     studentRows.forEach(row => {
         row.addEventListener('click', function(e) {
-            if (e.target.tagName !== 'A' && !e.target.closest('a')) {
+            if (!e.target.closest('.btn-detail')) {
                 const studentId = this.dataset.studentId;
-                if (studentId) {
-                    window.location.href = "{% url 'student_results' %}?student_id=" + studentId;
-                }
+                if (studentId) window.location.href = "{% url 'teacher_student_stats' 0 %}".replace('0', studentId);
             }
         });
     });

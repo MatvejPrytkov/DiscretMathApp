@@ -1,0 +1,814 @@
+{% extends 'teacher/base_teacher.html' %}
+{% block title %}Мои ученики{% endblock %}
+
+{% block teacher_content %}
+
+<style>
+    .students-list-container { max-width: 1400px; margin: 0 auto; }
+    .page-header { margin-bottom: 24px; }
+    .page-title { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .page-subtitle { color: #64748b; margin: 0; font-size: 14px; }
+
+    /* Фильтры */
+    .filter-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        border: 1px solid #e5e7eb;
+    }
+    .filter-title {
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #1f2937;
+        font-size: 14px;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 8px;
+    }
+    .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: flex-end;
+    }
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 160px;
+    }
+    .filter-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+    }
+    .filter-group select, .filter-group input {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        background: white;
+        font-size: 14px;
+    }
+    .filter-group select:focus, .filter-group input:focus {
+        outline: none;
+        border-color: #2f66ff;
+    }
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+    }
+    .btn-filter, .btn-reset {
+        padding: 8px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        border: none;
+        font-weight: 500;
+        transition: all 0.2s;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-filter {
+        background: #2f66ff;
+        color: white;
+    }
+    .btn-filter:hover {
+        background: #1d4ed8;
+    }
+    .btn-reset {
+        background: #6c757d;
+        color: white;
+    }
+    .btn-reset:hover {
+        background: #5a6268;
+    }
+    .active-filters {
+        margin-top: 15px;
+        padding-top: 12px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+    .active-filters-label {
+        font-size: 13px;
+        color: #6c757d;
+    }
+    .filter-badge {
+        background: #2f66ff;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .filter-badge .remove {
+        cursor: pointer;
+        font-weight: bold;
+        margin-left: 4px;
+        text-decoration: none;
+        color: white;
+    }
+    .filter-badge .remove:hover {
+        opacity: 0.8;
+    }
+
+    /* Сортировка */
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.2s;
+        position: relative;
+        padding-right: 20px !important;
+    }
+    .sortable:hover {
+        background-color: #e5e7eb !important;
+    }
+    .sortable::after {
+        content: "↕️";
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 11px;
+        opacity: 0.5;
+    }
+    .sortable.asc::after {
+        content: "↑";
+        opacity: 1;
+    }
+    .sortable.desc::after {
+        content: "↓";
+        opacity: 1;
+    }
+
+    .stats-cards {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+    }
+    .stat-card-mini {
+        background: white;
+        border-radius: 16px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        flex: 1;
+        min-width: 160px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card-mini:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    .stat-icon { font-size: 32px; }
+    .stat-info { flex: 1; }
+    .stat-value { font-size: 28px; font-weight: 700; color: #1e293b; line-height: 1.2; }
+    .stat-label { font-size: 13px; color: #64748b; }
+
+    .students-table-wrapper {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+        overflow: auto;
+    }
+    .students-table-wrapper.has-scroll {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .students-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 900px;
+    }
+    .students-table-wrapper.has-scroll .students-table thead th {
+        position: sticky;
+        top: 0;
+        background: #f8fafc;
+        z-index: 10;
+        box-shadow: 0 2px 0 0 #e2e8f0;
+    }
+    .students-table thead th {
+        background: #f8fafc;
+        padding: 16px 16px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .students-table tbody td {
+        padding: 16px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+    }
+    .students-table tbody tr:hover {
+        background: #f8fafc;
+        cursor: pointer;
+    }
+    .students-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .student-name-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .student-avatar-sm {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    .student-info-cell {
+        display: flex;
+        flex-direction: column;
+    }
+    .student-name {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 15px;
+    }
+    .student-email {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+
+    .progress-cell { min-width: 120px; }
+    .progress-stats {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        margin-bottom: 6px;
+        font-size: 13px;
+    }
+    .progress-completed {
+        font-weight: 700;
+        color: #10b981;
+        font-size: 14px;
+    }
+    .progress-sep { color: #cbd5e1; }
+    .progress-total { color: #64748b; }
+    .progress-bar-custom {
+        width: 100%;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #059669);
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+
+    .grade-cell { text-align: center; }
+    .grade-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 700;
+    }
+    .grade-5 { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+    .grade-4 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
+    .grade-3 { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+    .grade-2 { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+    .grade-none { background: #f1f5f9; color: #94a3b8; }
+
+    .btn-detail {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 4px 8px;
+        background: #f1f5f9;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #3b82f6;
+        font-size: 11px;
+        font-weight: 600;
+        transition: all 0.2s;
+        white-space: nowrap;
+        width: auto;
+        min-width: 65px;
+    }
+    .btn-detail:hover {
+        background: #3b82f6;
+        color: white;
+        transform: translateX(0);
+        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+    }
+
+    .empty-row td { text-align: center; padding: 60px 20px !important; }
+    .empty-state { text-align: center; }
+    .empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+    .empty-state h3 { font-size: 20px; color: #475569; margin-bottom: 8px; }
+    .empty-state p { color: #94a3b8; }
+
+    .students-table-wrapper.has-scroll::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .students-table-wrapper.has-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    .students-table-wrapper.has-scroll::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+        border-radius: 10px;
+    }
+    .students-table-wrapper.has-scroll::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #94a3b8, #64748b);
+    }
+
+    @media (max-width: 768px) {
+        .filter-row { flex-direction: column; align-items: stretch; }
+        .filter-actions { flex-direction: column; }
+        .btn-filter, .btn-reset { width: 100%; }
+        .stats-cards { flex-direction: column; }
+        .students-table-wrapper { overflow-x: auto; }
+        .students-table { min-width: 850px; }
+        .student-name-cell { flex-direction: column; text-align: center; }
+        .student-info-cell { align-items: center; }
+        .progress-cell { min-width: 100px; }
+        .action-cell { text-align: center !important; }
+    }
+</style>
+
+<div class="students-list-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">👨‍🎓 Мои ученики</h1>
+            <p class="page-subtitle" id="studentsCount">Всего учеников: {{ total_students }}</p>
+        </div>
+    </div>
+
+    <!-- Блок фильтрации -->
+    <div class="filter-section">
+        <div class="filter-title">🔍 Фильтрация учеников</div>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="groupFilter">Группа:</label>
+                <select id="groupFilter">
+                    <option value="">Все группы</option>
+                    {% for student in students_data %}
+                        {% if student.group != '—' %}
+                            <option value="{{ student.group }}">{{ student.group }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="courseFilter">Курс:</label>
+                <select id="courseFilter">
+                    <option value="">Все курсы</option>
+                    {% for student in students_data %}
+                        {% if student.course != '—' %}
+                            <option value="{{ student.course }}">{{ student.course }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="searchNameInput">Поиск по ФИО:</label>
+                <input type="text" id="searchNameInput" placeholder="Введите ФИО..." autocomplete="off">
+            </div>
+            <div class="filter-actions">
+                <button id="resetFiltersBtn" class="btn-reset">✖ Сбросить фильтры</button>
+            </div>
+        </div>
+        <div class="active-filters" id="activeFilters" style="display: none;">
+            <span class="active-filters-label">Активные фильтры:</span>
+            <span id="activeFiltersList"></span>
+        </div>
+    </div>
+
+    <!-- Краткая статистика (динамически обновляется) -->
+    <div class="stats-cards" id="statsCards">
+        <div class="stat-card-mini">
+            <div class="stat-icon">📊</div>
+            <div class="stat-info">
+                <div class="stat-value" id="totalTestAssignments">{{ total_test_assignments }}</div>
+                <div class="stat-label">Всего тестов назначено</div>
+            </div>
+        </div>
+        <div class="stat-card-mini">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+                <div class="stat-value" id="totalTestCompletions">{{ total_test_completions }}</div>
+                <div class="stat-label">Пройдено тестов (всего)</div>
+            </div>
+        </div>
+        <div class="stat-card-mini">
+            <div class="stat-icon">🧪</div>
+            <div class="stat-info">
+                <div class="stat-value" id="totalLabSubmissions">{{ total_lab_submissions }}</div>
+                <div class="stat-label">Сдано лабораторных</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Таблица учеников -->
+    <div class="students-table-wrapper" id="studentsTableWrapper">
+        <table class="students-table" id="studentsTable">
+            <thead>
+                <tr>
+                    <th class="sortable" data-sort="name">Ученик</th>
+                    <th class="sortable" data-sort="group">Группа</th>
+                    <th class="sortable" data-sort="course">Курс</th>
+                    <th class="sortable" data-sort="tests">Все тесты</th>
+                    <th class="sortable" data-sort="teacherTests">Тесты от учителя</th>
+                    <th class="sortable" data-sort="labs">Лабораторные</th>
+                    <th class="sortable" data-sort="avgGrade">Средний балл</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="studentsTableBody">
+                {% for data in students_data %}
+                <tr class="student-row" data-student-id="{{ data.student.id }}"
+                    data-name="{{ data.full_name|lower }}"
+                    data-group="{{ data.group }}"
+                    data-course="{{ data.course }}"
+                    data-tests-completed="{{ data.completed_tests }}"
+                    data-tests-total="{{ data.total_available_tests }}"
+                    data-teacher-tests-passed="{{ data.teacher_tests_passed }}"
+                    data-teacher-tests-count="{{ data.teacher_tests_count }}"
+                    data-labs-submitted="{{ data.submitted_labs }}"
+                    data-labs-total="{{ data.total_labs }}"
+                    data-avg-grade="{{ data.avg_grade|default:'0' }}">
+                    <td class="student-name-cell">
+                        <div class="student-avatar-sm">
+                            {{ data.full_name|first|upper }}
+                        </div>
+                        <div class="student-info-cell">
+                            <div class="student-name">{{ data.full_name }}</div>
+                            <div class="student-email">{{ data.student.email }}</div>
+                        </div>
+                    </td>
+                    <td class="group-cell">{{ data.group }}</td>
+                    <td class="course-cell">{{ data.course }}</td>
+                    <td class="progress-cell">
+                        <div class="progress-stats">
+                            <span class="progress-completed">{{ data.completed_tests }}</span>
+                            <span class="progress-sep">/</span>
+                            <span class="progress-total">{{ data.total_available_tests }}</span>
+                        </div>
+                        <div class="progress-bar-custom">
+                            <div class="progress-fill" style="width: {% widthratio data.completed_tests data.total_available_tests 100 %}%"></div>
+                        </div>
+                    </td>
+                    <td class="progress-cell">
+                        <div class="progress-stats">
+                            <span class="progress-completed">{{ data.teacher_tests_passed }}</span>
+                            <span class="progress-sep">/</span>
+                            <span class="progress-total">{{ data.teacher_tests_count }}</span>
+                        </div>
+                        <div class="progress-bar-custom">
+                            <div class="progress-fill" style="width: {% widthratio data.teacher_tests_passed data.teacher_tests_count 100 %}%"></div>
+                        </div>
+                    </td>
+                    <td class="progress-cell">
+                        <div class="progress-stats">
+                            <span class="progress-completed">{{ data.submitted_labs }}</span>
+                            <span class="progress-sep">/</span>
+                            <span class="progress-total">{{ data.total_labs }}</span>
+                        </div>
+                        <div class="progress-bar-custom">
+                            <div class="progress-fill" style="width: {% widthratio data.submitted_labs data.total_labs 100 %}%"></div>
+                        </div>
+                    </td>
+                    <td class="grade-cell">
+                        {% if data.avg_grade %}
+                            <span class="grade-badge grade-{{ data.avg_grade|floatformat:0 }}">
+                                {{ data.avg_grade|floatformat:1 }}
+                            </span>
+                        {% else %}
+                            <span class="grade-badge grade-none">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="action-cell">
+                        <a href="{% url 'teacher_student_stats' data.student.id %}" class="btn-detail">
+                            Подробнее →
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="empty-row">
+                        <div class="empty-state">
+                            <div class="empty-icon">👨‍🎓</div>
+                            <h3>У вас пока нет учеников</h3>
+                            <p>Ученики появятся здесь после того, как выберут вас своим преподавателем при регистрации.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const studentsTableBody = document.getElementById('studentsTableBody');
+    const groupFilter = document.getElementById('groupFilter');
+    const courseFilter = document.getElementById('courseFilter');
+    const searchNameInput = document.getElementById('searchNameInput');
+    const resetBtn = document.getElementById('resetFiltersBtn');
+    const activeFiltersDiv = document.getElementById('activeFilters');
+    const activeFiltersList = document.getElementById('activeFiltersList');
+    const studentsTableWrapper = document.getElementById('studentsTableWrapper');
+    const studentsCountSpan = document.getElementById('studentsCount');
+    const totalTestAssignmentsSpan = document.getElementById('totalTestAssignments');
+    const totalTestCompletionsSpan = document.getElementById('totalTestCompletions');
+    const totalLabSubmissionsSpan = document.getElementById('totalLabSubmissions');
+
+    // Получаем все строки
+    let allRows = Array.from(document.querySelectorAll('#studentsTableBody .student-row'));
+    let currentRows = [...allRows];
+    let currentSort = { column: null, direction: null };
+
+    // Убираем дубликаты групп и курсов для фильтров
+    if (groupFilter) {
+        const groups = new Set();
+        allRows.forEach(row => {
+            const group = row.getAttribute('data-group');
+            if (group && group !== '—') groups.add(group);
+        });
+        const currentValue = groupFilter.value;
+        groupFilter.innerHTML = '<option value="">Все группы</option>' +
+            Array.from(groups).sort().map(g => `<option value="${g}">${g}</option>`).join('');
+        if (currentValue && groups.has(currentValue)) groupFilter.value = currentValue;
+    }
+
+    if (courseFilter) {
+        const courses = new Set();
+        allRows.forEach(row => {
+            const course = row.getAttribute('data-course');
+            if (course && course !== '—') courses.add(course);
+        });
+        const currentValue = courseFilter.value;
+        courseFilter.innerHTML = '<option value="">Все курсы</option>' +
+            Array.from(courses).sort().map(c => `<option value="${c}">${c}</option>`).join('');
+        if (currentValue && courses.has(currentValue)) courseFilter.value = currentValue;
+    }
+
+    // Функция обновления статистики
+    function updateStatistics() {
+        const visibleRows = Array.from(studentsTableBody.querySelectorAll('.student-row')).filter(row => row.style.display !== 'none');
+        const count = visibleRows.length;
+        studentsCountSpan.textContent = `Всего учеников: ${count}`;
+
+        let totalTestsAssigned = 0;
+        let totalTestsCompleted = 0;
+        let totalLabsSubmitted = 0;
+
+        visibleRows.forEach(row => {
+            totalTestsAssigned += parseInt(row.getAttribute('data-tests-total')) || 0;
+            totalTestsCompleted += parseInt(row.getAttribute('data-tests-completed')) || 0;
+            totalLabsSubmitted += parseInt(row.getAttribute('data-labs-submitted')) || 0;
+        });
+
+        totalTestAssignmentsSpan.textContent = totalTestsAssigned;
+        totalTestCompletionsSpan.textContent = totalTestsCompleted;
+        totalLabSubmissionsSpan.textContent = totalLabsSubmitted;
+    }
+
+    // Функция фильтрации
+    function filterTable() {
+        const groupValue = groupFilter ? groupFilter.value : '';
+        const courseValue = courseFilter ? courseFilter.value : '';
+        const searchValue = searchNameInput ? searchNameInput.value.toLowerCase().trim() : '';
+
+        let visibleCount = 0;
+
+        allRows.forEach(row => {
+            const rowGroup = row.getAttribute('data-group') || '';
+            const rowCourse = row.getAttribute('data-course') || '';
+            const rowName = row.getAttribute('data-name') || '';
+
+            const matchesGroup = groupValue === '' || rowGroup === groupValue;
+            const matchesCourse = courseValue === '' || rowCourse === courseValue;
+            const matchesSearch = searchValue === '' || rowName.includes(searchValue);
+
+            if (matchesGroup && matchesCourse && matchesSearch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Обновляем currentRows для сортировки (только видимые)
+        currentRows = Array.from(studentsTableBody.querySelectorAll('.student-row')).filter(row => row.style.display !== 'none');
+
+        // Применяем сортировку если есть
+        if (currentSort.column && currentSort.direction) {
+            sortRows(currentSort.column, currentSort.direction);
+        }
+
+        updateStatistics();
+        updateActiveFilters();
+        updateScrollClass();
+    }
+
+    // Функция обновления активных фильтров
+    function updateActiveFilters() {
+        const filters = [];
+
+        if (groupFilter && groupFilter.value) {
+            filters.push({ name: `Группа: ${groupFilter.value}`, type: 'group', value: groupFilter.value });
+        }
+        if (courseFilter && courseFilter.value) {
+            filters.push({ name: `Курс: ${courseFilter.value}`, type: 'course', value: courseFilter.value });
+        }
+        if (searchNameInput && searchNameInput.value.trim()) {
+            filters.push({ name: `Поиск: "${searchNameInput.value.trim()}"`, type: 'search', value: searchNameInput.value.trim() });
+        }
+
+        if (filters.length > 0) {
+            activeFiltersDiv.style.display = 'flex';
+            activeFiltersList.innerHTML = filters.map(filter => `
+                <span class="filter-badge">
+                    ${filter.name}
+                    <span class="remove" data-type="${filter.type}" data-value="${filter.value}">✕</span>
+                </span>
+            `).join('');
+
+            document.querySelectorAll('.filter-badge .remove').forEach(removeBtn => {
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const type = this.dataset.type;
+                    if (type === 'group' && groupFilter) groupFilter.value = '';
+                    else if (type === 'course' && courseFilter) courseFilter.value = '';
+                    else if (type === 'search' && searchNameInput) searchNameInput.value = '';
+                    filterTable();
+                });
+            });
+        } else {
+            activeFiltersDiv.style.display = 'none';
+        }
+    }
+
+    // Функция сортировки
+    function sortRows(column, direction) {
+        const sortedRows = [...currentRows];
+
+        sortedRows.sort((a, b) => {
+            let aVal, bVal;
+
+            switch(column) {
+                case 'name':
+                    aVal = a.getAttribute('data-name') || '';
+                    bVal = b.getAttribute('data-name') || '';
+                    break;
+                case 'group':
+                    aVal = a.getAttribute('data-group') || '';
+                    bVal = b.getAttribute('data-group') || '';
+                    break;
+                case 'course':
+                    aVal = parseInt(a.getAttribute('data-course')) || 0;
+                    bVal = parseInt(b.getAttribute('data-course')) || 0;
+                    break;
+                case 'tests':
+                    aVal = (parseInt(a.getAttribute('data-tests-completed')) / Math.max(1, parseInt(a.getAttribute('data-tests-total')))) * 100;
+                    bVal = (parseInt(b.getAttribute('data-tests-completed')) / Math.max(1, parseInt(b.getAttribute('data-tests-total')))) * 100;
+                    break;
+                case 'teacherTests':
+                    aVal = (parseInt(a.getAttribute('data-teacher-tests-passed')) / Math.max(1, parseInt(a.getAttribute('data-teacher-tests-count')))) * 100;
+                    bVal = (parseInt(b.getAttribute('data-teacher-tests-passed')) / Math.max(1, parseInt(b.getAttribute('data-teacher-tests-count')))) * 100;
+                    break;
+                case 'labs':
+                    aVal = (parseInt(a.getAttribute('data-labs-submitted')) / Math.max(1, parseInt(a.getAttribute('data-labs-total')))) * 100;
+                    bVal = (parseInt(b.getAttribute('data-labs-submitted')) / Math.max(1, parseInt(b.getAttribute('data-labs-total')))) * 100;
+                    break;
+                case 'avgGrade':
+                    aVal = parseFloat(a.getAttribute('data-avg-grade')) || 0;
+                    bVal = parseFloat(b.getAttribute('data-avg-grade')) || 0;
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (typeof aVal === 'string') {
+                return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            } else {
+                return direction === 'asc' ? aVal - bVal : bVal - aVal;
+            }
+        });
+
+        // Обновляем DOM
+        currentRows.forEach(row => row.remove());
+        sortedRows.forEach(row => studentsTableBody.appendChild(row));
+        currentRows = sortedRows;
+    }
+
+    // Обработчики сортировки
+    const sortableHeaders = document.querySelectorAll('.sortable');
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.dataset.sort;
+            const currentDirection = this.classList.contains('asc') ? 'asc' : (this.classList.contains('desc') ? 'desc' : null);
+            let newDirection;
+
+            if (currentDirection === 'asc') {
+                newDirection = 'desc';
+            } else if (currentDirection === 'desc') {
+                newDirection = null;
+            } else {
+                newDirection = 'asc';
+            }
+
+            // Сбрасываем классы у всех заголовков
+            sortableHeaders.forEach(h => {
+                h.classList.remove('asc', 'desc');
+            });
+
+            if (newDirection) {
+                this.classList.add(newDirection);
+                currentSort = { column, direction: newDirection };
+                sortRows(column, newDirection);
+            } else {
+                currentSort = { column: null, direction: null };
+                // Возвращаем исходный порядок (по имени)
+                sortRows('name', 'asc');
+                const nameHeader = document.querySelector('.sortable[data-sort="name"]');
+                if (nameHeader) nameHeader.classList.add('asc');
+                currentSort = { column: 'name', direction: 'asc' };
+            }
+        });
+    });
+
+    // Функция обновления скролла
+    function updateScrollClass() {
+        const visibleRows = Array.from(studentsTableBody.querySelectorAll('.student-row')).filter(row => row.style.display !== 'none');
+        if (visibleRows.length > 7) {
+            studentsTableWrapper.classList.add('has-scroll');
+        } else {
+            studentsTableWrapper.classList.remove('has-scroll');
+        }
+    }
+
+    // Функция сброса фильтров
+    function resetFilters() {
+        if (groupFilter) groupFilter.value = '';
+        if (courseFilter) courseFilter.value = '';
+        if (searchNameInput) searchNameInput.value = '';
+        filterTable();
+    }
+
+    // Добавляем обработчики событий
+    if (groupFilter) groupFilter.addEventListener('change', filterTable);
+    if (courseFilter) courseFilter.addEventListener('change', filterTable);
+    if (searchNameInput) searchNameInput.addEventListener('input', filterTable);
+    if (resetBtn) resetBtn.addEventListener('click', resetFilters);
+
+    // Клик по строке
+    const rows = document.querySelectorAll('.student-row');
+    rows.forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (!e.target.closest('.btn-detail')) {
+                const studentId = this.dataset.studentId;
+                if (studentId) window.location.href = `/teacher/students/student/${studentId}/`;
+            }
+        });
+    });
+
+    // Инициализация: сортировка по имени по умолчанию
+    if (allRows.length > 0) {
+        const nameHeader = document.querySelector('.sortable[data-sort="name"]');
+        if (nameHeader) {
+            nameHeader.classList.add('asc');
+            currentSort = { column: 'name', direction: 'asc' };
+            sortRows('name', 'asc');
+        }
+    }
+
+    // Применяем фильтры и обновляем статистику
+    filterTable();
+});
+</script>
+{% endblock %}

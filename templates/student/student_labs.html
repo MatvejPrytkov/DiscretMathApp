@@ -65,37 +65,44 @@
     <div class="submissions-scroll">
         <div class="submissions-grid">
             {% for submission in my_submissions %}
-            <div class="card mb-3 clickable-card">
-                <div class="card-body">
-                    <h5>
-                        <a href="{% url 'lab' submission.lab_work.id %}" class="card-title-link">
-                            {{ submission.lab_work.title }}
-                        </a>
-                    </h5>
+            <!-- В student_labs.html, в блоке my_submissions -->
+<div class="card mb-3 clickable-card">
+    <div class="card-body">
+        <h5>
+            <a href="{% url 'lab' submission.lab_work.id %}" class="card-title-link">
+                {{ submission.lab_work.title }}
+            </a>
+        </h5>
 
-                    <p>Статус:
-                        <span class="badge badge-{{ submission.status }}">
-                            {{ submission.get_status_display }}
-                        </span>
-                    </p>
+        <p>Статус:
+            <span class="badge badge-{{ submission.status }}">
+                {{ submission.get_status_display }}
+            </span>
+        </p>
 
-                    {% if submission.grade %}
-                        <p><strong>Оценка: {{ submission.grade }}</strong></p>
-                        {% if submission.comment %}
-                            <p>Комментарий преподавателя: {{ submission.comment }}</p>
-                        {% endif %}
-                        <p>Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}</p>
-                    {% endif %}
+        <!-- Показываем дату последней сдачи -->
+        <small class="text-muted">
+            Последняя сдача: {{ submission.submitted_at|date:"d.m.Y H:i" }}
+        </small>
 
-                    <div class="d-flex gap-2 mt-3">
-                        <a href="{% url 'lab' submission.lab_work.id %}" class="btn btn-sm btn-success">
-                            📖 Открыть лабораторную
-                        </a>
-                        <a href="{{ submission.submitted_file.url }}" class="btn btn-sm btn-info" download>
-                            Скачать мою работу
-                        </a>
-                    </div>
-                </div>
+        {% if submission.grade %}
+            <p class="mt-2"><strong>Оценка: {{ submission.grade }}</strong></p>
+            {% if submission.comment %}
+                <p>Комментарий преподавателя: {{ submission.comment }}</p>
+            {% endif %}
+            <p>Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}</p>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-3">
+            <a href="{% url 'lab' submission.lab_work.id %}" class="btn btn-sm btn-success">
+                📖 Открыть лабораторную
+            </a>
+            <a href="{{ submission.submitted_file.url }}" class="btn btn-sm btn-info" download>
+                Скачать мою работу
+            </a>
+        </div>
+
+</div>
             </div>
             {% empty %}
             <p>Сдач пока нет.</p>

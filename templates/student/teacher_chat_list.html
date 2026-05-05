@@ -1,0 +1,131 @@
+{% extends 'student/base_student.html' %}
+{% load tz %}
+
+{% block title %}Чат с преподавателем{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .teacher-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        padding: 24px;
+        margin-bottom: 30px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .teacher-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 35px -10px rgba(99, 102, 241, 0.3);
+        border-color: #6366f1;
+    }
+    
+    .teacher-avatar {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        font-size: 36px;
+        color: white;
+    }
+    
+    .teacher-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+    
+    .teacher-role {
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+    
+    .unread-badge-large {
+        display: inline-block;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+    
+    .chat-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .chat-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+    
+    .error-container {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 20px;
+    }
+    
+    .error-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+    }
+    
+    .error-container h3 {
+        color: #1e293b;
+        margin-bottom: 10px;
+    }
+    
+    .error-container p {
+        color: #64748b;
+    }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="chat-container">
+    {% if error %}
+        <div class="error-container">
+            <div class="error-icon">👩‍🏫</div>
+            <h3>{{ error }}</h3>
+            <p>Обратитесь к администратору для назначения преподавателя.</p>
+        </div>
+    {% else %}
+        <div class="teacher-card" onclick="window.location.href='{% url 'student_teacher_chat_detail' teacher.id %}'">
+            <div class="teacher-avatar">
+                {{ teacher_name|slice:":1"|upper }}
+            </div>
+            <div class="teacher-name">{{ teacher_name }}</div>
+            <div class="teacher-role">Ваш преподаватель</div>
+            {% if unread_count > 0 %}
+                <div class="unread-badge-large">📬 {{ unread_count }} непрочитанных сообщений</div>
+            {% endif %}
+           <button class="chat-btn" onclick="event.stopPropagation(); window.location.href='{% url 'student_teacher_chat_detail' teacher.id %}'">
+    💬 Написать преподавателю
+</button>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

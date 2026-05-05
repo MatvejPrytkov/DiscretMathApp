@@ -31,25 +31,10 @@
                             {{ test_form.description.label_tag }}
                             {{ test_form.description }}
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    {{ test_form.course.label_tag }}
-                                    {{ test_form.course }}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    {{ test_form.group.label_tag }}
-                                    {{ test_form.group }}
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Выбор студентов -->
+                <!-- Выбор студентов с фильтрацией -->
                 <div class="card custom-card mb-4">
                     <div class="card-header custom-card-header">
                         <h5 class="mb-0">
@@ -57,31 +42,70 @@
                         </h5>
                     </div>
                     <div class="card-body custom-card-body">
-                        <div class="form-group mb-0">
+                        <div class="form-group mb-3">
                             <label class="section-label">Выберите учеников, которым будет доступен тест:</label>
                             <p class="text-muted small mb-3">
                                 Если ни один ученик не выбран, тест будет доступен всем вашим ученикам.
                             </p>
 
-                            <div class="students-list">
-                                {% for student_profile in request.user.students.all %}
-                                    <div class="student-item">
-                                        <input class="form-check-input student-checkbox"
-                                               type="checkbox"
-                                               name="selected_students"
-                                               value="{{ student_profile.user.id }}"
-                                               id="student_{{ student_profile.user.id }}">
-                                        <label class="student-label" for="student_{{ student_profile.user.id }}">
-                                            <span class="student-name">{{ student_profile.full_name }}</span>
-                                            <span class="student-group">
-                                                Группа: {{ student_profile.group|default:"не указана" }}
-                                            </span>
-                                        </label>
+                            <!-- Блок фильтрации -->
+                            <div class="filter-section">
+                                <div class="filter-row">
+                                    <div class="filter-group">
+                                        <label for="groupFilter">Фильтр по группе:</label>
+                                        <select id="groupFilter" class="form-control">
+                                            <option value="">Все группы</option>
+                                            {% for group in unique_groups %}
+                                                <option value="{{ group }}">{{ group }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
-                                {% empty %}
-                                    <p class="text-warning mb-0">У вас пока нет привязанных учеников.</p>
-                                {% endfor %}
+                                    <div class="filter-group">
+                                        <label for="courseFilter">Фильтр по курсу:</label>
+                                        <select id="courseFilter" class="form-control">
+                                            <option value="">Все курсы</option>
+                                            {% for course in unique_courses %}
+                                                <option value="{{ course }}">{{ course }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="filter-group">
+                                        <label for="searchNameInput">Поиск по ФИО:</label>
+                                        <input type="text" id="searchNameInput" class="form-control" placeholder="Введите ФИО..." autocomplete="off">
+                                    </div>
+                                </div>
                             </div>
+
+                            <!-- Кнопки быстрого выбора -->
+                            <div class="quick-select-buttons mb-3">
+                                <button type="button" class="btn-quick-select" id="selectAllBtn">✓ Выбрать всех</button>
+                                <button type="button" class="btn-quick-select" id="selectAllFilteredBtn">✓ Выбрать всех (по фильтру)</button>
+                                <button type="button" class="btn-quick-select" id="clearAllBtn">✗ Очистить все</button>
+                            </div>
+
+                            <div class="students-list" id="studentsList">
+    {% for student_profile in students %}
+        <div class="student-item"
+             data-group="{{ student_profile.group|default:'' }}"
+             data-course="{{ student_profile.course|default:'' }}"
+             data-name="{{ student_profile.full_name|lower }}">
+            <input class="form-check-input student-checkbox"
+                   type="checkbox"
+                   name="selected_students"
+                   value="{{ student_profile.user.id }}"
+                   id="student_{{ student_profile.user.id }}">
+            <label class="student-label" for="student_{{ student_profile.user.id }}">
+                <span class="student-name">{{ student_profile.full_name }}</span>
+                <span class="student-group">
+                    Группа: {{ student_profile.group|default:"не указана" }},
+                    Курс: {{ student_profile.course|default:"не указан" }}
+                </span>
+            </label>
+        </div>
+    {% empty %}
+        <p class="text-warning mb-0">У вас пока нет привязанных учеников.</p>
+    {% endfor %}
+</div>
                         </div>
                     </div>
                 </div>
@@ -105,7 +129,6 @@
                                        value="{{ question.id }}"
                                        id="question_{{ question.id }}"
                                        class="existing-question-checkbox">
-
                                 <label for="question_{{ question.id }}" class="existing-question-label">
                                     {{ question.question_text|truncatechars:100 }}
                                 </label>
@@ -192,7 +215,7 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group mb-0">
+                                <div class="form-group mb-3">
                                     <label>Правильный ответ:</label>
                                     <select name="question_form-0-correct_answer" class="form-control">
                                         <option value="">Выберите правильный ответ</option>
@@ -201,6 +224,13 @@
                                         <option value="3">Вариант 3</option>
                                         <option value="4">Вариант 4</option>
                                     </select>
+                                </div>
+
+                                <!-- Кнопка удаления вопроса (для всех, кроме первого) -->
+                                <div class="delete-question-btn-container" style="display: none;">
+                                    <button type="button" class="btn-delete-question" onclick="deleteQuestionBlock(0)">
+                                        <i class="fas fa-trash-alt me-1"></i>Удалить вопрос
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -230,11 +260,130 @@ document.addEventListener('DOMContentLoaded', function() {
     const questionsContainer = document.getElementById('questions-container');
     const addQuestionBtn = document.getElementById('add-question-btn');
 
+    // Элементы фильтрации
+    const groupFilter = document.getElementById('groupFilter');
+    const courseFilter = document.getElementById('courseFilter');
+    const searchNameInput = document.getElementById('searchNameInput');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const selectAllFilteredBtn = document.getElementById('selectAllFilteredBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const studentsList = document.getElementById('studentsList');
+    let allStudentItems = [];
+
+    // Получаем все элементы учеников
+    if (studentsList) {
+        allStudentItems = Array.from(studentsList.querySelectorAll('.student-item'));
+    }
+
+    // Функция фильтрации учеников
+    function filterStudents() {
+        const groupValue = groupFilter ? groupFilter.value : '';
+        const courseValue = courseFilter ? courseFilter.value : '';
+        const searchValue = searchNameInput ? searchNameInput.value.toLowerCase().trim() : '';
+
+        allStudentItems.forEach(item => {
+            const itemGroup = item.getAttribute('data-group') || '';
+            const itemCourse = item.getAttribute('data-course') || '';
+            const itemName = item.getAttribute('data-name') || '';
+
+            const matchesGroup = groupValue === '' || itemGroup === groupValue;
+            const matchesCourse = courseValue === '' || itemCourse === courseValue;
+            const matchesSearch = searchValue === '' || itemName.includes(searchValue);
+
+            if (matchesGroup && matchesCourse && matchesSearch) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    // Функция получения видимых (отфильтрованных) чекбоксов
+    function getFilteredCheckboxes() {
+        const visibleItems = allStudentItems.filter(item => item.style.display !== 'none');
+        return visibleItems.map(item => item.querySelector('.student-checkbox'));
+    }
+
+    // Выбрать всех учеников
+    function selectAllStudents() {
+        const checkboxes = studentsList.querySelectorAll('.student-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
+
+    // Выбрать только отфильтрованных учеников
+    function selectFilteredStudents() {
+        const filteredCheckboxes = getFilteredCheckboxes();
+        filteredCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
+
+    // Очистить все выборы
+    function clearAllStudents() {
+        const checkboxes = studentsList.querySelectorAll('.student-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+
+    // Добавляем обработчики событий для фильтров
+    if (groupFilter) groupFilter.addEventListener('change', filterStudents);
+    if (courseFilter) courseFilter.addEventListener('change', filterStudents);
+    if (searchNameInput) searchNameInput.addEventListener('input', filterStudents);
+    if (selectAllBtn) selectAllBtn.addEventListener('click', selectAllStudents);
+    if (selectAllFilteredBtn) selectAllFilteredBtn.addEventListener('click', selectFilteredStudents);
+    if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllStudents);
+
     const categoryOptions = `
         {% for category in categories %}
         <option value="{{ category.id }}">{{ category.name }}</option>
         {% endfor %}
     `;
+
+    // Функция удаления блока вопроса
+    window.deleteQuestionBlock = function(blockId) {
+        const block = document.getElementById(`question-block-${blockId}`);
+        if (block) {
+            block.remove();
+            // Перенумеровываем оставшиеся блоки
+            renumberQuestionBlocks();
+        }
+    };
+
+    // Функция перенумерации блоков вопросов
+    function renumberQuestionBlocks() {
+        const blocks = document.querySelectorAll('.question-block');
+        blocks.forEach((block, index) => {
+            const newId = index;
+            block.id = `question-block-${newId}`;
+
+            // Обновляем заголовок
+            const header = block.querySelector('.question-block-header h6');
+            if (header) {
+                header.textContent = `Вопрос ${newId + 1}`;
+            }
+
+            // Обновляем атрибуты name у всех полей внутри блока
+            const inputs = block.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                if (input.name) {
+                    input.name = input.name.replace(/question_form-\d+-/, `question_form-${newId}-`);
+                }
+            });
+
+            // Обновляем кнопку удаления
+            const deleteBtnContainer = block.querySelector('.delete-question-btn-container');
+            if (deleteBtnContainer) {
+                const deleteBtn = deleteBtnContainer.querySelector('button');
+                if (deleteBtn) {
+                    deleteBtn.setAttribute('onclick', `deleteQuestionBlock(${newId})`);
+                }
+            }
+        });
+        questionCount = blocks.length;
+    }
 
     function addNewQuestionBlock() {
         const newBlock = document.createElement('div');
@@ -304,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
 
-            <div class="form-group mb-0">
+            <div class="form-group mb-3">
                 <label>Правильный ответ:</label>
                 <select name="question_form-${questionCount}-correct_answer" class="form-control">
                     <option value="">Выберите правильный ответ</option>
@@ -314,6 +463,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     <option value="4">Вариант 4</option>
                 </select>
             </div>
+
+            <div class="delete-question-btn-container">
+                <button type="button" class="btn-delete-question" onclick="deleteQuestionBlock(${questionCount})">
+                    <i class="fas fa-trash-alt me-1"></i>Удалить вопрос
+                </button>
+            </div>
         `;
 
         questionsContainer.appendChild(newBlock);
@@ -321,13 +476,23 @@ document.addEventListener('DOMContentLoaded', function() {
         newBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    addQuestionBtn.addEventListener('click', function() {
-        addNewQuestionBlock();
-    });
+    if (addQuestionBtn) {
+        addQuestionBtn.addEventListener('click', function() {
+            addNewQuestionBlock();
+        });
+    }
 
-    document.getElementById('testForm').addEventListener('submit', function() {
-        console.log('Отправка формы...');
-    });
+    // Инициализация фильтрации
+    filterStudents();
+
+    // Инициализация: у первого вопроса скрываем кнопку удаления
+    const firstBlock = document.getElementById('question-block-0');
+    if (firstBlock) {
+        const deleteContainer = firstBlock.querySelector('.delete-question-btn-container');
+        if (deleteContainer) {
+            deleteContainer.style.display = 'none';
+        }
+    }
 });
 </script>
 
@@ -383,6 +548,103 @@ document.addEventListener('DOMContentLoaded', function() {
     display: inline-block;
 }
 
+/* Стили для фильтрации */
+.filter-section {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 150px;
+}
+
+.filter-group label {
+    font-size: 12px;
+    margin-bottom: 4px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.filter-group select,
+.filter-group input {
+    width: 100%;
+    border: 1px solid #d8e1ee;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 14px;
+    background-color: white;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+    border-color: #6ea8fe;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(110, 168, 254, 0.2);
+}
+
+/* Кнопки быстрого выбора */
+.quick-select-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-quick-select {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.btn-quick-select:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+}
+
+.btn-quick-select:first-child {
+    background: #10b981;
+    color: white;
+}
+
+.btn-quick-select:first-child:hover {
+    background: #059669;
+}
+
+.btn-quick-select:nth-child(2) {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-quick-select:nth-child(2):hover {
+    background: #2563eb;
+}
+
+.btn-quick-select:last-child {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-quick-select:last-child:hover {
+    background: #dc2626;
+}
+
 .create-test-page input[type="text"],
 .create-test-page input[type="number"],
 .create-test-page input[type="email"],
@@ -410,9 +672,16 @@ document.addEventListener('DOMContentLoaded', function() {
     outline: none;
 }
 
-.existing-questions-list,
-.students-list {
+/* Список существующих вопросов */
+.existing-questions-list {
     max-height: 340px;
+    overflow-y: auto;
+    padding: 8px 4px 8px 2px;
+}
+
+/* Список учеников */
+.students-list {
+    max-height: 400px;
     overflow-y: auto;
     padding: 8px 4px 8px 2px;
 }
@@ -445,6 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
     margin-top: 4px;
     flex-shrink: 0;
     transform: scale(1.1);
+    cursor: pointer;
 }
 
 .existing-question-label,
@@ -469,6 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
     margin-top: 2px;
 }
 
+/* Блоки вопросов */
 .question-block {
     background: linear-gradient(180deg, #f9fbff 0%, #f4f8ff 100%);
     border: 1px solid #e3ecf8;
@@ -477,6 +748,7 @@ document.addEventListener('DOMContentLoaded', function() {
     margin-bottom: 16px;
     transition: all 0.3s ease;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+    position: relative;
 }
 
 .question-block:hover {
@@ -499,6 +771,30 @@ document.addEventListener('DOMContentLoaded', function() {
     color: #234;
 }
 
+/* Кнопка удаления вопроса */
+.delete-question-btn-container {
+    margin-top: 15px;
+    text-align: right;
+}
+
+.btn-delete-question {
+    padding: 6px 12px;
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-question:hover {
+    background: #fecaca;
+    transform: translateY(-1px);
+}
+
+/* Кнопка добавления вопроса */
 .add-question-btn {
     border: none;
     border-radius: 12px;
@@ -507,6 +803,7 @@ document.addEventListener('DOMContentLoaded', function() {
     color: #2356a8;
     font-weight: 600;
     transition: all 0.25s ease;
+    cursor: pointer;
 }
 
 .add-question-btn:hover {
@@ -516,6 +813,7 @@ document.addEventListener('DOMContentLoaded', function() {
     color: #1d4f9c;
 }
 
+/* Кнопка создания теста */
 .create-test-btn {
     border: none;
     border-radius: 14px;
@@ -531,6 +829,7 @@ document.addEventListener('DOMContentLoaded', function() {
     box-shadow: 0 14px 28px rgba(40, 199, 111, 0.28);
 }
 
+/* Скроллбары */
 .existing-questions-list::-webkit-scrollbar,
 .students-list::-webkit-scrollbar {
     width: 8px;
@@ -548,6 +847,7 @@ document.addEventListener('DOMContentLoaded', function() {
     border-radius: 10px;
 }
 
+/* Адаптивность */
 @media (max-width: 991.98px) {
     .custom-card-body {
         padding: 18px 16px;
@@ -555,6 +855,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     .page-title {
         font-size: 1.6rem;
+    }
+
+    .filter-row {
+        flex-direction: column;
+    }
+
+    .quick-select-buttons {
+        flex-wrap: wrap;
     }
 }
 </style>

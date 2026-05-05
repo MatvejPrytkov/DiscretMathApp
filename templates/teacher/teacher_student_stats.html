@@ -1,0 +1,770 @@
+{% extends 'teacher/base_teacher.html' %}
+{% block title %}Статистика: {{ full_name }}{% endblock %}
+
+{% block teacher_content %}
+
+<div class="student-stats-container">
+    <!-- Хедер с информацией об ученике -->
+    <div class="student-header">
+        <div class="student-avatar">
+            {{ full_name|first|upper }}
+        </div>
+        <div class="student-info">
+            <h1>{{ full_name }}</h1>
+            <div class="student-details">
+                <span class="detail-badge">📧 {{ email }}</span>
+                <span class="detail-badge">👥 Группа: {{ group }}</span>
+                <span class="detail-badge">📚 Курс: {{ course }}</span>
+            </div>
+        </div>
+        <a href="{% url 'teacher_students_list' %}" class="btn-back-list">
+            ← Назад к списку
+        </a>
+    </div>
+
+    <!-- Карточки со статистикой -->
+    <div class="stats-grid-two">
+        <div class="stat-card-detailed">
+            <div class="stat-header">
+                <span class="stat-icon-detailed">📝</span>
+                <h3>Тесты от учителя</h3>
+            </div>
+            <div class="stat-numbers">
+                <div class="stat-number-large">{{ completed_tests_count }} / {{ completed_tests_count|add:not_completed_tests_count }}</div>
+                <div class="stat-label-large">
+                    {% if not_completed_tests_count == 0 %}
+                        ✅ Все тесты пройдены
+                    {% else %}
+                        📌 Осталось пройти: {{ not_completed_tests_count }}
+                    {% endif %}
+                </div>
+            </div>
+            {% if test_avg_grade %}
+            <div class="stat-footer">
+                Средний балл: <strong class="avg-grade">{{ test_avg_grade }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="stat-card-detailed">
+            <div class="stat-header">
+                <span class="stat-icon-detailed">🧪</span>
+                <h3>Лабораторные работы</h3>
+            </div>
+            <div class="stat-numbers">
+                <div class="stat-number-large">{{ submitted_labs_count }} / {{ submitted_labs_count|add:not_submitted_labs_count }}</div>
+                <div class="stat-label-large">
+                    {% if not_submitted_labs_count == 0 %}
+                        ✅ Все работы сданы
+                    {% else %}
+                        📌 Осталось сдать: {{ not_submitted_labs_count }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Секция с тестами -->
+    <div class="section-card">
+        <div class="section-header">
+            <h2>📋 Тесты</h2>
+            <span class="section-count">{{ tests_data|length }} тестов</span>
+        </div>
+
+        <div class="items-grid">
+            {% for item in tests_data %}
+            <div class="item-card {% if item.is_completed %}completed{% else %}pending{% endif %}">
+                <div class="item-status">
+                    {% if item.is_completed %}
+                        <span class="status-badge success">✅ Пройден</span>
+                    {% else %}
+                        <span class="status-badge warning">⏳ Ожидает</span>
+                    {% endif %}
+                </div>
+                <div class="item-title">{{ item.test.title }}</div>
+                <div class="item-description">{{ item.test.description|truncatechars:80 }}</div>
+                {% if item.is_completed %}
+                <div class="item-result">
+                    <div class="result-line">
+                        <span class="result-label">Результат:</span>
+                        <span class="result-value">{{ item.score }} ({{ item.percent|floatformat:1 }}%)</span>
+                    </div>
+                    {% if item.grade %}
+                    <div class="result-line">
+                        <span class="result-label">Оценка:</span>
+                        <span class="result-value grade-{{ item.grade|floatformat:0 }}">{{ item.grade }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="result-line">
+                        <span class="result-label">Дата:</span>
+                        <span class="result-value">{{ item.completed_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                </div>
+                <a href="{% url 'teacher_result_detail' item.result.id %}" class="btn-detail-item">Подробнее →</a>
+                {% else %}
+                <div class="item-empty">
+                    <span class="empty-icon">📭</span>
+                    <span>Тест еще не пройден</span>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="empty-item">Нет назначенных тестов</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Секция с лабораторными работами -->
+    <div class="section-card">
+        <div class="section-header">
+            <h2>🧪 Лабораторные работы</h2>
+            <span class="section-count">{{ labs_data|length }} работ</span>
+        </div>
+
+        <div class="items-grid">
+            {% for item in labs_data %}
+            <div class="item-card {% if item.is_submitted %}submitted{% else %}pending{% endif %}">
+                <div class="item-status">
+                    {% if item.is_submitted %}
+                        {% if item.grade %}
+                            <span class="status-badge success">✅ Проверено</span>
+                        {% else %}
+                            <span class="status-badge info">📤 Сдано</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="status-badge warning">⏳ Не сдано</span>
+                    {% endif %}
+                </div>
+                <div class="item-title">{{ item.lab.title }}</div>
+                <div class="item-description">{{ item.lab.description|truncatechars:80 }}</div>
+                {% if item.is_submitted %}
+                <div class="item-result">
+                    {% if item.grade %}
+                    <div class="result-line">
+                        <span class="result-label">Оценка:</span>
+                        <span class="result-value grade-{{ item.grade|floatformat:0 }}">{{ item.grade }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="result-line">
+                        <span class="result-label">Дата сдачи:</span>
+                        <span class="result-value">{{ item.submitted_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    {% if item.status %}
+                    <div class="result-line">
+                        <span class="result-label">Статус:</span>
+                        <span class="result-value">{{ item.status }}</span>
+                    </div>
+                    {% endif %}
+                    {% if item.comment %}
+                    <div class="result-comment">
+                        <span class="comment-label">💬 Комментарий:</span>
+                        <span class="comment-text">{{ item.comment }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <a href="{% url 'submission_detail' item.submission.id %}" class="btn-detail-item">Подробнее →</a>
+                {% else %}
+                <div class="item-empty">
+                    <span class="empty-icon">📭</span>
+                    <span>Работа еще не сдана</span>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="empty-item">Нет лабораторных работ</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Сводная таблица всех работ -->
+    <div class="section-card">
+        <div class="section-header">
+            <h2>📊 Сводная таблица всех работ</h2>
+            <span class="section-count">{{ all_works|length }} работ</span>
+        </div>
+
+        <div class="summary-table-wrapper">
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Тип</th>
+                        <th>Название</th>
+                        <th>Результат</th>
+                        <th>Оценка</th>
+                        <th>Дата</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for work in all_works %}
+                    <tr class="summary-row" data-url="{{ work.detail_url }}">
+                        <td>
+                            <span class="type-badge {% if work.type == 'test' %}type-test{% else %}type-lab{% endif %}">
+                                {{ work.type_name }}
+                            </span>
+                        </td>
+                        <td class="work-title">{{ work.title }}</td>
+                        <td class="work-score">
+                            {% if work.percent %}
+                                {{ work.percent|floatformat:1 }}%
+                            {% else %}
+                                {{ work.score }}
+                            {% endif %}
+                        </td>
+                        <td class="work-grade">
+                            {% if work.grade %}
+                                <span class="grade-badge grade-{{ work.grade|floatformat:0 }}">{{ work.grade }}</span>
+                            {% else %}
+                                <span class="grade-badge grade-none">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="work-date">{{ work.date|date:"d.m.Y H:i" }}</td>
+                        <td class="work-action">
+                            <a href="{{ work.detail_url }}" class="btn-view">Просмотр →</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-row-table">Нет выполненных работ</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+        /* Скролл для сетки тестов и лабораторных */
+    .items-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+    }
+
+    .items-grid.has-scroll {
+        max-height: 450px;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+
+    /* Скролл для сводной таблицы */
+    .summary-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .summary-table-wrapper.has-scroll {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    /* Фиксация шапки сводной таблицы */
+    .summary-table-wrapper.has-scroll .summary-table thead th {
+        position: sticky;
+        top: 0;
+        background: #f8fafc;
+        z-index: 10;
+        box-shadow: 0 2px 0 0 #e2e8f0;
+    }
+
+    /* Кастомизация скроллбара */
+    .items-grid.has-scroll::-webkit-scrollbar,
+    .summary-table-wrapper.has-scroll::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .items-grid.has-scroll::-webkit-scrollbar-track,
+    .summary-table-wrapper.has-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .items-grid.has-scroll::-webkit-scrollbar-thumb,
+    .summary-table-wrapper.has-scroll::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+        border-radius: 10px;
+    }
+
+    .items-grid.has-scroll::-webkit-scrollbar-thumb:hover,
+    .summary-table-wrapper.has-scroll::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #94a3b8, #64748b);
+    }
+    .student-stats-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+   .student-header {
+        background: #f8fafc;
+        border-radius: 24px;
+        padding: 28px 32px;
+        margin-bottom: 28px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 24px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .student-avatar {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: 700;
+        flex-shrink: 0;
+        color: white;
+    }
+
+    .student-info {
+        flex: 1;
+    }
+
+    .student-info h1 {
+        margin: 0 0 8px 0;
+        color: #1e293b;  /* ← черный цвет */
+        font-size: 28px;
+    }
+
+    .student-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .detail-badge {
+        background: #f1f5f9;
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-size: 13px;
+        color: #1e293b;
+        font-weight: 500;
+    }
+
+     .btn-back-list {
+        background: #e2e8f0;
+        padding: 10px 20px;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #1e293b;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-back-list:hover {
+        background: #cbd5e1;
+        transform: translateX(-4px);
+        color: #1e293b;
+    }
+
+    /* Сетка статистики */
+    .stats-grid-two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card-detailed {
+        background: white;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .stat-icon-detailed {
+        font-size: 28px;
+    }
+
+    .stat-header h3 {
+        margin: 0;
+        font-size: 18px;
+        color: #1e293b;
+    }
+
+    .stat-numbers {
+        text-align: center;
+        margin-bottom: 12px;
+    }
+
+    .stat-number-large {
+        font-size: 42px;
+        font-weight: 800;
+        color: #1e293b;
+    }
+
+    .stat-label-large {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .stat-footer {
+        text-align: center;
+        padding-top: 12px;
+        border-top: 1px solid #e2e8f0;
+        color: #64748b;
+    }
+
+    .avg-grade {
+        font-size: 24px;
+        font-weight: 700;
+        color: #10b981;
+    }
+
+    /* Секции */
+    .section-card {
+        background: white;
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 28px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .section-header h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #1e293b;
+    }
+
+    .section-count {
+        background: #f1f5f9;
+        padding: 4px 12px;
+        border-radius: 30px;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    /* Сетка элементов */
+    .items-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+    }
+
+    .item-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 18px;
+        transition: all 0.2s;
+        background: white;
+    }
+
+    .item-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        border-color: #cbd5e1;
+    }
+
+    .item-status {
+        margin-bottom: 12px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .status-badge.success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-badge.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .item-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+
+    .item-description {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 16px;
+        line-height: 1.4;
+    }
+
+    .item-result {
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 14px;
+    }
+
+    .result-line {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+
+    .result-label {
+        color: #64748b;
+    }
+
+    .result-value {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .result-comment {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+        font-size: 12px;
+    }
+
+    .comment-label {
+        color: #64748b;
+    }
+
+    .comment-text {
+        color: #475569;
+    }
+
+    .item-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        background: #f8fafc;
+        border-radius: 12px;
+        color: #94a3b8;
+        font-size: 13px;
+    }
+
+    .empty-icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+    }
+
+    .btn-detail-item {
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+        padding: 8px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #3b82f6;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-detail-item:hover {
+        background: #3b82f6;
+        color: white;
+    }
+
+    /* Сводная таблица */
+    .summary-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .summary-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .summary-table thead th {
+        background: #f8fafc;
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .summary-table tbody td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+    }
+
+    .summary-row {
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .summary-row:hover {
+        background: #f8fafc;
+    }
+
+    .type-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .type-test {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .type-lab {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .work-title {
+        font-weight: 500;
+        color: #1e293b;
+    }
+
+    .grade-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .grade-5 {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .grade-4 {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+    }
+
+    .grade-3 {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+
+    .grade-2 {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+
+    .grade-none {
+        background: #f1f5f9;
+        color: #94a3b8;
+    }
+
+    .btn-view {
+        padding: 4px 12px;
+        background: #f1f5f9;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #3b82f6;
+        font-size: 12px;
+        transition: all 0.2s;
+    }
+
+    .btn-view:hover {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .empty-item, .empty-row-table {
+        text-align: center;
+        padding: 40px;
+        color: #94a3b8;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 900px) {
+        .stats-grid-two {
+            grid-template-columns: 1fr;
+        }
+
+        .items-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .student-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .student-details {
+            justify-content: center;
+        }
+
+        .summary-table {
+            min-width: 600px;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Клик по строке сводной таблицы
+    const summaryRows = document.querySelectorAll('.summary-row');
+    summaryRows.forEach(row => {
+        const url = row.dataset.url;
+        if (url) {
+            row.addEventListener('click', function(e) {
+                if (!e.target.closest('.btn-view')) {
+                    window.location.href = url;
+                }
+            });
+        }
+    });
+});
+        // Активация скролла для сетки тестов (при более чем 5 элементах)
+    const testsGrid = document.querySelector('.section-card:first-of-type .items-grid');
+    const testsItems = testsGrid ? testsGrid.querySelectorAll('.item-card').length : 0;
+    if (testsGrid && testsItems > 5) {
+        testsGrid.classList.add('has-scroll');
+    }
+
+    // Активация скролла для сетки лабораторных (при более чем 5 элементах)
+    const labsGrid = document.querySelectorAll('.section-card')[1]?.querySelector('.items-grid');
+    const labsItems = labsGrid ? labsGrid.querySelectorAll('.item-card').length : 0;
+    if (labsGrid && labsItems > 5) {
+        labsGrid.classList.add('has-scroll');
+    }
+
+    // Активация скролла для сводной таблицы (при более чем 5 записях)
+    const summaryWrapper = document.querySelector('.summary-table-wrapper');
+    const summaryRows = document.querySelectorAll('.summary-row');
+    if (summaryWrapper && summaryRows.length > 5) {
+        summaryWrapper.classList.add('has-scroll');
+    }
+</script>
+{% endblock %}

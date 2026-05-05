@@ -88,23 +88,23 @@
 
     // Одна функция обработки полей
     function toggleStudentFields() {
-        const selectedRole = document.querySelector('input[name="role"]:checked').value;
-        studentFields.style.display = selectedRole === 'student' ? 'block' : 'none';
+    const selectedRole = document.querySelector('input[name="role"]:checked').value;
+    studentFields.style.display = selectedRole === 'student' ? 'block' : 'none';
 
-        const groupField = document.getElementById('id_group');
-        const courseField = document.getElementById('id_course');
-        const teacherField = document.getElementById('id_teacher');
+    const groupField = document.getElementById('id_group');
+    const courseField = document.getElementById('id_course');
+    const teacherField = document.getElementById('id_teacher');
 
-        if (selectedRole === 'student') {
-            if(groupField) groupField.required = true;
-            if(courseField) courseField.required = true;
-            if(teacherField) teacherField.required = true;
-        } else {
-            if(groupField) groupField.required = false;
-            if(courseField) courseField.required = false;
-            if(teacherField) teacherField.required = false;
-        }
+    if (selectedRole === 'student') {
+        if(groupField) { groupField.required = true; groupField.disabled = false; }
+        if(courseField) { courseField.required = true; courseField.disabled = false; }
+        if(teacherField) { teacherField.required = true; teacherField.disabled = false; }
+    } else {
+        if(groupField) { groupField.required = false; groupField.disabled = true; }
+        if(courseField) { courseField.required = false; courseField.disabled = true; }
+        if(teacherField) { teacherField.required = false; teacherField.disabled = true; }
     }
+}
 
     // Обработка совпадения паролей
     form.addEventListener('submit', (e) => {

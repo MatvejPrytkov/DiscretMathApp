@@ -15,13 +15,14 @@ class RegistrationForm(UserCreationForm):
     group = forms.CharField(max_length=20, label="Группа", required=False)
     course = forms.IntegerField(min_value=1, max_value=6, label="Курс", required=False)
 
-    # Добавляем поле выбора преподавателя
     teacher = forms.ModelChoiceField(
         queryset=User.objects.filter(profile__role='teacher'),
         required=False,
         label="Преподаватель",
         empty_label="-- Выберите преподавателя --",
-        widget=forms.Select(attrs={'class': 'form-control'})
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        # ДОБАВЬТЕ ЭТО — разрешаем пустое значение
+        to_field_name='id',
     )
 
     class Meta:
@@ -30,8 +31,14 @@ class RegistrationForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Обновляем queryset для поля teacher
         self.fields['teacher'].queryset = User.objects.filter(profile__role='teacher')
+        self.fields['teacher'].required = False
+
+    def clean_teacher(self):
+        teacher = self.cleaned_data.get('teacher')
+        if not teacher or teacher == '':
+            return None
+        return teacher
 
     def clean(self):
         cleaned_data = super().clean()
@@ -45,7 +52,6 @@ class RegistrationForm(UserCreationForm):
                 self.add_error('group', 'Для ученика необходимо указать группу')
             if not course:
                 self.add_error('course', 'Для ученика необходимо указать курс')
-            # Проверяем, что ученик выбрал преподавателя
             if not teacher:
                 self.add_error('teacher', 'Для ученика необходимо выбрать преподавателя')
 
@@ -54,16 +60,25 @@ class RegistrationForm(UserCreationForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data["email"]
+        user.username = self.cleaned_data["username"]
 
         if commit:
             user.save()
+
+            teacher_value = self.cleaned_data.get("teacher")
+            # teacher_value уже прошёл через clean_teacher, но на всякий случай
+            if isinstance(teacher_value, User):
+                teacher_obj = teacher_value
+            else:
+                teacher_obj = None
+
             UserProfile.objects.create(
                 user=user,
                 full_name=self.cleaned_data["name"],
                 role=self.cleaned_data["role"],
                 group=self.cleaned_data.get("group"),
                 course=self.cleaned_data.get("course"),
-                teacher=self.cleaned_data.get("teacher")  # Сохраняем преподавателя
+                teacher=teacher_obj
             )
         return user
 

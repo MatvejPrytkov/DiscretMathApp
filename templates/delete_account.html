@@ -8,7 +8,7 @@
     
     <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
         <strong>Внимание!</strong> Это действие <u>необратимо</u>. 
-        Все ваши результаты тестов и личные данные будут удалены навсегда.
+        Все ваши данные будут удалены навсегда.
     </div>
 
     <p style="text-align: center; margin-bottom: 24px;">
@@ -18,9 +18,15 @@
     <form method="post">
         {% csrf_token %}
         <div style="display: flex; flex-direction: column; gap: 12px;">
-    <button type="submit" class="btn btn-danger" style="margin-top: 0;">Да, удалить мой аккаунт</button>
-    <a href="{% url 'profile' %}" class="btn-cancel">Нет, я передумал</a>
-</div>
+            <button type="submit" class="btn btn-danger" style="margin-top: 0;">Да, удалить мой аккаунт</button>
+            <a href="
+                {% if user.profile.role == 'teacher' %}
+                    {% url 'teacher_dashboard' %}
+                {% else %}
+                    {% url 'profile' %}
+                {% endif %}
+            " class="btn-cancel">Нет, я передумал(а)</a>
+        </div>
     </form>
 </div>
 {% endblock %}

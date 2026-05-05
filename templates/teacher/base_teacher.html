@@ -62,25 +62,33 @@
 {% endblock %}
 
 {% block content %}
+
 <div class="teacher-layout">
     <nav class="teacher-nav" aria-label="Навигация преподавателя">
         <a href="{% url 'teacher_dashboard' %}"
            class="teacher-nav-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}">
             Панель управления
         </a>
-
+        <a href="{% url 'teacher_students_list' %}"
+           class="teacher-nav-link {% if 'teacher_students_list' in request.resolver_match.url_name or 'teacher_student_stats' in request.resolver_match.url_name %}active{% endif %}">
+            👨‍🎓 Мои ученики
+        </a>
+       <a href="{% url 'teacher_student_chat_list' %}"
+   class="teacher-nav-link {% if 'teacher_student_chat_list' in request.resolver_match.url_name or 'teacher_student_chat_detail' in request.resolver_match.url_name %}active{% endif %}">
+    💬 Чаты с учениками
+</a>
         <a href="{% url 'teacher_manage_tests' %}"
-           class="teacher-nav-link {% if request.resolver_match.url_name == 'teacher_manage_tests' %}active{% endif %}">
+           class="teacher-nav-link {% if 'teacher_manage_tests' in request.resolver_match.url_name or 'teacher_test_detail' in request.resolver_match.url_name or 'create_teacher_test' in request.resolver_match.url_name or 'edit_test_assignment' in request.resolver_match.url_name %}active{% endif %}">
             Мои тесты
         </a>
 
         <a href="{% url 'teacher_labs' %}"
-           class="teacher-nav-link {% if request.resolver_match.url_name == 'teacher_labs' %}active{% endif %}">
+           class="teacher-nav-link {% if 'teacher_labs' in request.resolver_match.url_name or 'lab_detail' in request.resolver_match.url_name or 'create_lab' in request.resolver_match.url_name or 'submission_detail' in request.resolver_match.url_name %}active{% endif %}">
             Лабораторные
         </a>
 
         <a href="{% url 'student_results' %}"
-           class="teacher-nav-link {% if request.resolver_match.url_name == 'student_results' %}active{% endif %}">
+           class="teacher-nav-link {% if 'student_results' in request.resolver_match.url_name or 'export_student_results' in request.resolver_match.url_name or 'teacher_result_detail' in request.resolver_match.url_name %}active{% endif %}">
             Результаты учеников
         </a>
     </nav>

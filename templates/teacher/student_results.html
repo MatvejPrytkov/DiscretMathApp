@@ -1,13 +1,14 @@
 {% extends 'teacher/base_teacher.html' %}
+{% block title %}Результаты учеников{% endblock %}
 {% block teacher_content %}
 
 <style>
-    .page { max-width: 1100px; margin: 0 auto; }
+    .page { max-width: 1200px; margin: 0 auto; }
     .page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
     .page-title { margin: 0; font-size: 24px; font-weight: 700; }
     .page-subtitle { margin: 6px 0 0; font-size: 13px; color: #6b7280; }
 
-    /* Единый блок фильтрации */
+    /* Блок фильтрации */
     .filter-section {
         background: #f8f9fa;
         padding: 20px;
@@ -55,7 +56,6 @@
         display: flex;
         gap: 10px;
         align-items: flex-end;
-        margin-bottom: 0;
     }
     .btn-filter, .btn-reset {
         padding: 8px 20px;
@@ -119,6 +119,52 @@
         opacity: 0.8;
     }
 
+    /* Стили для поиска учеников */
+    .student-search-wrapper {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+    }
+
+    .student-search-container {
+        flex: 1;
+        position: relative;
+    }
+
+    .student-search-input {
+        width: 100%;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        background: white;
+        font-size: 14px;
+        transition: all 0.2s;
+        box-sizing: border-box;
+    }
+
+    .student-search-input:focus {
+        outline: none;
+        border-color: #2f66ff;
+        box-shadow: 0 0 0 3px rgba(47, 102, 255, 0.1);
+    }
+
+    .clear-search-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #999;
+        font-size: 16px;
+        display: none;
+        background: white;
+        padding: 0 4px;
+    }
+
+    .clear-search-btn:hover {
+        color: #dc3545;
+    }
+
     .panel {
         background: #ffffff;
         border-radius: 12px;
@@ -142,7 +188,7 @@
     .results-table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 760px;
+        min-width: 900px;
         background-color: #fff;
     }
     .table-wrap.table-scroll .results-table thead th {
@@ -172,6 +218,47 @@
     }
     .table-wrap.table-scroll .results-table thead tr {
         background: #f3f4f6;
+    }
+
+    /* Стили для кликабельных строк */
+    .result-row {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .result-row:hover {
+        background-color: #eff6ff !important;
+        transform: translateX(2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Стиль для ссылки внутри строки */
+    .result-row a {
+        text-decoration: none;
+        color: #3b82f6;
+        font-weight: 500;
+        transition: all 0.2s;
+        pointer-events: auto;
+        position: relative;
+        z-index: 2;
+    }
+
+    .result-row a:hover {
+        text-decoration: underline;
+        color: #1d4ed8;
+    }
+
+    /* Индикатор кликабельности при наведении */
+    .result-row:hover::after {
+        content: "🔗";
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.5;
+        font-size: 12px;
+        pointer-events: none;
     }
 
     .type-badge {
@@ -220,7 +307,6 @@
         background: #f8f9fa;
     }
 
-    /* Стиль для выделения активного ученика */
     .active-student-badge {
         margin-top: 10px;
         padding: 8px 15px;
@@ -230,7 +316,6 @@
         border-left: 4px solid #2f66ff;
     }
 
-    /* Стили для блока действий (кнопки) */
     .actions-wrapper {
         display: flex;
         justify-content: space-between;
@@ -257,10 +342,19 @@
         color: white;
     }
 
+    .empty-row {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+
     @media (max-width: 768px) {
         .filter-row {
             flex-direction: column;
             align-items: stretch;
+        }
+        .student-search-wrapper {
+            flex-direction: column;
         }
         .filter-actions {
             flex-direction: column;
@@ -277,116 +371,117 @@
             justify-content: center;
             width: 100%;
         }
+        .result-row:hover::after {
+            display: none;
+        }
     }
 </style>
+
 
 <div class="page">
     <div class="page-header">
         <div>
             <h2 class="page-title">Результаты учеников</h2>
-            <div class="page-subtitle">Все попытки тестов и сдачи лабораторных работ, отсортированные по дате</div>
-            {% if student_id %}
-                {% for student in students %}
-                    {% if student.id|stringformat:"s" == student_id %}
-                        <div class="active-student-badge">
-                            <strong>👨‍🎓 Показаны результаты ученика:</strong> {{ student.profile.full_name|default:student.username }}
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
+            <div class="page-subtitle">Все попытки тестов и сдачи лабораторных работ</div>
+            <div id="activeStudentBadge"></div>
         </div>
     </div>
 
-    <!-- Единый блок фильтрации -->
+    <!-- Блок фильтрации -->
     <div class="filter-section">
         <div class="filter-title">🔍 Фильтрация результатов</div>
 
-        <form method="GET" action="{% url 'student_results' %}" id="filterForm">
-            <div class="filter-row">
-                <div class="filter-group">
-                    <label for="student_id">Ученик:</label>
-                    <select name="student_id" id="student_id">
-                        <option value="">Все ученики</option>
+
+
+            <div class="filter-group">
+                <label for="typeFilter">Тип работы:</label>
+                <select id="typeFilter">
+                    <option value="">Все типы</option>
+                    <option value="test" {% if type_filter == 'test' %}selected{% endif %}>📝 Все тесты</option>
+                    <option value="start" {% if type_filter == 'start' %}selected{% endif %}>📋 Входное тестирование</option>
+                    <option value="final" {% if type_filter == 'final' %}selected{% endif %}>🎯 Итоговое тестирование</option>
+                    <option value="teacher" {% if type_filter == 'teacher' %}selected{% endif %}>📚 Мои тесты</option>
+                    <option value="lab" {% if type_filter == 'lab' %}selected{% endif %}>🧪 Лабораторные</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="gradeFilter">Оценка:</label>
+                <select id="gradeFilter">
+                    <option value="">Все оценки</option>
+                    <option value="5" {% if grade_filter == '5' %}selected{% endif %}>5 (Отлично)</option>
+                    <option value="4" {% if grade_filter == '4' %}selected{% endif %}>4 (Хорошо)</option>
+                    <option value="3" {% if grade_filter == '3' %}selected{% endif %}>3 (Удовлетворительно)</option>
+                    <option value="2" {% if grade_filter == '2' %}selected{% endif %}>2 (Неудовлетворительно)</option>
+                    <option value="pending" {% if grade_filter == 'pending' %}selected{% endif %}>⏳ Не проверено</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="groupFilter">Группа:</label>
+                <select id="groupFilter">
+                    <option value="">Все группы</option>
+                    {% for group in available_groups %}
+                        <option value="{{ group }}" {% if group_filter == group %}selected{% endif %}>{{ group }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="courseFilter">Курс:</label>
+                <select id="courseFilter">
+                    <option value="">Все курсы</option>
+                    {% for course in available_courses %}
+                        <option value="{{ course }}" {% if course_filter|stringformat:"s" == course|stringformat:"s" %}selected{% endif %}>{{ course }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-actions">
+                <button id="resetFiltersBtn" class="btn-reset">✖ Сбросить фильтры</button>
+            </div>
+        </div>
+
+        <div class="active-filters" id="activeFilters" style="display: none;">
+            <span class="active-filters-label">Активные фильтры:</span>
+            <span id="activeFiltersList"></span>
+        </div>
+     <div class="filter-row">
+            <div class="filter-group" style="min-width: 260px;">
+                <label for="studentFilter">👨‍🎓 Ученик:</label>
+                <div class="student-search-wrapper">
+                    <div class="student-search-container">
+                        <input type="text"
+                               id="studentSearchInput"
+                               class="student-search-input"
+                               placeholder="Введите ФИО для поиска..."
+                               autocomplete="off">
+                        <span class="clear-search-btn" id="clearSearchBtn">✕</span>
+                    </div>
+                    <select id="studentFilter" style="width: 200px;">
+                        <option value="">-- Выбрать из списка --</option>
                         {% for student in students %}
-                            <option value="{{ student.id }}" {% if student_id == student.id|stringformat:"s" %}selected{% endif %}>
+                            <option value="{{ student.id }}"
+                                    data-name="{{ student.profile.full_name|default:student.username }}"
+                                    {% if student_id|stringformat:"s" == student.id|stringformat:"s" %}selected{% endif %}>
                                 {{ student.profile.full_name|default:student.username }}
                             </option>
                         {% endfor %}
                     </select>
                 </div>
-
-                <div class="filter-group">
-                    <label for="type_filter">Тип работы:</label>
-                    <select name="type_filter" id="type_filter">
-                        <option value="">Все типы</option>
-                        <option value="test" {% if request.GET.type_filter == 'test' %}selected{% endif %}>📝 Тесты</option>
-                        <option value="lab" {% if request.GET.type_filter == 'lab' %}selected{% endif %}>🧪 Лабораторные</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="grade_filter">Оценка:</label>
-                    <select name="grade_filter" id="grade_filter">
-                        <option value="">Все оценки</option>
-                        <option value="5" {% if request.GET.grade_filter == '5' %}selected{% endif %}>5 (Отлично)</option>
-                        <option value="4" {% if request.GET.grade_filter == '4' %}selected{% endif %}>4 (Хорошо)</option>
-                        <option value="3" {% if request.GET.grade_filter == '3' %}selected{% endif %}>3 (Удовлетворительно)</option>
-                        <option value="2" {% if request.GET.grade_filter == '2' %}selected{% endif %}>2 (Неудовлетворительно)</option>
-                        <option value="pending" {% if request.GET.grade_filter == 'pending' %}selected{% endif %}>⏳ Не проверено</option>
-                    </select>
-                </div>
-
-                <div class="filter-actions">
-                    <button type="submit" class="btn-filter">Применить</button>
-                    <a href="{% url 'student_results' %}" class="btn-reset">Сбросить все</a>
-                </div>
             </div>
-
-            <!-- Активные фильтры -->
-            {% if student_id or request.GET.type_filter or request.GET.grade_filter %}
-            <div class="active-filters">
-                <span class="active-filters-label">Активные фильтры:</span>
-
-                {% if student_id %}
-                    {% for student in students %}
-                        {% if student.id|stringformat:"s" == student_id %}
-                            <span class="filter-badge">
-                                👤 {{ student.profile.full_name|default:student.username }}
-                                <a href="{% url 'student_results' %}?{% if request.GET.type_filter %}type_filter={{ request.GET.type_filter }}{% endif %}{% if request.GET.grade_filter %}&grade_filter={{ request.GET.grade_filter }}{% endif %}" class="remove">✕</a>
-                            </span>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-
-                {% if request.GET.type_filter %}
-                    <span class="filter-badge">
-                        {% if request.GET.type_filter == 'test' %}📝 Тесты{% else %}🧪 Лабораторные{% endif %}
-                        <a href="{% url 'student_results' %}?{% if student_id %}student_id={{ student_id }}{% endif %}{% if request.GET.grade_filter %}&grade_filter={{ request.GET.grade_filter }}{% endif %}" class="remove">✕</a>
-                    </span>
-                {% endif %}
-
-                {% if request.GET.grade_filter %}
-                    <span class="filter-badge">
-                        {% if request.GET.grade_filter == '5' %}⭐ Оценка 5
-                        {% elif request.GET.grade_filter == '4' %}⭐ Оценка 4
-                        {% elif request.GET.grade_filter == '3' %}⭐ Оценка 3
-                        {% elif request.GET.grade_filter == '2' %}⭐ Оценка 2
-                        {% else %}⏳ Не проверено{% endif %}
-                        <a href="{% url 'student_results' %}?{% if student_id %}student_id={{ student_id }}{% endif %}{% if request.GET.type_filter %}&type_filter={{ request.GET.type_filter }}{% endif %}" class="remove">✕</a>
-                    </span>
-                {% endif %}
-            </div>
-            {% endif %}
-        </form>
     </div>
 
     <div class="panel">
-        <div class="panel-body table-wrap {% if results|length > 7 %}table-scroll{% endif %}">
-            <table class="results-table">
+        <div class="panel-body table-wrap" id="resultsTableContainer">
+            {% if results %}
+            <table class="results-table" id="resultsTable">
                 <thead>
                     <tr>
                         <th>Тип</th>
                         <th>Ученик</th>
+                        <th>Группа</th>
+                        <th>Курс</th>
                         <th>Название</th>
                         <th>Результат</th>
                         <th>Процент</th>
@@ -394,9 +489,29 @@
                         <th>Дата</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="resultsTableBody">
                     {% for result in results %}
-                    <tr>
+                    <tr class="result-row"
+                        data-type="{{ result.type }}"
+                        data-test-subtype="{{ result.test_subtype|default:'' }}"
+                        data-student-id="{{ result.user.id }}"
+                        data-student-name="{{ result.user_name|lower }}"
+                        data-group="{{ result.group }}"
+                        data-course="{{ result.course }}"
+                        data-detail-url="{{ result.detail_url }}"
+                        data-grade-value="
+                            {% if result.type == 'test' %}
+                                {% if result.grade %}{{ result.grade_value }}{% else %}0{% endif %}
+                            {% else %}
+                                {% if result.grade == '5' %}5
+                                {% elif result.grade == '4' %}4
+                                {% elif result.grade == '3' %}3
+                                {% elif result.grade == '2' %}2
+                                {% else %}0
+                                {% endif %}
+                            {% endif %}
+                        "
+                        data-date="{{ result.date|date:'Y-m-d H:i:s' }}">
                         <td>
                             {% if result.type == 'test' %}
                                 <span class="type-badge type-test">📝 Тест</span>
@@ -407,8 +522,10 @@
                         <td class="col-student">
                             {{ result.user_name }}
                         </td>
+                        <td>{{ result.group }}</td>
+                        <td>{{ result.course }}</td>
                         <td>
-                            <a href="{{ result.detail_url }}" style="text-decoration: none;">
+                            <a href="{{ result.detail_url }}" class="result-link">
                                 {{ result.title }}
                             </a>
                         </td>
@@ -438,41 +555,423 @@
                         </td>
                         <td>{{ result.date|date:"d.m.Y H:i" }}</td>
                     </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" class="empty-row" style="text-align: center; padding: 40px;">
-                            {% if student_id %}
-                                У данного ученика пока нет результатов
-                            {% else %}
-                                Результатов пока нет
-                            {% endif %}
-                        </td>
-                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            {% else %}
+            <div class="empty-row" style="text-align: center; padding: 60px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
+                <h3 style="color: #666; margin-bottom: 10px;">Нет результатов</h3>
+                <p style="color: #999;">
+                    {% if student_id %}
+                        У выбранного ученика пока нет результатов.
+                    {% else %}
+                        У ваших учеников пока нет результатов тестов или сданных лабораторных работ.
+                    {% endif %}
+                </p>
+                <a href="{% url 'teacher_dashboard' %}" class="btn-simple" style="margin-top: 20px;">
+                    ← Вернуться к панели учителя
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
 
+    {% if results %}
     <div class="actions-wrapper">
         <a href="{% url 'teacher_dashboard' %}" class="btn-simple">← Назад к панели</a>
-        <a href="{% url 'export_student_results' %}?{{ request.GET.urlencode }}" class="btn-excel">
+        <a href="{% url 'export_student_results' %}" class="btn-excel" id="exportExcelBtn">
             📊 Экспорт в Excel
         </a>
     </div>
+    {% endif %}
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Автоматическая отправка формы при изменении select
-    const selects = document.querySelectorAll('#student_id, #type_filter, #grade_filter');
-    const filterForm = document.getElementById('filterForm');
+    const studentSelect = document.getElementById('studentFilter');
+    const studentSearchInput = document.getElementById('studentSearchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const typeFilter = document.getElementById('typeFilter');
+    const gradeFilter = document.getElementById('gradeFilter');
+    const groupFilter = document.getElementById('groupFilter');
+    const courseFilter = document.getElementById('courseFilter');
+    const resetBtn = document.getElementById('resetFiltersBtn');
+    const resultsTableBody = document.getElementById('resultsTableBody');
+    const resultsTableContainer = document.getElementById('resultsTableContainer');
+    const activeFiltersDiv = document.getElementById('activeFilters');
+    const activeFiltersList = document.getElementById('activeFiltersList');
+    const exportBtn = document.getElementById('exportExcelBtn');
 
-    selects.forEach(select => {
-        select.addEventListener('change', function() {
-            filterForm.submit();
-        });
+    // Проверяем, есть ли строки с результатами
+    const resultRows = resultsTableBody ? Array.from(document.querySelectorAll('#resultsTableBody .result-row')) : [];
+    const totalResults = resultRows.length;
+
+    // ========== ДЕЛАЕМ СТРОКИ КЛИКАБЕЛЬНЫМИ ==========
+    resultRows.forEach(row => {
+        const detailUrl = row.getAttribute('data-detail-url');
+        if (detailUrl) {
+            row.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A' || e.target.closest('a')) {
+                    return;
+                }
+                window.location.href = detailUrl;
+            });
+        }
     });
+
+    // ========== СОБИРАЕМ СПИСОК УЧЕНИКОВ ДЛЯ ПОИСКА ==========
+    const students = [];
+    if (studentSelect) {
+        const options = studentSelect.querySelectorAll('option');
+        options.forEach(option => {
+            if (option.value) {
+                students.push({
+                    id: option.value,
+                    name: option.textContent,
+                    nameLower: option.textContent.toLowerCase()
+                });
+            }
+        });
+    }
+
+    // Функция фильтрации по вводу (поиск по ФИО)
+    function filterByStudentName() {
+        const searchTerm = studentSearchInput.value.toLowerCase().trim();
+
+        if (searchTerm === '') {
+            // Если поиск пустой - сбрасываем выбор в select
+            if (studentSelect) studentSelect.value = '';
+            // Убираем бейдж
+            const badgeDiv = document.getElementById('activeStudentBadge');
+            if (badgeDiv) badgeDiv.innerHTML = '';
+            // Применяем фильтры (без фильтра по ученику)
+            applyFilters();
+            return;
+        }
+
+        // Ищем ученика по введённому тексту
+        const matchedStudents = students.filter(student =>
+            student.nameLower.includes(searchTerm)
+        );
+
+        if (matchedStudents.length === 1) {
+            // Найден ровно один ученик - выбираем его
+            studentSelect.value = matchedStudents[0].id;
+            // Показываем бейдж
+            const badgeDiv = document.getElementById('activeStudentBadge');
+            if (badgeDiv) {
+                badgeDiv.innerHTML = `
+                    <div class="active-student-badge">
+                        <strong>👨‍🎓 Показаны результаты ученика:</strong> ${matchedStudents[0].name}
+                    </div>
+                `;
+            }
+        } else if (matchedStudents.length > 1) {
+            // Найдено несколько учеников - сбрасываем выбор и показываем сообщение
+            studentSelect.value = '';
+            const badgeDiv = document.getElementById('activeStudentBadge');
+            if (badgeDiv) {
+                badgeDiv.innerHTML = `
+                    <div class="active-student-badge" style="background: #fef3c7; border-left-color: #f59e0b;">
+                        <strong>🔍 Найдено ${matchedStudents.length} учеников:</strong>
+                        ${matchedStudents.map(s => s.name).join(', ')}
+                        <br><small>Выберите конкретного ученика из списка или уточните поиск</small>
+                    </div>
+                `;
+            }
+        } else {
+            // Ничего не найдено
+            studentSelect.value = '';
+            const badgeDiv = document.getElementById('activeStudentBadge');
+            if (badgeDiv) {
+                badgeDiv.innerHTML = `
+                    <div class="active-student-badge" style="background: #fee2e2; border-left-color: #ef4444;">
+                        <strong>❌ Ученик не найден</strong>
+                        <br><small>Проверьте правильность написания ФИО</small>
+                    </div>
+                `;
+            }
+        }
+
+        applyFilters();
+        updateExportUrl();
+    }
+
+    // Обработчик ввода в поле поиска (с debounce для производительности)
+    let searchTimeout;
+    if (studentSearchInput) {
+        studentSearchInput.addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            const value = this.value;
+
+            // Показываем/скрываем кнопку очистки
+            if (clearSearchBtn) {
+                clearSearchBtn.style.display = value ? 'block' : 'none';
+            }
+
+            searchTimeout = setTimeout(() => {
+                filterByStudentName();
+            }, 300);
+        });
+    }
+
+    // Очистка поиска
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', function() {
+            studentSearchInput.value = '';
+            clearSearchBtn.style.display = 'none';
+            filterByStudentName();
+        });
+    }
+
+    // Синхронизация: при выборе из выпадающего списка обновляем поле поиска
+    if (studentSelect) {
+        studentSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                studentSearchInput.value = selectedOption.textContent;
+                if (clearSearchBtn) clearSearchBtn.style.display = 'block';
+
+                // Показываем бейдж
+                const studentName = selectedOption.textContent;
+                const badgeDiv = document.getElementById('activeStudentBadge');
+                if (badgeDiv) {
+                    badgeDiv.innerHTML = `
+                        <div class="active-student-badge">
+                            <strong>👨‍🎓 Показаны результаты ученика:</strong> ${studentName}
+                        </div>
+                    `;
+                }
+            } else {
+                studentSearchInput.value = '';
+                if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                const badgeDiv = document.getElementById('activeStudentBadge');
+                if (badgeDiv) badgeDiv.innerHTML = '';
+            }
+            applyFilters();
+            updateExportUrl();
+        });
+    }
+
+    // ========== УСТАНОВКА ФИЛЬТРОВ ИЗ URL ==========
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTypeFilter = urlParams.get('type_filter');
+    const urlGradeFilter = urlParams.get('grade_filter');
+    const urlGroupFilter = urlParams.get('group_filter');
+    const urlCourseFilter = urlParams.get('course_filter');
+    const urlStudentId = urlParams.get('student_id');
+
+    if (urlTypeFilter && typeFilter) typeFilter.value = urlTypeFilter;
+    if (urlGradeFilter && gradeFilter) gradeFilter.value = urlGradeFilter;
+    if (urlGroupFilter && groupFilter) groupFilter.value = urlGroupFilter;
+    if (urlCourseFilter && courseFilter) courseFilter.value = urlCourseFilter;
+
+    if (urlStudentId && studentSelect && studentSearchInput) {
+        studentSelect.value = urlStudentId;
+        const option = studentSelect.querySelector(`option[value="${urlStudentId}"]`);
+        if (option) {
+            studentSearchInput.value = option.textContent;
+            if (clearSearchBtn) clearSearchBtn.style.display = 'block';
+            const badgeDiv = document.getElementById('activeStudentBadge');
+            if (badgeDiv) {
+                badgeDiv.innerHTML = `
+                    <div class="active-student-badge">
+                        <strong>👨‍🎓 Показаны результаты ученика:</strong> ${option.textContent}
+                    </div>
+                `;
+            }
+        }
+    }
+
+    function updateExportUrl() {
+        if (!exportBtn) return;
+        const params = new URLSearchParams();
+        if (studentSelect && studentSelect.value) params.append('student_id', studentSelect.value);
+        if (typeFilter && typeFilter.value) params.append('type_filter', typeFilter.value);
+        if (gradeFilter && gradeFilter.value) params.append('grade_filter', gradeFilter.value);
+        if (groupFilter && groupFilter.value) params.append('group_filter', groupFilter.value);
+        if (courseFilter && courseFilter.value) params.append('course_filter', courseFilter.value);
+        exportBtn.href = "{% url 'export_student_results' %}" + (params.toString() ? '?' + params.toString() : '');
+    }
+
+    function updateActiveFilters() {
+        if (!activeFiltersDiv || !activeFiltersList) return;
+        const filters = [];
+
+        if (studentSelect && studentSelect.value) {
+            const selectedOption = studentSelect.querySelector(`option[value="${studentSelect.value}"]`);
+            const studentName = selectedOption ? selectedOption.textContent : studentSelect.value;
+            filters.push({ name: `Ученик: ${studentName}`, type: 'student', value: studentSelect.value });
+        }
+
+        if (typeFilter && typeFilter.value) {
+            const typeNames = {
+                'test': 'Все тесты',
+                'start': 'Входное тестирование',
+                'final': 'Итоговое тестирование',
+                'teacher': 'Мои тесты',
+                'lab': 'Лабораторные'
+            };
+            filters.push({ name: `Тип: ${typeNames[typeFilter.value] || typeFilter.value}`, type: 'type', value: typeFilter.value });
+        }
+
+        if (gradeFilter && gradeFilter.value) {
+            const gradeNames = {
+                '5': 'Оценка: 5',
+                '4': 'Оценка: 4',
+                '3': 'Оценка: 3',
+                '2': 'Оценка: 2',
+                'pending': 'Статус: Не проверено'
+            };
+            filters.push({ name: gradeNames[gradeFilter.value] || `Оценка: ${gradeFilter.value}`, type: 'grade', value: gradeFilter.value });
+        }
+
+        if (groupFilter && groupFilter.value) {
+            filters.push({ name: `Группа: ${groupFilter.value}`, type: 'group', value: groupFilter.value });
+        }
+
+        if (courseFilter && courseFilter.value) {
+            filters.push({ name: `Курс: ${courseFilter.value}`, type: 'course', value: courseFilter.value });
+        }
+
+        if (filters.length > 0) {
+            activeFiltersDiv.style.display = 'flex';
+            activeFiltersList.innerHTML = filters.map(filter => `
+                <span class="filter-badge">
+                    ${filter.name}
+                    <span class="remove" data-type="${filter.type}" data-value="${filter.value}">✕</span>
+                </span>
+            `).join('');
+
+            document.querySelectorAll('.filter-badge .remove').forEach(removeBtn => {
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const type = this.dataset.type;
+                    if (type === 'student' && studentSelect) {
+                        studentSelect.value = '';
+                        if (studentSearchInput) studentSearchInput.value = '';
+                        if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                        const badgeDiv = document.getElementById('activeStudentBadge');
+                        if (badgeDiv) badgeDiv.innerHTML = '';
+                    }
+                    else if (type === 'type' && typeFilter) typeFilter.value = '';
+                    else if (type === 'grade' && gradeFilter) gradeFilter.value = '';
+                    else if (type === 'group' && groupFilter) groupFilter.value = '';
+                    else if (type === 'course' && courseFilter) courseFilter.value = '';
+                    applyFilters();
+                    updateExportUrl();
+                });
+            });
+        } else {
+            activeFiltersDiv.style.display = 'none';
+        }
+    }
+
+    function applyFilters() {
+        if (!resultRows.length) return;
+
+        const studentId = studentSelect ? studentSelect.value : '';
+        const typeValue = typeFilter ? typeFilter.value : '';
+        const gradeValue = gradeFilter ? gradeFilter.value : '';
+        const groupValue = groupFilter ? groupFilter.value : '';
+        const courseValue = courseFilter ? courseFilter.value : '';
+
+        let visibleCount = 0;
+
+        resultRows.forEach(row => {
+            const rowStudentId = row.getAttribute('data-student-id') || '';
+            const rowType = row.getAttribute('data-type') || '';
+            const rowTestSubtype = row.getAttribute('data-test-subtype') || '';
+            let rowGradeValue = row.getAttribute('data-grade-value') || '0';
+            const rowGroup = row.getAttribute('data-group') || '';
+            const rowCourse = row.getAttribute('data-course') || '';
+
+            rowGradeValue = rowGradeValue.trim();
+
+            const matchesStudent = studentId === '' || rowStudentId === studentId;
+            const matchesGroup = groupValue === '' || rowGroup === groupValue;
+            const matchesCourse = courseValue === '' || rowCourse === courseValue;
+
+            let matchesType = true;
+            if (typeValue === 'test') {
+                matchesType = rowType === 'test';
+            } else if (typeValue === 'start') {
+                matchesType = rowType === 'test' && rowTestSubtype === 'start';
+            } else if (typeValue === 'final') {
+                matchesType = rowType === 'test' && rowTestSubtype === 'final';
+            } else if (typeValue === 'teacher') {
+                matchesType = rowType === 'test' && rowTestSubtype === 'teacher';
+            } else if (typeValue === 'lab') {
+                matchesType = rowType === 'lab';
+            } else {
+                matchesType = typeValue === '';
+            }
+
+            let matchesGrade = true;
+            if (gradeValue === 'pending') {
+                matchesGrade = rowGradeValue === '0';
+            } else if (gradeValue !== '') {
+                matchesGrade = rowGradeValue === gradeValue;
+            }
+
+            if (matchesStudent && matchesType && matchesGrade && matchesGroup && matchesCourse) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (resultsTableContainer) {
+            if (visibleCount > 7) {
+                resultsTableContainer.classList.add('table-scroll');
+            } else {
+                resultsTableContainer.classList.remove('table-scroll');
+            }
+        }
+
+        let noResultsRow = document.getElementById('noResultsRow');
+        if (visibleCount === 0 && totalResults > 0) {
+            if (!noResultsRow && resultsTableBody) {
+                noResultsRow = document.createElement('tr');
+                noResultsRow.id = 'noResultsRow';
+                noResultsRow.innerHTML = '<td colspan="9" class="empty-row">🔍 Нет результатов, соответствующих фильтрам</td>';
+                resultsTableBody.appendChild(noResultsRow);
+            }
+        } else if (noResultsRow && visibleCount > 0) {
+            noResultsRow.remove();
+        }
+
+        updateActiveFilters();
+    }
+
+    function resetFilters() {
+        if (studentSelect) studentSelect.value = '';
+        if (studentSearchInput) studentSearchInput.value = '';
+        if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+        if (typeFilter) typeFilter.value = '';
+        if (gradeFilter) gradeFilter.value = '';
+        if (groupFilter) groupFilter.value = '';
+        if (courseFilter) courseFilter.value = '';
+        applyFilters();
+        updateExportUrl();
+        const badgeDiv = document.getElementById('activeStudentBadge');
+        if (badgeDiv) badgeDiv.innerHTML = '';
+    }
+
+    // Добавляем обработчики
+    if (typeFilter) typeFilter.addEventListener('change', () => { applyFilters(); updateExportUrl(); });
+    if (gradeFilter) gradeFilter.addEventListener('change', () => { applyFilters(); updateExportUrl(); });
+    if (groupFilter) groupFilter.addEventListener('change', () => { applyFilters(); updateExportUrl(); });
+    if (courseFilter) courseFilter.addEventListener('change', () => { applyFilters(); updateExportUrl(); });
+    if (resetBtn) resetBtn.addEventListener('click', resetFilters);
+
+    // Применяем фильтры при загрузке
+    if (resultRows.length) {
+        applyFilters();
+    }
+    updateExportUrl();
 });
 </script>
 {% endblock %}

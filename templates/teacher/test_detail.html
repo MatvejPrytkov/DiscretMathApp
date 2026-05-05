@@ -1,17 +1,494 @@
-{% extends 'base.html' %}
-{% block content %}
-<h2>{{ test.title }}</h2>
-<p>{{ test.description }}</p>
-<h3>Вопросы:</h3>
-<ul>
-    {% for question in test.questions.all %}
-    <li>{{ question.question_text }}</li>
-    {% endfor %}
-</ul>
-<h3>Назначенные ученики:</h3>
-<ul>
-    {% for student in test.assigned_to.all %}
-    <li>{{ student.profile.full_name }}</li>
-    {% endfor %}
-</ul>
+{% extends 'teacher/base_teacher.html' %}
+{% block teacher_content %}
+
+<div class="test-detail-container">
+    <!-- Заголовок и описание -->
+    <div class="test-header">
+        <h2 class="test-title">{{ test.title }}</h2>
+        {% if test.description %}
+            <div class="test-description">
+                <p>{{ test.description }}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Две колонки: вопросы и ученики -->
+    <div class="test-detail-grid">
+        <!-- Левая колонка - Вопросы -->
+        <div class="detail-card questions-card">
+            <div class="card-header-custom">
+                <div class="header-icon">📋</div>
+                <h3>Вопросы теста</h3>
+                <span class="item-count">{{ test.questions.all|length }} вопрос(ов)</span>
+            </div>
+            <div class="card-body-custom questions-list">
+                {% if test.questions.all %}
+                    <ul class="questions-ul">
+                        {% for question in test.questions.all %}
+                        <li class="question-item">
+                            <span class="question-number">{{ forloop.counter }}</span>
+                            <span class="question-text">{{ question.question_text }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="empty-message">В этом тесте пока нет вопросов.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Правая колонка - Назначенные ученики (теперь кликабельные) -->
+        <div class="detail-card students-card">
+            <div class="card-header-custom">
+                <div class="header-icon">👨‍🎓</div>
+                <h3>Назначенные ученики</h3>
+                <span class="item-count">Учеников: {{ test.assigned_to.all|length }}</span>
+            </div>
+            <div class="card-body-custom students-list">
+                {% if test.assigned_to.all %}
+                    <ul class="students-ul">
+                        {% for student in test.assigned_to.all %}
+                        <li class="student-item clickable-student" data-student-id="{{ student.id }}">
+                            <span class="student-avatar">
+                                {{ student.profile.full_name|first|upper }}
+                            </span>
+                            <div class="student-info">
+                                <span class="student-name">{{ student.profile.full_name }}</span>
+                                {% if student.email %}
+                                    <span class="student-email">{{ student.email }}</span>
+                                {% endif %}
+                            </div>
+                            <span class="student-arrow">→</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="empty-message">Тест пока не назначен ученикам.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Кнопки действий -->
+    <div class="test-actions">
+        <a href="{% url 'teacher_manage_tests' %}" class="btn btn-secondary-custom">
+            ← Назад к тестам
+        </a>
+        <a href="{% url 'edit_test_assignment' test.id %}" class="btn btn-primary-custom">
+            👥 Назначить учеников
+        </a>
+    </div>
+</div>
+
+<style>
+/* ============================================
+   СТИЛИ ДЛЯ СТРАНИЦЫ ДЕТАЛЕЙ ТЕСТА
+   ============================================ */
+
+.test-detail-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Заголовок и описание */
+.test-header {
+    margin-bottom: 28px;
+}
+
+.test-title {
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 3px solid #6366f1;
+    display: inline-block;
+}
+
+.test-description {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    padding: 16px 20px;
+    border-radius: 16px;
+    margin-top: 12px;
+    border-left: 4px solid #6366f1;
+}
+
+.test-description p {
+    margin: 0;
+    color: #334155;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+/* Сетка из двух колонок */
+.test-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+/* Общие стили для карточек */
+.detail-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.detail-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 35px rgba(0, 0, 0, 0.12);
+}
+
+/* Заголовок карточки */
+.card-header-custom {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.header-icon {
+    font-size: 24px;
+}
+
+.card-header-custom h3 {
+    margin: 0;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.item-count {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+/* Тело карточки с прокруткой */
+.card-body-custom {
+    padding: 0;
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+/* Стили для списка вопросов */
+.questions-ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.question-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s ease;
+}
+
+.question-item:hover {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.question-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.question-text {
+    flex: 1;
+    color: #334155;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+/* ============================================
+   КЛИКАБЕЛЬНЫЕ СТУДЕНТЫ - НОВЫЕ СТИЛИ
+   ============================================ */
+
+.students-ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.student-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/* Кликабельный стиль */
+.student-item.clickable-student {
+    cursor: pointer;
+}
+
+.student-item.clickable-student:hover {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    transform: translateX(4px);
+    padding-left: 24px;
+}
+
+.student-item.clickable-student:active {
+    transform: translateX(2px);
+}
+
+.student-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    transition: all 0.2s ease;
+}
+
+.student-item.clickable-student:hover .student-avatar {
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(16, 185, 129, 0.4);
+}
+
+.student-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.student-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    transition: color 0.2s ease;
+}
+
+.student-item.clickable-student:hover .student-name {
+    color: #059669;
+}
+
+.student-email {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* Стрелка-указатель для кликабельных элементов */
+.student-arrow {
+    font-size: 18px;
+    color: #cbd5e1;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.2s ease;
+}
+
+.student-item.clickable-student:hover .student-arrow {
+    opacity: 1;
+    transform: translateX(0);
+    color: #10b981;
+}
+
+/* Пустое сообщение */
+.empty-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+    font-size: 14px;
+    margin: 0;
+    background: #fafafa;
+}
+
+/* Кнопки действий */
+.test-actions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.btn-secondary-custom {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-secondary-custom:hover {
+    background: linear-gradient(135deg, #475569 0%, #334155 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(71, 85, 105, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-primary-custom {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary-custom:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+/* Стили для скроллбара */
+.card-body-custom::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-body-custom::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.card-body-custom::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+    border-radius: 10px;
+}
+
+.card-body-custom::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+}
+
+/* Адаптивность */
+@media (max-width: 900px) {
+    .test-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .test-title {
+        font-size: 26px;
+    }
+}
+
+@media (max-width: 640px) {
+    .test-title {
+        font-size: 22px;
+    }
+
+    .card-header-custom {
+        padding: 12px 18px;
+    }
+
+    .card-header-custom h3 {
+        font-size: 16px;
+    }
+
+    .question-item,
+    .student-item {
+        padding: 12px 16px;
+    }
+
+    .question-text {
+        font-size: 13px;
+    }
+
+    .student-name {
+        font-size: 14px;
+    }
+
+    .test-actions {
+        flex-direction: column;
+    }
+
+    .test-actions .btn-secondary-custom,
+    .test-actions .btn-primary-custom {
+        text-align: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .card-body-custom {
+        max-height: 350px;
+    }
+
+    .student-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    .student-arrow {
+        font-size: 14px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Делаем учеников кликабельными
+    const studentItems = document.querySelectorAll('.student-item.clickable-student');
+
+    studentItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            // Предотвращаем срабатывание, если клик был по ссылке внутри
+            if (e.target.closest('a')) {
+                return;
+            }
+
+            const studentId = this.dataset.studentId;
+            if (studentId) {
+                // Используем URL из Django (можно заменить на прямую ссылку)
+                window.location.href = `/teacher/students/student/${studentId}/`;
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

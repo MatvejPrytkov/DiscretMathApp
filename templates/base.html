@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% load static %}
     <title>{% block title %}Тестирование{% endblock %}</title>
-
+          <link rel="icon" type="image/png" href="{% static 'images/discrete-math.png' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'images/discrete-math.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/discrete-math.png' %}">
     <!-- Подключение внешнего файла стилей -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
@@ -27,14 +29,14 @@
         <!-- Блок для уведомлений - показываем только авторизованным пользователям -->
         {% if user.is_authenticated %}
         <div class="notifications-wrapper" style="position: relative; float: right;">
-            <button class="notifications-toggle" onclick="toggleNotifications()">
+            <button class="notifications-toggle" onclick="toggleNotifications()" style="background: none; border: none; font-size: 24px; cursor: pointer; position: relative; padding: 8px;">
                 🔔
                 <span id="notifications-badge" class="notifications-badge" style="{% if unread_notifications_count == 0 %}display: none;{% endif %}">
                     {{ unread_notifications_count }}
                 </span>
             </button>
-            <div id="notifications-dropdown" class="notifications-dropdown" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000;">
-                <div class="notifications-loading">Загрузка...</div>
+            <div id="notifications-dropdown" class="notifications-dropdown" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 380px; max-width: 90vw; overflow: hidden;">
+                <div class="notifications-loading" style="padding: 40px; text-align: center; color: #9ca3af;">Загрузка...</div>
             </div>
         </div>
         <div style="clear: both;"></div>
@@ -44,39 +46,28 @@
         {% endblock %}
     </div>
 
-    <style>
-        .notifications-wrapper {
-            position: relative;
-            float: right;
+   <script>
+    // CSRF токен
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
         }
-        .notifications-toggle {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            position: relative;
-            padding: 8px;
-        }
-        .notifications-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #dc3545;
-            color: white;
-            font-size: 11px;
-            border-radius: 50%;
-            padding: 2px 6px;
-            min-width: 18px;
-            text-align: center;
-            font-weight: bold;
-        }
-    </style>
+        return cookieValue;
+    }
 
-    <script>
-        let currentUnreadCount = {{ unread_notifications_count|default:0 }};
+    let currentUnreadCount = {{ unread_notifications_count|default:0 }};
 
-        function updateBadge(count) {
-            const badge = document.getElementById('notifications-badge');
+    function updateBadge(count) {
+        const badge = document.getElementById('notifications-badge');
+        if (badge) {
             if (count > 0) {
                 badge.textContent = count;
                 badge.style.display = '';
@@ -86,300 +77,268 @@
                 currentUnreadCount = 0;
             }
         }
+    }
 
-        function markNotificationAsRead(notificationId, link) {
-            fetch(`/notifications/mark-read/${notificationId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'Content-Type': 'application/json'
+    // Отметить все как прочитанные - ОБНОВЛЯЕТ ТОЛЬКО СТИЛИ, НЕ ПЕРЕЗАГРУЖАЯ СПИСОК
+    function markAllNotificationsRead() {
+        fetch('/notifications/mark-all-read/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                // Обновляем стили всех уведомлений - убираем синий фон
+                document.querySelectorAll('.notification-item').forEach(item => {
+                    item.classList.remove('unread');
+                    item.style.background = 'white';
+                });
+                // Обнуляем счетчик
+                updateBadge(0);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Удалить все уведомления
+    function deleteAllNotifications() {
+        if (!confirm('Вы уверены, что хотите удалить все уведомления?')) return;
+
+        fetch('/notifications/delete-all/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                // Перезагружаем список (он будет пустым)
+                fetchNotifications();
+                updateBadge(0);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Отметить одно уведомление как прочитанное
+    function markSingleAsRead(notificationId) {
+        fetch(`/notifications/mark-read/${notificationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                const item = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
+                if (item) {
+                    item.classList.remove('unread');
+                    item.style.background = 'white';
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    // Уменьшаем счетчик
-                    if (currentUnreadCount > 0) {
+                if (currentUnreadCount > 0) {
+                    updateBadge(currentUnreadCount - 1);
+                }
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Удалить одно уведомление
+    function deleteSingleNotification(notificationId) {
+        fetch(`/notifications/delete/${notificationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                const item = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
+                if (item) {
+                    const wasUnread = item.classList.contains('unread');
+                    item.remove();
+                    if (wasUnread && currentUnreadCount > 0) {
                         updateBadge(currentUnreadCount - 1);
                     }
-                    // Переходим по ссылке
-                    if (link) {
-                        window.location.href = link;
-                    }
-                }
-            });
-        }
-
-        function markAllNotificationsRead() {
-            fetch('/notifications/mark-all-read/', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    updateBadge(0);
-                    // Обновляем список уведомлений
-                    const dropdown = document.getElementById('notifications-dropdown');
-                    if (dropdown.style.display === 'block') {
-                        fetchNotifications();
-                    }
-                }
-            });
-        }
-
-        function fetchNotifications() {
-            const dropdown = document.getElementById('notifications-dropdown');
-            fetch('/notifications/get/')
-                .then(response => response.json())
-                .then(data => {
-                    dropdown.innerHTML = data.html;
-                    // Привязываем обработчики к уведомлениям
-                    attachNotificationHandlers();
-                });
-        }
-
-        function attachNotificationHandlers() {
-            // Обработка клика по уведомлению
-            document.querySelectorAll('.notification-item').forEach(item => {
-                const notificationId = item.dataset.id;
-                const link = item.querySelector('.notification-link')?.href;
-
-                item.addEventListener('click', function(e) {
-                    // Если клик не по ссылке внутри
-                    if (!e.target.closest('.notification-link')) {
-                        e.preventDefault();
-                        if (notificationId) {
-                            markNotificationAsRead(notificationId, link);
+                    // Проверяем, остались ли уведомления
+                    const remaining = document.querySelectorAll('.notification-item');
+                    if (remaining.length === 0) {
+                        const listContainer = document.querySelector('.notifications-list');
+                        if (listContainer) {
+                            listContainer.innerHTML = '<div class="notification-empty" style="padding: 40px; text-align: center; color: #9ca3af;">У вас нет уведомлений</div>';
+                        }
+                        const actionsDiv = document.querySelector('.notifications-actions');
+                        if (actionsDiv) {
+                            actionsDiv.innerHTML = '';
                         }
                     }
-                });
-            });
+                }
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
 
-            // Обработка кнопки "Отметить все"
-            const markAllBtn = document.querySelector('.mark-read-btn');
-            if (markAllBtn) {
-                markAllBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    markAllNotificationsRead();
+    // Переход по ссылке + удаление
+    function openAndDelete(notificationId, link) {
+        fetch(`/notifications/mark-read/${notificationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                fetch(`/notifications/delete/${notificationId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(() => {
+                    if (link) window.location.href = link;
                 });
             }
+        });
+    }
+
+    // Загрузка уведомлений
+    function fetchNotifications() {
+        const dropdown = document.getElementById('notifications-dropdown');
+        if (!dropdown) return;
+
+        fetch('/notifications/get/')
+            .then(response => response.json())
+            .then(data => {
+                dropdown.innerHTML = data.html;
+                attachEventHandlers();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                dropdown.innerHTML = '<div class="notification-empty" style="padding: 40px; text-align: center; color: #9ca3af;">Ошибка загрузки</div>';
+            });
+    }
+
+    // Навешиваем обработчики на загруженные уведомления
+    function attachEventHandlers() {
+        // Кнопка "Отметить все прочитанными"
+        const markAllBtn = document.querySelector('.mark-read-all-btn');
+        if (markAllBtn) {
+            // Удаляем старый обработчик, если есть
+            const newBtn = markAllBtn.cloneNode(true);
+            markAllBtn.parentNode.replaceChild(newBtn, markAllBtn);
+            newBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                markAllNotificationsRead();
+            });
         }
 
-        function toggleNotifications() {
+        // Кнопка "Очистить все"
+        const deleteAllBtn = document.querySelector('.delete-all-btn');
+        if (deleteAllBtn) {
+            const newBtn = deleteAllBtn.cloneNode(true);
+            deleteAllBtn.parentNode.replaceChild(newBtn, deleteAllBtn);
+            newBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                deleteAllNotifications();
+            });
+        }
+
+        // Клик по уведомлению
+        document.querySelectorAll('.notification-item').forEach(item => {
+            const notificationId = item.getAttribute('data-id');
+            const linkElement = item.querySelector('.notification-link');
+            const link = linkElement ? linkElement.getAttribute('href') : null;
+
+            const newItem = item.cloneNode(true);
+            item.parentNode.replaceChild(newItem, item);
+
+            newItem.addEventListener('click', function(e) {
+                if (e.target.closest('.notification-delete')) return;
+                if (e.target.closest('.notification-link')) return;
+
+                if (link) {
+                    e.preventDefault();
+                    openAndDelete(notificationId, link);
+                } else {
+                    markSingleAsRead(notificationId);
+                }
+            });
+        });
+
+        // Кнопки удаления (крестик)
+        document.querySelectorAll('.notification-delete').forEach(btn => {
+            const notificationId = btn.getAttribute('data-id');
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                deleteSingleNotification(notificationId);
+            });
+        });
+
+        // Ссылки-стрелочки
+        document.querySelectorAll('.notification-link').forEach(link => {
+            const notificationId = link.getAttribute('data-id');
+            const newLink = link.cloneNode(true);
+            link.parentNode.replaceChild(newLink, link);
+            newLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const href = this.getAttribute('href');
+                if (notificationId && href) {
+                    openAndDelete(notificationId, href);
+                }
+            });
+        });
+    }
+
+    function toggleNotifications() {
+        const dropdown = document.getElementById('notifications-dropdown');
+        if (!dropdown) return;
+
+        if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+            fetchNotifications();
+            dropdown.style.display = 'block';
+        } else {
+            dropdown.style.display = 'none';
+        }
+    }
+
+    // Закрыть при клике вне
+    document.addEventListener('click', function(e) {
+        const wrapper = document.querySelector('.notifications-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
             const dropdown = document.getElementById('notifications-dropdown');
-            if (dropdown.style.display === 'none') {
-                fetchNotifications();
-                dropdown.style.display = 'block';
-            } else {
+            if (dropdown) {
                 dropdown.style.display = 'none';
             }
         }
-
-        // Получение CSRF токена
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        // Закрыть при клике вне
-        document.addEventListener('click', function(e) {
-            const wrapper = document.querySelector('.notifications-wrapper');
-            if (wrapper && !wrapper.contains(e.target)) {
-                const dropdown = document.getElementById('notifications-dropdown');
-                if (dropdown) {
-                    dropdown.style.display = 'none';
-                }
-            }
-        });
-
-        // Обновление счетчика при возврате на страницу
-        window.addEventListener('pageshow', function() {
-            fetch('/notifications/unread-count/')
-                .then(response => response.json())
-                .then(data => {
-                    updateBadge(data.count);
-                });
-        });
-        // Добавьте эти функции в существующий script в base.html
-
-function openAndDeleteNotification(notificationId, link) {
-    // Помечаем как прочитанное и удаляем
-    fetch(`/notifications/delete/${notificationId}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            // Уменьшаем счетчик
-            if (currentUnreadCount > 0) {
-                updateBadge(currentUnreadCount - 1);
-            }
-            // Переходим по ссылке
-            if (link) {
-                window.location.href = link;
-            }
-        }
     });
-}
 
-function deleteSingleNotification(notificationId, event) {
-    event.stopPropagation();
-
-    fetch(`/notifications/delete/${notificationId}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            // Удаляем элемент из DOM
-            const notificationItem = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
-            if (notificationItem) {
-                const wasUnread = notificationItem.classList.contains('unread');
-                notificationItem.remove();
-
-                // Если уведомление было непрочитанным, уменьшаем счетчик
-                if (wasUnread && currentUnreadCount > 0) {
-                    updateBadge(currentUnreadCount - 1);
-                }
-
-                // Проверяем, остались ли уведомления
-                const remainingItems = document.querySelectorAll('.notification-item');
-                if (remainingItems.length === 0) {
-                    const listContainer = document.querySelector('.notifications-list');
-                    if (listContainer) {
-                        listContainer.innerHTML = '<div class="notification-empty">У вас нет уведомлений</div>';
-                    }
-                    // Скрываем кнопки в header
-                    const actionsDiv = document.querySelector('.notifications-actions');
-                    if (actionsDiv) {
-                        actionsDiv.innerHTML = '';
-                    }
-                }
-            }
-        }
-    });
-}
-
-function deleteAllNotifications() {
-    if (!confirm('Вы уверены, что хотите удалить все уведомления?')) {
-        return;
-    }
-
-    fetch('/notifications/delete-all/', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            // Очищаем список уведомлений
-            const listContainer = document.querySelector('.notifications-list');
-            if (listContainer) {
-                listContainer.innerHTML = '<div class="notification-empty">У вас нет уведомлений</div>';
-            }
-            // Скрываем кнопки в header
-            const actionsDiv = document.querySelector('.notifications-actions');
-            if (actionsDiv) {
-                actionsDiv.innerHTML = '';
-            }
-            // Обнуляем счетчик
-            updateBadge(0);
-        }
-    });
-}
-
-// Обновите функцию markAllNotificationsRead
-function markAllNotificationsRead() {
-    fetch('/notifications/mark-all-read/', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            // Убираем класс unread у всех уведомлений, но не удаляем их
-            document.querySelectorAll('.notification-item').forEach(item => {
-                item.classList.remove('unread');
+    // Обновление счетчика при возврате на страницу
+    window.addEventListener('pageshow', function() {
+        fetch('/notifications/unread-count/')
+            .then(response => response.json())
+            .then(data => {
+                updateBadge(data.count);
             });
-            // Обнуляем счетчик
-            updateBadge(0);
-        }
     });
-}
-
-// Обновите функцию attachNotificationHandlers
-function attachNotificationHandlers() {
-    // Удаляем старые обработчики, если они были
-    const oldItems = document.querySelectorAll('.notification-item');
-    oldItems.forEach(item => {
-        const newItem = item.cloneNode(true);
-        item.parentNode.replaceChild(newItem, item);
-    });
-
-    // Обработка клика по уведомлению (для перехода)
-    document.querySelectorAll('.notification-item').forEach(item => {
-        const notificationId = item.dataset.id;
-        const link = item.querySelector('.notification-link')?.href;
-
-        item.addEventListener('click', function(e) {
-            if (!e.target.closest('.notification-delete') && !e.target.closest('.notification-link')) {
-                if (notificationId && link) {
-                    openAndDeleteNotification(notificationId, link);
-                }
-            }
-        });
-    });
-
-    // Обработка кнопки "Отметить все"
-    const markAllBtn = document.querySelector('.mark-read-btn');
-    if (markAllBtn) {
-        const newMarkAllBtn = markAllBtn.cloneNode(true);
-        markAllBtn.parentNode.replaceChild(newMarkAllBtn, markAllBtn);
-        newMarkAllBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            markAllNotificationsRead();
-        });
-    }
-
-    // Обработка кнопки "Очистить все"
-    const deleteAllBtn = document.querySelector('.delete-all-btn');
-    if (deleteAllBtn) {
-        const newDeleteAllBtn = deleteAllBtn.cloneNode(true);
-        deleteAllBtn.parentNode.replaceChild(newDeleteAllBtn, deleteAllBtn);
-        newDeleteAllBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            deleteAllNotifications();
-        });
-    }
-}
-    </script>
+</script>
 </body>
 </html>
