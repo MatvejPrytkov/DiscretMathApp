@@ -212,7 +212,42 @@ class TestQuestion(models.Model):
     def __str__(self):
         return f"{self.category.name}: {self.question_text[:50]}..."
 
+# models.py - добавьте после модели TestQuestion
 
+class TeacherPersonalQuestion(models.Model):
+    """Личные вопросы учителя (не попадают в общие тесты)"""
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='personal_questions',
+        limit_choices_to={'profile__role': 'teacher'}
+    )
+    question_text = models.TextField(verbose_name="Текст вопроса")
+    option_a = models.TextField(verbose_name="Вариант А")
+    option_b = models.TextField(verbose_name="Вариант Б")
+    option_c = models.TextField(verbose_name="Вариант В")
+    option_d = models.TextField(verbose_name="Вариант Г")
+    correct_option = models.CharField(
+        max_length=1,
+        choices=[('a', 'А'), ('b', 'Б'), ('c', 'В'), ('d', 'Г')],
+        verbose_name="Правильный вариант"
+    )
+    category = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Категория (для сортировки)"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Личный вопрос учителя"
+        verbose_name_plural = "Личные вопросы учителей"
+
+    def __str__(self):
+        return f"{self.teacher.profile.full_name}: {self.question_text[:50]}..."
 class TestKindConfig(models.Model):
     """Конфигурация типов тестов (хранится в БД)"""
     TEST_KIND_CHOICES = [
@@ -276,12 +311,19 @@ class TeacherTest(models.Model):
     teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_tests')
     title = models.CharField(max_length=200, verbose_name="Название теста")
     description = models.TextField(blank=True, verbose_name="Описание")
+    # Оставляем связь с общими вопросами
     questions = models.ManyToManyField(TestQuestion, through='TeacherTestQuestion', related_name='teacher_tests')
+    # ДОБАВЛЯЕМ связь с личными вопросами учителя
+    personal_questions = models.ManyToManyField(
+        'TeacherPersonalQuestion',
+        through='TeacherTestPersonalQuestion',
+        related_name='teacher_tests',
+        blank=True,
+        verbose_name="Личные вопросы"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True, verbose_name="Активен")
-
-    # Изменяем: если assigned_to пусто, тест доступен ВСЕМ ученикам учителя
     assigned_to = models.ManyToManyField(
         User,
         related_name='assigned_tests',
@@ -289,13 +331,12 @@ class TeacherTest(models.Model):
         limit_choices_to={'profile__role': 'student'},
         verbose_name="Конкретные ученики (оставьте пустым для всех)"
     )
-
-    # Новое поле: назначать автоматически новым ученикам
     auto_assign_new_students = models.BooleanField(
         default=True,
         verbose_name="Автоматически назначать новым ученикам"
     )
 class TeacherTestQuestion(models.Model):
+    """Связь теста с общими вопросами"""
     test = models.ForeignKey(TeacherTest, on_delete=models.CASCADE)
     question = models.ForeignKey(TestQuestion, on_delete=models.CASCADE)
     order = models.IntegerField(default=0)
@@ -303,7 +344,6 @@ class TeacherTestQuestion(models.Model):
     class Meta:
         ordering = ['order']
         unique_together = ['test', 'question']
-
 
 # Добавьте в models.py после существующих моделей
 
@@ -352,7 +392,15 @@ class Message(models.Model):
     def __str__(self):
         return f"Message #{self.id}"
 
+class TeacherTestPersonalQuestion(models.Model):
+    """Связь теста с личными вопросами учителя"""
+    test = models.ForeignKey(TeacherTest, on_delete=models.CASCADE)
+    question = models.ForeignKey('TeacherPersonalQuestion', on_delete=models.CASCADE)
+    order = models.IntegerField(default=0)
 
+    class Meta:
+        ordering = ['order']
+        unique_together = ['test', 'question']
 # Замените существующий сигнал на этот:
 # Добавьте в models.py после класса Message
 

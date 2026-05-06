@@ -1,14 +1,170 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'student/base_student.html' %}
+{% load test_extras %}  <!-- ИСПРАВЛЕНО: добавлена загрузка фильтров -->
 
-    <title>Результаты итогового тестирования</title>
-</head>
-<body>
-    <h2>Результаты итогового теста</h2>
-    <p>Правильных ответов: {{ correct }} из {{ total }}</p>
-    <p>Процент выполнения: {{ percent }}%</p>
-    <a href="{% url back_url %}" class="btn btn-primary">{{ back_text }}</a>
-</body>
-</html>
+{% block title %}Результаты итогового тестирования{% endblock %}
+
+{% block student_content %}
+<div class="result-header">
+    <h1>Результаты итогового тестирования</h1>
+    <div class="result-meta">
+        <div class="result-meta-item">
+            <span>📊</span>
+            <strong>Результат:</strong>
+            <span class="percent-{% if result.percent >= 90 %}excellent{% elif result.percent >= 70 %}good{% elif result.percent >= 50 %}average{% else %}poor{% endif %}">
+                {{ result.score }} из {{ result.total_questions }} ({{ result.percent|floatformat:1 }}%)
+            </span>
+        </div>
+        <div class="result-meta-item">
+            <span>⚠️</span>
+            <strong>Внимание:</strong> Итоговое тестирование можно пройти только один раз!
+        </div>
+    </div>
+</div>
+
+<!-- Результаты по категориям/темам -->
+{% if results_by_category %}
+<div style="margin-top: 20px; margin-bottom: 25px; border: 1px solid #ddd; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
+    <h3>📈 Результаты по темам:</h3>
+    <ul style="list-style: none; padding-left: 0;">
+        {% for key, val in results_by_category.items %}
+            <li style="margin-bottom: 10px; font-size: 1.1em;">
+                <strong>{{ val.name }}:</strong>
+                {% if val.total > 0 %}
+                    <span style="color: {% if val.correct == val.total %}#28a745{% elif val.correct > 0 %}#ffc107{% else %}#dc3545{% endif %}; font-weight: bold;">
+                        {{ val.correct }}
+                    </span>
+                    из {{ val.total }}
+                    ({% widthratio val.correct val.total 100 %}%)
+                {% else %}
+                    <span style="color: #6c757d;">Нет вопросов</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<h2>📋 Детальные ответы</h2>
+<div class="answers-grid">
+    {% for a in answers %}
+        <div class="card">
+            <p><strong>Вопрос №{{ forloop.counter }}</strong></p>
+            {% if a.question_text %}
+                <p><strong>Вопрос:</strong> {{ a.question_text }}</p>
+            {% endif %}
+
+            <!-- ИСПРАВЛЕНО: преобразование латинских букв в кириллицу -->
+            {% if a.user_answer %}
+                <p>
+                    <strong>Ваш ответ:</strong>
+                    <span class="answer-cyrillic">{{ a.user_answer|to_cyrillic_letter }}</span>
+                    {% if a.user_answer_text %}
+                        - {{ a.user_answer_text }}
+                    {% endif %}
+                </p>
+                <p>
+                    <strong>Правильный ответ:</strong>
+                    <span class="answer-cyrillic">{{ a.correct_answer|to_cyrillic_letter }}</span>
+                    {% if a.correct_answer_text %}
+                        - {{ a.correct_answer_text }}
+                    {% endif %}
+                </p>
+            {% else %}
+                <p><strong>Ваш ответ:</strong> <span class="text-warning">❌ Не выбран</span></p>
+                <p class="text-muted small">Вы не выбрали ответ на этот вопрос. Правильный ответ не показывается.</p>
+            {% endif %}
+
+            {% if a.is_correct %}
+                <p class="ok"><strong>✅ Верно</strong></p>
+            {% else %}
+                <p class="no"><strong>❌ Неверно</strong></p>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>Нет сохранённых ответов для этой попытки.</p>
+    {% endfor %}
+</div>
+
+<hr style="margin: 30px 0;">
+
+<div style="display: flex; gap: 15px; flex-wrap: wrap;">
+    <a href="{% url 'profile' %}" class="btn btn-primary" style="background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+        📊 Вернуться в профиль
+    </a>
+</div>
+
+<style>
+    .result-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 16px;
+        padding: 25px 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+    }
+    .result-header h1 {
+        margin: 0 0 15px 0;
+        font-size: 28px;
+    }
+    .result-meta {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .result-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: white;
+        padding: 10px 18px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .percent-excellent { color: #059669; font-weight: bold; }
+    .percent-good { color: #3b82f6; font-weight: bold; }
+    .percent-average { color: #f59e0b; font-weight: bold; }
+    .percent-poor { color: #ef4444; font-weight: bold; }
+
+    .answer-cyrillic {
+        display: inline-block;
+        font-weight: bold;
+        min-width: 30px;
+        padding: 2px 8px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .answers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+        margin: 30px 0;
+    }
+    .answers-grid .card {
+        background: white;
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        border-radius: 16px;
+        padding: 20px;
+        transition: all 0.3s;
+    }
+    .answers-grid .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .answers-grid .ok strong { color: #059669; }
+    .answers-grid .no strong { color: #dc2626; }
+
+    @media (max-width: 768px) {
+        .answers-grid {
+            grid-template-columns: 1fr;
+        }
+        .result-meta {
+            flex-direction: column;
+        }
+        .result-header {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}

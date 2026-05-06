@@ -1,5 +1,6 @@
 {% extends 'student/base_student.html' %}
 {% load tz %}
+{% load test_extras %}  <!-- ИСПРАВЛЕНО: добавлена загрузка фильтров -->
 
 {% block title %}{{ result.get_test_type_display }}{% endblock %}
 
@@ -93,12 +94,35 @@
             {% if a.question_text %}
                 <p><strong>Вопрос:</strong> {{ a.question_text }}</p>
             {% endif %}
-            <p><strong>Ваш ответ:</strong> {{ a.user_answer_text|default:"—" }}</p>
-            <p><strong>Правильный ответ:</strong> {{ a.correct_answer_text|default:"—" }}</p>
+
+            <!-- ИСПРАВЛЕНО: преобразование латинских букв в кириллицу -->
+            {% if a.user_answer %}
+                <p>
+                    <strong>Ваш ответ:</strong>
+                    <span class="answer-cyrillic">{{ a.user_answer|to_cyrillic_letter }}</span>
+                    {% if a.user_answer_text %}
+                        - {{ a.user_answer_text }}
+                    {% endif %}
+                </p>
+                <p>
+                    <strong>Правильный ответ:</strong>
+                    <span class="answer-cyrillic">{{ a.correct_answer|to_cyrillic_letter }}</span>
+                    {% if a.correct_answer_text %}
+                        - {{ a.correct_answer_text }}
+                    {% endif %}
+                </p>
+                {% if not a.is_correct %}
+                    <p class="text-muted small">Правильный ответ показан для вашего обучения.</p>
+                {% endif %}
+            {% else %}
+                <p><strong>Ваш ответ:</strong> <span class="text-warning">❌ Не выбран</span></p>
+                <p class="text-muted small">Вы не выбрали ответ на этот вопрос. Правильный ответ не показывается.</p>
+            {% endif %}
+
             {% if a.is_correct %}
                 <p class="ok"><strong>✅ Верно</strong></p>
             {% else %}
-                <p class="no"><strong>Неверно</strong></p>
+                <p class="no"><strong> Неверно</strong></p>
             {% endif %}
         </div>
     {% empty %}
@@ -111,7 +135,6 @@
 <div class="grade-form">
     <h2>📝 Выставление оценки</h2>
 
-    <!-- Показ текущей оценки, если уже выставлена -->
     {% if result.grade %}
     <div class="current-grade-info">
         <div class="current-grade-header">
@@ -218,7 +241,17 @@
     .percent-average { color: #f59e0b; font-weight: bold; }
     .percent-poor { color: #ef4444; font-weight: bold; }
 
-    /* ========== НОВЫЕ СТИЛИ ДЛЯ БЛОКА ПРОВЕРКИ ========== */
+    /* ИСПРАВЛЕНО: стиль для кириллических букв в ответах */
+    .answer-cyrillic {
+        display: inline-block;
+        font-weight: bold;
+        min-width: 30px;
+        padding: 2px 8px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        text-align: center;
+    }
+
     .grade-checked-info {
         background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
         border: 1px solid rgba(16, 185, 129, 0.3);
@@ -299,7 +332,6 @@
         color: white;
     }
 
-    /* ========== СТИЛИ ДЛЯ ТЕКУЩЕЙ ОЦЕНКИ УЧИТЕЛЯ ========== */
     .current-grade-info {
         background: #fef3c7;
         border: 1px solid rgba(245, 158, 11, 0.3);

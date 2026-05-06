@@ -11,6 +11,7 @@ urlpatterns = [
     path('', views.index, name='initial'),
     path('admin/', admin.site.urls),
     path('register/', views.register, name='register'),
+    path('api/search-teachers/', views.search_teachers_api, name='search_teachers_api'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('profile/update/', views.profile_update, name='profile_update'),
@@ -95,6 +96,13 @@ urlpatterns = [
     path('chat/teacher-student/send-file/', views.send_teacher_student_file, name='send_teacher_student_file'),
     path('chat/teacher-student/send-voice/', views.send_teacher_student_voice, name='send_teacher_student_voice'),
     path('chat/teacher-student/add-reaction/', views.add_message_reaction, name='add_message_reaction'),
+
+    path('teacher/personal-questions/', views.manage_personal_questions, name='manage_personal_questions'),
+    path('teacher/personal-questions/add/', views.add_personal_question, name='add_personal_question'),
+    path('teacher/personal-questions/delete/<int:question_id>/', views.delete_personal_question,
+         name='delete_personal_question'),
+    path('teacher/personal-questions/edit/<int:question_id>/', views.edit_personal_question,
+         name='edit_personal_question'),
 ]
 
 if settings.DEBUG:

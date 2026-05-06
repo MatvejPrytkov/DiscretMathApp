@@ -1,11 +1,7 @@
 {% extends 'student/base_student.html' %}
+{% load test_extras %}  <!-- ИСПРАВЛЕНО: добавлена загрузка фильтров -->
 {% block title %}Входное тестирование{% endblock %}
 {% block student_content %}
-<!--<nav class="mb-4">-->
-<!--        <a href="{% url 'profile' %}" class="btn btn-outline-secondary btn-sm">← Личный кабинет</a>-->
-<!--        <a href="{% url 'student_labs' %}" class="btn btn-outline-secondary btn-sm">🧪 Лабораторные</a>-->
-<!--        <a href="{% url 'test_view' 'final' %}" class="btn btn-outline-secondary btn-sm">📤 Итоговый тест</a>-->
-<!--    </nav>-->
     <h1>Входное тестирование (15 вопросов)</h1>
     <form method="post">
         {% csrf_token %}
@@ -15,28 +11,27 @@
                 <h3>
                     <span class="question-number">{{ forloop.counter }}</span>
                     {{ q.question }}
-
                 </h3>
 
-                <!-- Скрытое поле ID (без дубликатов в начале формы) -->
-                <input type="hidden" name="ids_{{ q.category }}" value="{{ q.id_val }}">
+                <!-- Скрытое поле с ID вопроса -->
+                <input type="hidden" name="question_id_{{ q.category }}_{{ q.id_val }}" value="{{ q.id_val }}">
 
                 <div class="options">
                     <label>
                         <input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="a" required>
-                        {{ q.answer1 }}
+                        А) {{ q.answer1 }}  <!-- ИСПРАВЛЕНО: А вместо A -->
                     </label>
                     <label>
                         <input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="b">
-                        {{ q.answer2 }}
+                        Б) {{ q.answer2 }}  <!-- ИСПРАВЛЕНО: Б вместо Б -->
                     </label>
                     <label>
                         <input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="c">
-                        {{ q.answer3 }}
+                        В) {{ q.answer3 }}  <!-- ИСПРАВЛЕНО: В вместо C -->
                     </label>
                     <label>
                         <input type="radio" name="q_{{ q.category }}_{{ q.id_val }}" value="d">
-                        {{ q.answer4 }}
+                        Г) {{ q.answer4 }}  <!-- ИСПРАВЛЕНО: Г вместо D -->
                     </label>
                 </div>
             </div>

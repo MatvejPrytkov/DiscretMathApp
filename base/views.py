@@ -8,15 +8,15 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib import messages
-from .forms import RegistrationForm, GradeTestForm
-from .models import LabWork, LabSubmission, TestResult, TestKindCategory, TestKindConfig, Notification
+from .forms import RegistrationForm, GradeTestForm, ProfileEditForm
+from .models import LabWork, LabSubmission, TestResult, TestKindCategory, TestKindConfig, Notification, TeacherPersonalQuestion
 from django.contrib.auth.forms import AuthenticationForm
 import pandas as pd
 import random
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from .models import TestAnswer
-from .forms import UserUpdateForm, PasswordChangeForm, TeacherTestForm, TestQuestionForm
+from .forms import UserUpdateForm, PasswordChangeForm, TeacherTestForm, TestQuestionForm, TeacherTestWithPersonalForm, TeacherPersonalQuestionForm
 from .decorators import student_required, teacher_required, check_test_result_access, any_user_required
 from django.db.models import Count, Sum, Avg, Max, CharField, Case, When, FloatField, Value
 from django.db.models.functions import Round, Cast
@@ -46,7 +46,7 @@ from django.views.decorators.http import require_http_methods
 from .context_processors import has_final_test
 # Добавьте эту функцию в views.py после импортов
 
-@login_required
+
 def search_teachers_api(request):
     """API для поиска преподавателей по ФИО (для регистрации)"""
     query = request.GET.get('q', '').strip()
@@ -134,6 +134,23 @@ def get_file_response(file_field, filename):
     return response
 def index(request):
     return render(request, 'index.html')
+
+
+# views.py - полная функция test_view с исправлениями
+
+def _get_answer_text(question, option_letter):
+    """Получает текст ответа по букве варианта"""
+    if not option_letter:
+        return ''
+    mapping = {
+        'a': question.option_a,
+        'b': question.option_b,
+        'c': question.option_c,
+        'd': question.option_d,
+    }
+    return mapping.get(option_letter.lower(), '')
+
+
 @login_required
 @student_required
 def test_view(request, test_kind: str):
@@ -144,9 +161,8 @@ def test_view(request, test_kind: str):
         messages.error(request, f"Тест '{test_kind}' не найден или неактивен")
         return redirect('profile')
 
-    # ========== НОВАЯ ПРОВЕРКА ДЛЯ ИТОГОВОГО ТЕСТА ==========
+    # ========== ПРОВЕРКА ДЛЯ ИТОГОВОГО ТЕСТА ==========
     if test_kind == 'final':
-        # Проверяем, был ли уже пройден итоговый тест
         existing_result = TestResult.objects.filter(
             user=request.user,
             test_type='final'
@@ -154,7 +170,6 @@ def test_view(request, test_kind: str):
 
         if existing_result:
             messages.warning(request, 'Вы уже прошли итоговое тестирование. Повторное прохождение невозможно.')
-            # Если есть результат, перенаправляем на страницу с результатами
             final_result = TestResult.objects.filter(user=request.user, test_type='final').first()
             if final_result:
                 return redirect('result_detail', pk=final_result.id)
@@ -164,40 +179,75 @@ def test_view(request, test_kind: str):
     if request.method == 'POST':
         results = {}
         total_correct = 0
-        total_questions_all = 0
+        all_question_ids = []
 
         # Получаем все категории для этого типа теста
         test_categories = test_config.categories.all()
 
+        if not test_categories.exists():
+            messages.error(request, 'Тест не настроен. Обратитесь к администратору.')
+            return redirect('profile')
+
+        # ВАЖНО: Собираем ID вопросов из скрытых полей (не из radio-кнопок!)
+        for key in request.POST.keys():
+            if key.startswith('question_id_'):
+                # Извлекаем ID вопроса из ключа вида "question_id_category_id"
+                q_id = request.POST.get(key)
+                if q_id and q_id.isdigit():
+                    all_question_ids.append(int(q_id))
+
+        # Удаляем дубликаты
+        all_question_ids = list(set(all_question_ids))
+        total_questions_all = len(all_question_ids)
+
+        if total_questions_all == 0:
+            messages.error(request, 'В тесте нет вопросов. Обратитесь к администратору.')
+            return redirect('profile')
+
+        # Обрабатываем ответы по категориям
         for category in test_categories:
             try:
-                # Получаем конфигурацию количества вопросов для этой категории
                 kind_category = TestKindCategory.objects.get(
                     test_kind=test_config,
                     category=category
                 )
                 questions_needed = kind_category.questions_count
 
-                # Получаем отправленные ID вопросов для этой категории
-                question_ids = request.POST.getlist(f'ids_{category.code}')
+                # Получаем ID вопросов для этой категории
+                prefix = f'question_id_{category.code}_'
+                category_question_ids = []
+                for key in request.POST.keys():
+                    if key.startswith(prefix):
+                        q_id = request.POST.get(key)
+                        if q_id and q_id.isdigit():
+                            category_question_ids.append(int(q_id))
+
+                category_question_ids = list(set(category_question_ids))
+
+                if not category_question_ids:
+                    continue
 
                 correct_count = 0
                 question_details = []
 
-                for q_id in question_ids:
-                    user_answer = (request.POST.get(f'q_{category.code}_{q_id}') or '').strip().lower()
+                for q_id in category_question_ids:
+                    # Получаем ответ пользователя
+                    user_answer = request.POST.get(f'q_{category.code}_{q_id}')
+                    if user_answer:
+                        user_answer = user_answer.strip().lower()
+                    # else: user_answer остается None
+
                     try:
                         question = TestQuestion.objects.get(
                             id=q_id,
                             category=category,
                             is_active=True
                         )
-                        is_correct = (user_answer == question.correct_option)
+                        is_correct = (user_answer is not None and user_answer == question.correct_option)
 
                         if is_correct:
                             correct_count += 1
 
-                        # Сохраняем детали ответа
                         question_details.append({
                             'question_id': q_id,
                             'user_answer': user_answer,
@@ -207,59 +257,69 @@ def test_view(request, test_kind: str):
                         })
 
                     except TestQuestion.DoesNotExist:
+                        question_details.append({
+                            'question_id': q_id,
+                            'user_answer': user_answer,
+                            'correct_answer': None,
+                            'is_correct': False,
+                            'question_text': 'Вопрос не найден'
+                        })
                         continue
 
                 results[category.code] = {
                     'name': category.name,
                     'correct': correct_count,
-                    'total': len(question_ids),
+                    'total': len(category_question_ids),
                     'config_questions': questions_needed,
                     'questions': question_details
                 }
 
                 total_correct += correct_count
-                total_questions_all += len(question_ids)
 
             except TestKindCategory.DoesNotExist:
                 results[category.code] = {'name': category.name, 'correct': 0, 'total': 0}
             except Exception as e:
                 results[category.code] = {'name': category.name, 'correct': 0, 'total': 0}
 
-        # Сохраняем результат теста
+        # Сохраняем результат
         test_result = TestResult.objects.create(
             user=request.user,
             test_type=test_kind,
             score=total_correct,
             total_questions=total_questions_all,
-            percent=round((total_correct / total_questions_all) * 100, 2) if total_questions_all else 0,
+            percent=round((total_correct / total_questions_all) * 100, 2) if total_questions_all > 0 else 0,
             correct_answers=total_correct,
-            percentage=round((total_correct / total_questions_all) * 100, 2) if total_questions_all else 0,
+            percentage=round((total_correct / total_questions_all) * 100, 2) if total_questions_all > 0 else 0,
             category_results=results
         )
 
         # Сохраняем детальные ответы
         for category_code, data in results.items():
             for question_detail in data.get('questions', []):
-                question = TestQuestion.objects.get(id=question_detail['question_id'])
+                if question_detail.get('correct_answer') is None:
+                    continue
 
-                TestAnswer.objects.create(
-                    result=test_result,
-                    question_id=question.id,
-                    question_text=question.question_text,
-                    user_answer=question_detail['user_answer'],
-                    user_answer_text=_get_answer_text(question, question_detail['user_answer']),
-                    correct_answer=question.correct_option,
-                    correct_answer_text=_get_answer_text(question, question.correct_option),
-                    is_correct=question_detail['is_correct']
-                )
+                try:
+                    question = TestQuestion.objects.get(id=question_detail['question_id'])
 
-        # ========== УВЕДОМЛЕНИЕ УЧИТЕЛЮ ==========
-        # Получаем учителя ученика
+                    TestAnswer.objects.create(
+                        result=test_result,
+                        question_id=question.id,
+                        question_text=question.question_text,
+                        user_answer=question_detail['user_answer'],
+                        user_answer_text=_get_answer_text(question, question_detail['user_answer']),
+                        correct_answer=question.correct_option,
+                        correct_answer_text=_get_answer_text(question, question.correct_option),
+                        is_correct=question_detail['is_correct']
+                    )
+                except TestQuestion.DoesNotExist:
+                    continue
+
+        # Уведомление учителю
         teacher = None
         if hasattr(request.user, 'profile') and request.user.profile.teacher:
             teacher = request.user.profile.teacher
 
-        # Отправляем уведомление учителю о прохождении теста
         if teacher:
             test_name = "Входное тестирование" if test_kind == 'start' else "Итоговое тестирование"
             from .utils import create_notification
@@ -272,7 +332,6 @@ def test_view(request, test_kind: str):
                 link=f'/teacher/result/{test_result.id}/'
             )
 
-        # Рендерим результаты
         return render(request, test_config.result_template, {
             'result': test_result,
             'answers': test_result.answers.all().order_by('question_id'),
@@ -283,38 +342,38 @@ def test_view(request, test_kind: str):
             'test_title': test_config.title,
             'test_config': test_config,
             'back_url': 'profile',
-            'back_text': 'Вернуться в профиль'
+            'back_text': 'Вернуться в профиль',
+            'active_nav': 'final_result' if test_kind == 'final' else None,
         })
 
     # =============== GET (показ вопросов) ===============
     questions_to_render = []
-
-    # Получаем все категории для этого типа теста
     test_categories = test_config.categories.filter(is_active=True)
 
     for category in test_categories:
         try:
-            # Получаем конфигурацию количества вопросов для этой категории
             kind_category = TestKindCategory.objects.get(
                 test_kind=test_config,
                 category=category
             )
             questions_needed = kind_category.questions_count
 
-            # Получаем вопросы для категории
+            if questions_needed == 0:
+                continue
+
             queryset = TestQuestion.objects.filter(
                 category=category,
                 is_active=True
             )
 
-            # Выбираем вопросы в зависимости от конфигурации
+            if not queryset.exists():
+                continue
+
             if questions_needed > 0:
                 questions = list(queryset.order_by('?')[:questions_needed])
             else:
-                # 0 означает все вопросы
                 questions = list(queryset.order_by('?'))
 
-            # Форматируем для шаблона
             for question in questions:
                 questions_to_render.append({
                     'category': category.code,
@@ -333,7 +392,6 @@ def test_view(request, test_kind: str):
         except TestQuestion.DoesNotExist:
             continue
 
-    # Перемешиваем вопросы
     random.shuffle(questions_to_render)
 
     return render(request, test_config.template, {
@@ -342,18 +400,9 @@ def test_view(request, test_kind: str):
         'test_kind': test_kind,
         'test_type': test_kind,
         'test_config': test_config,
-        'categories': test_categories
+        'categories': test_categories,
+        'active_nav': 'final_test' if test_kind == 'final' else None,
     })
-
-def _get_answer_text(question, option_letter):
-    """Получает текст ответа по букве варианта"""
-    mapping = {
-        'a': question.option_a,
-        'b': question.option_b,
-        'c': question.option_c,
-        'd': question.option_d,
-    }
-    return mapping.get(option_letter.lower(), '')
 
 def register(request):
     if request.method == 'POST':
@@ -603,22 +652,52 @@ def result_detail(request, pk):
         'back_text': back_text,
         'active_nav': active_nav,
     })
+
+
 @login_required
 def profile_update(request):
+    """Редактирование профиля пользователя"""
+
+    # Получаем профиль пользователя
+    user_profile = getattr(request.user, 'profile', None)
+    is_teacher = user_profile and user_profile.role == 'teacher'
+    is_student = user_profile and user_profile.role == 'student'
+
     if request.method == 'POST':
-        form = UserUpdateForm(request.POST, instance=request.user)
+        if is_student:
+            # Для учеников используем расширенную форму
+            form = ProfileEditForm(request.POST, instance=request.user, profile=user_profile)
+        else:
+            # Для учителей только базовые поля
+            form = UserUpdateForm(request.POST, instance=request.user)
+
         if form.is_valid():
             form.save()
             messages.success(request, 'Профиль успешно обновлён!')
+
             # Перенаправляем в зависимости от роли
-            if hasattr(request.user, 'profile') and request.user.profile.role == 'teacher':
+            if is_teacher:
                 return redirect('teacher_dashboard')
             return redirect('profile')
     else:
-        form = UserUpdateForm(instance=request.user)
+        if is_student:
+            form = ProfileEditForm(instance=request.user, profile=user_profile)
+        else:
+            form = UserUpdateForm(instance=request.user)
 
-    # Используем универсальный шаблон (создадим его ниже)
-    return render(request, 'profile_update.html', {'form': form})
+    # Статистика для ученика (если нужно)
+    context = {
+        'form': form,
+        'is_student': is_student,
+        'is_teacher': is_teacher,
+        'user_profile': user_profile,
+    }
+
+    # Для учеников получаем доступных преподавателей для отображения
+    if is_student:
+        context['teachers'] = User.objects.filter(profile__role='teacher').select_related('profile')
+
+    return render(request, 'profile_update.html', context)
 @login_required
 @any_user_required
 def change_password(request):
@@ -1555,81 +1634,51 @@ def manage_questions(request):
     return render(request, 'teacher/manage_questions.html', {'questions': questions})
 
 
+# views.py - обновите функцию create_teacher_test
+
 @login_required
 @teacher_required
 def create_teacher_test(request):
-    # Получаем профили учеников учителя
     students = UserProfile.objects.filter(
         role='student',
         teacher=request.user
     ).select_related('user')
 
-    # Получаем уникальные группы и курсы для фильтров
-    unique_groups = sorted(set(
-        student.group for student in students
-        if student and student.group
-    ))
-    unique_courses = sorted(set(
-        student.course for student in students
-        if student and student.course
-    ))
+    unique_groups = sorted(set(s.group for s in students if s and s.group))
+    unique_courses = sorted(set(s.course for s in students if s and s.course))
 
     if request.method == 'POST':
-        test_form = TeacherTestForm(request.POST)
-        # ... остальной код обработки формы ...
+        test_form = TeacherTestWithPersonalForm(request.POST, user=request.user)
 
         if test_form.is_valid():
             test = test_form.save(commit=False)
             test.teacher = request.user
             test.save()
 
-            # Добавляем выбранные вопросы из БД
+            # Добавляем вопросы из общей базы
             selected_question_ids = request.POST.getlist('existing_questions')
             selected_questions = TestQuestion.objects.filter(id__in=selected_question_ids)
-            test.questions.add(*selected_questions)
+            for question in selected_questions:
+                TeacherTestQuestion.objects.create(test=test, question=question, order=0)
 
-            # Обрабатываем динамически добавленные вопросы
-            i = 0
-            while f'question_form-{i}-question_text' in request.POST:
-                question_text = request.POST.get(f'question_form-{i}-question_text')
-                if question_text:
-                    category_id = request.POST.get(f'question_form-{i}-category')
-                    try:
-                        category = TestCategory.objects.get(id=category_id)
-                    except (TestCategory.DoesNotExist, ValueError):
-                        category = TestCategory.objects.first()
-                        if not category:
-                            messages.error(request, 'Нет доступных категорий вопросов')
-                            return redirect('create_teacher_test')
-
-                    correct_option_raw = request.POST.get(f'question_form-{i}-correct_answer')
-                    correct_option_map = {'1': 'a', '2': 'b', '3': 'c', '4': 'd'}
-                    correct_option = correct_option_map.get(correct_option_raw, 'a')
-
-                    question = TestQuestion.objects.create(
-                        category=category,
-                        question_text=question_text,
-                        option_a=request.POST.get(f'question_form-{i}-option1', ''),
-                        option_b=request.POST.get(f'question_form-{i}-option2', ''),
-                        option_c=request.POST.get(f'question_form-{i}-option3', ''),
-                        option_d=request.POST.get(f'question_form-{i}-option4', ''),
-                        correct_option=correct_option,
-                        created_by=request.user
-                    )
-                    test.questions.add(question)
-                i += 1
+            # Добавляем личные вопросы
+            selected_personal_ids = request.POST.getlist('personal_questions')
+            selected_personal = TeacherPersonalQuestion.objects.filter(
+                id__in=selected_personal_ids,
+                teacher=request.user
+            )
+            for question in selected_personal:
+                TeacherTestPersonalQuestion.objects.create(test=test, question=question, order=0)
 
             # Обработка выбранных учеников
             selected_student_ids = request.POST.getlist('selected_students')
             if selected_student_ids:
-                # Добавляем только выбранных учеников
                 selected_students = User.objects.filter(
                     id__in=selected_student_ids,
                     profile__teacher=request.user
                 )
                 test.assigned_to.set(selected_students)
             else:
-                # Если никого не выбрано - добавляем всех учеников учителя
                 all_students = User.objects.filter(
                     profile__teacher=request.user,
                     profile__role='student'
@@ -1638,30 +1687,29 @@ def create_teacher_test(request):
                 if all_students.exists():
                     messages.info(request, 'Тест назначен всем вашим ученикам')
 
-            # Отправляем уведомления
             for student in test.assigned_to.all():
-                notify_student_about_new_test(request.user, student, test,  request=request)
+                notify_student_about_new_test(request.user, student, test, request=request)
 
             messages.success(request, f'Тест "{test.title}" успешно создан!')
             return redirect('teacher_manage_tests')
-
     else:
-        test_form = TeacherTestForm()
+        test_form = TeacherTestWithPersonalForm(user=request.user)
 
-    # Получаем все существующие вопросы для чекбоксов
     all_questions = TestQuestion.objects.all()
-    # Получаем все категории для выпадающих списков
+    personal_questions = TeacherPersonalQuestion.objects.filter(teacher=request.user)
     categories = TestCategory.objects.all()
 
     context = {
         'test_form': test_form,
         'all_questions': all_questions,
+        'personal_questions': personal_questions,
         'categories': categories,
-        'students': students,  # Здесь объекты UserProfile
+        'students': students,
         'unique_groups': unique_groups,
         'unique_courses': unique_courses,
     }
     return render(request, 'teacher/create_teacher_test.html', context)
+
 @login_required
 @teacher_required
 def teacher_manage_tests(request):
@@ -1738,10 +1786,13 @@ def student_teacher_tests(request):
         test.result = results_map.get(test.id)
 
     return render(request, 'student/teacher_tests.html', {'tests': tests})
+
+
+# views.py - обновите функцию take_teacher_test
+
 @login_required
 @student_required
 def take_teacher_test(request, test_id):
-    """Прохождение теста от учителя"""
     try:
         test = TeacherTest.objects.get(id=test_id, is_active=True)
         if not test.assigned_to.filter(id=request.user.id).exists():
@@ -1753,22 +1804,57 @@ def take_teacher_test(request, test_id):
 
     if request.method == 'POST':
         correct = 0
-        total = test.questions.count()
+        total = test.questions.count() + test.personal_questions.count()
         answers = []
+
+        # Обрабатываем общие вопросы
         for question in test.questions.all():
-            user_answer = request.POST.get(f'q_{question.id}', '').strip().lower()
-            is_correct = user_answer == question.correct_option
+            user_answer = request.POST.get(f'q_{question.id}')
+            if user_answer:
+                user_answer = user_answer.strip().lower()
+            else:
+                user_answer = None
+
+            is_correct = False
+            if user_answer is not None:
+                is_correct = (user_answer == question.correct_option)
+
             if is_correct:
                 correct += 1
+
             answers.append({
                 'question': question,
                 'user_answer': user_answer,
                 'correct_answer': question.correct_option,
                 'is_correct': is_correct,
+                'is_personal': False
             })
+
+        # Обрабатываем личные вопросы
+        for question in test.personal_questions.all():
+            user_answer = request.POST.get(f'q_personal_{question.id}')
+            if user_answer:
+                user_answer = user_answer.strip().lower()
+            else:
+                user_answer = None
+
+            is_correct = False
+            if user_answer is not None:
+                is_correct = (user_answer == question.correct_option)
+
+            if is_correct:
+                correct += 1
+
+            answers.append({
+                'question': question,
+                'user_answer': user_answer,
+                'correct_answer': question.correct_option,
+                'is_correct': is_correct,
+                'is_personal': True
+            })
+
         percent = round((correct / total) * 100, 2) if total else 0
 
-        # Сохраняем результат в TestResult с привязкой к TeacherTest
         result = TestResult.objects.create(
             user=request.user,
             test_type='teacher',
@@ -1777,27 +1863,63 @@ def take_teacher_test(request, test_id):
             percent=percent,
             correct_answers=correct,
             percentage=percent,
-            teacher_test=test,  # ← ДОБАВЬТЕ ЭТУ СТРОКУ
+            teacher_test=test,
             category_results={'teacher_test': {'name': test.title, 'correct': correct, 'total': total}}
         )
-        # Сохраняем детали ответов
+
         for answer in answers:
             TestAnswer.objects.create(
                 result=result,
                 question_id=answer['question'].id,
                 question_text=answer['question'].question_text,
                 user_answer=answer['user_answer'],
-                user_answer_text=_get_answer_text(answer['question'], answer['user_answer']),
+                user_answer_text=_get_answer_text_for_personal(answer['question'], answer['user_answer']) if answer['is_personal'] else _get_answer_text(answer['question'], answer['user_answer']),
                 correct_answer=answer['correct_answer'],
-                correct_answer_text=_get_answer_text(answer['question'], answer['correct_answer']),
+                correct_answer_text=_get_answer_text_for_personal(answer['question'], answer['correct_answer']) if answer['is_personal'] else _get_answer_text(answer['question'], answer['correct_answer']),
                 is_correct=answer['is_correct']
             )
+
         notify_teacher_about_test_completion(test.teacher, request.user, result, request=request)
         messages.success(request, f'Тест завершен! Ваш результат: {correct}/{total} ({percent}%)')
         return redirect('result_detail', pk=result.id)
 
-    questions = test.questions.all()
-    return render(request, 'student/take_teacher_test.html', {'test': test, 'questions': questions})
+    # Собираем все вопросы для отображения
+    all_questions = []
+    for q in test.questions.all():
+        all_questions.append({
+            'id': q.id,
+            'question_text': q.question_text,
+            'option_a': q.option_a,
+            'option_b': q.option_b,
+            'option_c': q.option_c,
+            'option_d': q.option_d,
+            'is_personal': False
+        })
+    for q in test.personal_questions.all():
+        all_questions.append({
+            'id': f'personal_{q.id}',
+            'question_text': q.question_text,
+            'option_a': q.option_a,
+            'option_b': q.option_b,
+            'option_c': q.option_c,
+            'option_d': q.option_d,
+            'is_personal': True
+        })
+
+    return render(request, 'student/take_teacher_test.html', {'test': test, 'questions': all_questions})
+
+
+def _get_answer_text_for_personal(question, option_letter):
+    """Получает текст ответа для личного вопроса"""
+    if not option_letter:
+        return ''
+    mapping = {
+        'a': question.option_a,
+        'b': question.option_b,
+        'c': question.option_c,
+        'd': question.option_d,
+    }
+    return mapping.get(option_letter.lower(), '')
 
 
 @login_required
@@ -2722,3 +2844,71 @@ def student_test_results(request):
     }
 
     return render(request, 'student/test_results.html', context)
+
+
+# views.py - добавьте новые функции
+
+@login_required
+@teacher_required
+def manage_personal_questions(request):
+    """Управление личными вопросами учителя"""
+    questions = TeacherPersonalQuestion.objects.filter(teacher=request.user).order_by('-created_at')
+    return render(request, 'teacher/manage_personal_questions.html', {'questions': questions})
+
+
+@login_required
+@teacher_required
+def add_personal_question(request):
+    """Добавление личного вопроса"""
+    if request.method == 'POST':
+        form = TeacherPersonalQuestionForm(request.POST)
+        if form.is_valid():
+            question = form.save(commit=False)
+            question.teacher = request.user
+            question.save()
+            messages.success(request, 'Личный вопрос успешно добавлен!')
+            return redirect('manage_personal_questions')
+    else:
+        form = TeacherPersonalQuestionForm()
+
+    return render(request, 'teacher/add_personal_question.html', {'form': form})
+
+
+@login_required
+@teacher_required
+def delete_personal_question(request, question_id):
+    """Удаление личного вопроса"""
+    from django.db import transaction
+    from .models import TeacherPersonalQuestion, TeacherTestPersonalQuestion
+
+    question = get_object_or_404(TeacherPersonalQuestion, id=question_id, teacher=request.user)
+
+    try:
+        with transaction.atomic():
+            # Удаляем связи с тестами
+            TeacherTestPersonalQuestion.objects.filter(question=question).delete()
+            # Удаляем вопрос
+            question.delete()
+        messages.success(request, 'Вопрос успешно удалён')
+    except Exception as e:
+        messages.error(request, f'Ошибка при удалении: {str(e)}')
+
+    return redirect('manage_personal_questions')
+
+
+@login_required
+@teacher_required
+def edit_personal_question(request, question_id):
+    """Редактирование личного вопроса"""
+    question = get_object_or_404(TeacherPersonalQuestion, id=question_id, teacher=request.user)
+
+    if request.method == 'POST':
+        form = TeacherPersonalQuestionForm(request.POST, instance=question)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Вопрос успешно обновлён!')
+            return redirect('manage_personal_questions')
+    else:
+        form = TeacherPersonalQuestionForm(instance=question)
+
+    return render(request, 'teacher/edit_personal_question.html', {'form': form, 'question': question})

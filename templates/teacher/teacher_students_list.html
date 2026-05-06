@@ -149,6 +149,7 @@
         opacity: 1;
     }
 
+    /* Кликабельные карточки статистики */
     .stats-cards {
         display: flex;
         gap: 20px;
@@ -157,24 +158,87 @@
     }
     .stat-card-mini {
         background: white;
-        border-radius: 16px;
-        padding: 16px 20px;
+        border-radius: 20px;
+        padding: 20px 24px;
         display: flex;
         align-items: center;
         gap: 16px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         flex: 1;
-        min-width: 160px;
-        transition: transform 0.2s, box-shadow 0.2s;
+        min-width: 180px;
+        transition: all 0.2s;
+        border: 1px solid #e2e8f0;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
     }
     .stat-card-mini:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+        border-color: #cbd5e1;
     }
-    .stat-icon { font-size: 32px; }
-    .stat-info { flex: 1; }
-    .stat-value { font-size: 28px; font-weight: 700; color: #1e293b; line-height: 1.2; }
-    .stat-label { font-size: 13px; color: #64748b; }
+    .stat-card-mini:active {
+        transform: translateY(-2px);
+        transition: transform 0.05s;
+    }
+    .stat-icon {
+        font-size: 42px;
+        transition: transform 0.2s;
+    }
+    .stat-card-mini:hover .stat-icon {
+        transform: scale(1.05);
+    }
+    .stat-info {
+        flex: 1;
+    }
+    .stat-value {
+        font-size: 32px;
+        font-weight: 800;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+    .stat-label {
+        font-size: 13px;
+        color: #64748b;
+    }
+    .stat-arrow {
+        font-size: 20px;
+        color: #94a3b8;
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.2s ease;
+    }
+    .stat-card-mini:hover .stat-arrow {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* Индивидуальные цвета при наведении на карточки */
+    .stat-card-mini:first-child:hover {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+    }
+    .stat-card-mini:first-child:hover .stat-icon {
+        filter: drop-shadow(0 4px 6px rgba(59, 130, 246, 0.3));
+    }
+
+    .stat-card-mini:nth-child(2):hover {
+        border-color: #10b981;
+        background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);
+    }
+    .stat-card-mini:nth-child(2):hover .stat-icon {
+        filter: drop-shadow(0 4px 6px rgba(16, 185, 129, 0.3));
+    }
+
+    .stat-card-mini:nth-child(3):hover {
+        border-color: #8b5cf6;
+        background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
+    }
+    .stat-card-mini:nth-child(3):hover .stat-icon {
+        filter: drop-shadow(0 4px 6px rgba(139, 92, 246, 0.3));
+    }
 
     .students-table-wrapper {
         background: white;
@@ -406,29 +470,32 @@
         </div>
     </div>
 
-    <!-- Краткая статистика (динамически обновляется) -->
+    <!-- Краткая статистика (кликабельные карточки) -->
     <div class="stats-cards" id="statsCards">
-        <div class="stat-card-mini">
+        <a href="{% url 'student_results' %}?type_filter=test" class="stat-card-mini" id="testAssignmentsCard">
             <div class="stat-icon">📊</div>
             <div class="stat-info">
                 <div class="stat-value" id="totalTestAssignments">{{ total_test_assignments }}</div>
                 <div class="stat-label">Всего тестов назначено</div>
             </div>
-        </div>
-        <div class="stat-card-mini">
+            <div class="stat-arrow">→</div>
+        </a>
+        <a href="{% url 'student_results' %}?type_filter=test&grade_filter=5" class="stat-card-mini" id="testCompletionsCard">
             <div class="stat-icon">✅</div>
             <div class="stat-info">
                 <div class="stat-value" id="totalTestCompletions">{{ total_test_completions }}</div>
                 <div class="stat-label">Пройдено тестов (всего)</div>
             </div>
-        </div>
-        <div class="stat-card-mini">
+            <div class="stat-arrow">→</div>
+        </a>
+        <a href="{% url 'student_results' %}?type_filter=lab" class="stat-card-mini" id="labSubmissionsCard">
             <div class="stat-icon">🧪</div>
             <div class="stat-info">
                 <div class="stat-value" id="totalLabSubmissions">{{ total_lab_submissions }}</div>
                 <div class="stat-label">Сдано лабораторных</div>
             </div>
-        </div>
+            <div class="stat-arrow">→</div>
+        </a>
     </div>
 
     <!-- Таблица учеников -->
@@ -513,8 +580,8 @@
                         <a href="{% url 'teacher_student_stats' data.student.id %}" class="btn-detail">
                             Подробнее →
                         </a>
-                    </td>
-                </tr>
+                     </td>
+                 </tr>
                 {% empty %}
                 <tr>
                     <td colspan="8" class="empty-row">
@@ -550,6 +617,37 @@ document.addEventListener('DOMContentLoaded', function() {
     let allRows = Array.from(document.querySelectorAll('#studentsTableBody .student-row'));
     let currentRows = [...allRows];
     let currentSort = { column: null, direction: null };
+
+    // Обновляем href карточек при фильтрации (чтобы ссылки учитывали выбранные фильтры)
+    function updateCardLinks() {
+        const groupValue = groupFilter ? groupFilter.value : '';
+        const courseValue = courseFilter ? courseFilter.value : '';
+        const searchValue = searchNameInput ? searchNameInput.value.trim() : '';
+
+        let groupParam = groupValue ? `&group_filter=${encodeURIComponent(groupValue)}` : '';
+        let courseParam = courseValue ? `&course_filter=${encodeURIComponent(courseValue)}` : '';
+
+        // Карточка "Всего тестов назначено" -> ведёт на страницу результатов с фильтром по тестам
+        const testAssignmentsCard = document.getElementById('testAssignmentsCard');
+        if (testAssignmentsCard) {
+            let url = "{% url 'student_results' %}?type_filter=test" + groupParam + courseParam;
+            testAssignmentsCard.setAttribute('href', url);
+        }
+
+        // Карточка "Пройдено тестов" -> ведёт на страницу результатов с фильтром по тестам и оценке 5 (или можно без фильтра по оценке)
+        const testCompletionsCard = document.getElementById('testCompletionsCard');
+        if (testCompletionsCard) {
+            let url = "{% url 'student_results' %}?type_filter=test" + groupParam + courseParam;
+            testCompletionsCard.setAttribute('href', url);
+        }
+
+        // Карточка "Сдано лабораторных" -> ведёт на страницу результатов с фильтром по лабораторным
+        const labSubmissionsCard = document.getElementById('labSubmissionsCard');
+        if (labSubmissionsCard) {
+            let url = "{% url 'student_results' %}?type_filter=lab" + groupParam + courseParam;
+            labSubmissionsCard.setAttribute('href', url);
+        }
+    }
 
     // Убираем дубликаты групп и курсов для фильтров
     if (groupFilter) {
@@ -595,6 +693,9 @@ document.addEventListener('DOMContentLoaded', function() {
         totalTestAssignmentsSpan.textContent = totalTestsAssigned;
         totalTestCompletionsSpan.textContent = totalTestsCompleted;
         totalLabSubmissionsSpan.textContent = totalLabsSubmitted;
+
+        // Обновляем ссылки карточек
+        updateCardLinks();
     }
 
     // Функция фильтрации

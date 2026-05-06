@@ -2,13 +2,87 @@
 
 {% block title %}Редактирование профиля{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #2f66ff;
+        box-shadow: 0 0 0 3px rgba(47, 102, 255, 0.1);
+    }
+
+    .teacher-search-container {
+        position: relative;
+    }
+
+    .teacher-search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .teacher-search-result-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        transition: background 0.2s;
+    }
+
+    .teacher-search-result-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .teacher-search-highlight {
+        font-weight: bold;
+        color: #2f66ff;
+    }
+
+    .selected-teacher-info {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: #e8f5e9;
+        border-radius: 6px;
+        display: none;
+    }
+
+    .selected-teacher-info.show {
+        display: block;
+    }
+
     .form-actions {
         margin-top: 28px;
         display: flex;
         gap: 12px;
     }
+
     .form-actions button,
     .form-actions a {
         flex: 1;
@@ -27,32 +101,134 @@
         border: none;
         min-height: 48px;
     }
+
     .btn-primary {
         background: #2f66ff;
         color: white;
     }
+
     .btn-danger {
-        background: #dc3545;
+        background: #6c757d;
         color: white;
     }
+
     .btn-danger:hover {
-        background: linear-gradient(135deg, #b02a37 0%, #8b1e2a 100%);
+        background: #5a6268;
         transform: translateY(-2px);
         color: white;
     }
+
     .btn-primary:hover {
         background: #1a4fd4;
         transform: translateY(-2px);
     }
+
+    .student-fields {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .student-fields h3 {
+        margin-bottom: 15px;
+        font-size: 18px;
+        color: #2f66ff;
+    }
+
+    .help-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
 </style>
+{% endblock %}
+
+{% block content %}
 <div class="card">
     <h1>Редактирование профиля</h1>
-    <form method="post">
+
+    <form method="post" autocomplete="off">
         {% csrf_token %}
-        {{ form.as_p }}
+
+        {% if form.errors %}
+        <div style="color: red; margin-bottom: 15px; padding: 10px; background: #ffebee; border-radius: 6px;">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label>Имя</label>
+            {{ form.first_name }}
+        </div>
+
+        <div class="form-group">
+            <label>Фамилия</label>
+            {{ form.last_name }}
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            {{ form.email }}
+        </div>
+
+        {% if is_student %}
+        <div class="student-fields">
+            <h3>🏫 Информация об обучении</h3>
+
+            <div class="form-group">
+                <label>Группа</label>
+                <input type="text" name="group" id="id_group" class="form-control"
+                       value="{{ form.group.value|default:'' }}" placeholder="Например: ИС-21">
+                <div class="help-text">Введите номер вашей группы</div>
+            </div>
+
+            <div class="form-group">
+                <label>Курс</label>
+                <select name="course" id="id_course" class="form-control">
+                    <option value="">-- Выберите курс --</option>
+                    {% for i in "123456"|make_list %}
+                    <option value="{{ forloop.counter }}"
+                            {% if form.course.value == forloop.counter %}selected{% endif %}>
+                        {{ forloop.counter }} курс
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Преподаватель</label>
+                <div class="teacher-search-container">
+                    <input type="text"
+                           id="teacher-search-input"
+                           class="form-control"
+                           placeholder="Начните вводить ФИО преподавателя..."
+                           autocomplete="off"
+                           value="{% if user_profile.teacher %}{{ user_profile.teacher.profile.full_name|default:user_profile.teacher.username }}{% endif %}">
+                    <input type="hidden" name="teacher" id="teacher-id-hidden"
+                           value="{% if user_profile.teacher %}{{ user_profile.teacher.id }}{% endif %}">
+                    <div id="teacher-search-results" class="teacher-search-results"></div>
+                </div>
+                <div id="selected-teacher-info" class="selected-teacher-info {% if user_profile.teacher %}show{% endif %}">
+                    <span>✅ Выбран преподаватель: </span>
+                    <strong id="selected-teacher-name">
+                        {% if user_profile.teacher %}
+                            {{ user_profile.teacher.profile.full_name|default:user_profile.teacher.username }}
+                        {% endif %}
+                    </strong>
+                    <button type="button" id="clear-teacher-btn"
+                            style="margin-left: 10px; background: none; border: none; color: red; cursor: pointer;">✖</button>
+                </div>
+                <div class="help-text">Начните вводить ФИО преподавателя для поиска</div>
+            </div>
+        </div>
+        {% endif %}
 
         <div class="form-actions">
-            <button type="submit" class="btn-primary">Сохранить</button>
+            <button type="submit" class="btn-primary">Сохранить изменения</button>
             <a href="
                 {% if user.profile.role == 'teacher' %}
                     {% url 'teacher_dashboard' %}
@@ -63,4 +239,178 @@
         </div>
     </form>
 </div>
+
+{% if is_student %}
+<script>
+    // DOM элементы
+    const teacherSearchInput = document.getElementById('teacher-search-input');
+    const teacherIdHidden = document.getElementById('teacher-id-hidden');
+    const searchResultsDiv = document.getElementById('teacher-search-results');
+    const selectedTeacherInfo = document.getElementById('selected-teacher-info');
+    const selectedTeacherName = document.getElementById('selected-teacher-name');
+    const clearTeacherBtn = document.getElementById('clear-teacher-btn');
+
+    let searchTimeout = null;
+    let currentSearchQuery = '';
+
+    // Функция поиска преподавателей
+    async function searchTeachers(query) {
+        if (!query || query.length < 2) {
+            searchResultsDiv.style.display = 'none';
+            return;
+        }
+
+        searchResultsDiv.innerHTML = '<div class="teacher-search-loading" style="padding: 10px; text-align: center;">🔍 Поиск...</div>';
+        searchResultsDiv.style.display = 'block';
+
+        try {
+            const response = await fetch(`/api/search-teachers/?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+
+            if (data.success && data.teachers.length > 0) {
+                renderSearchResults(data.teachers, query);
+            } else {
+                searchResultsDiv.innerHTML = '<div class="teacher-search-loading" style="padding: 10px; text-align: center;">❌ Преподаватели не найдены</div>';
+            }
+        } catch (error) {
+            console.error('Ошибка поиска:', error);
+            searchResultsDiv.innerHTML = '<div class="teacher-search-loading" style="padding: 10px; text-align: center;">⚠️ Ошибка при поиске</div>';
+        }
+    }
+
+    // Функция отображения результатов
+    function renderSearchResults(teachers, query) {
+        const html = teachers.map(teacher => {
+            const fullName = teacher.full_name;
+            const highlightedName = highlightMatch(fullName, query);
+
+            return `
+                <div class="teacher-search-result-item" data-teacher-id="${teacher.id}" data-teacher-name="${fullName}">
+                    <div class="teacher-name">${highlightedName}</div>
+                    <div style="font-size: 12px; color: #666;">${teacher.email || ''}</div>
+                </div>
+            `;
+        }).join('');
+
+        searchResultsDiv.innerHTML = html;
+
+        document.querySelectorAll('.teacher-search-result-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const teacherId = item.dataset.teacherId;
+                const teacherName = item.dataset.teacherName;
+                selectTeacher(teacherId, teacherName);
+            });
+        });
+    }
+
+    // Функция подсветки совпадений
+    function highlightMatch(text, query) {
+        if (!query) return text;
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<span class="teacher-search-highlight">$1</span>');
+    }
+
+    // Функция выбора преподавателя
+    function selectTeacher(teacherId, teacherName) {
+        teacherIdHidden.value = teacherId;
+        teacherSearchInput.value = teacherName;
+        selectedTeacherName.textContent = teacherName;
+        selectedTeacherInfo.classList.add('show');
+        searchResultsDiv.style.display = 'none';
+        teacherSearchInput.style.borderColor = '';
+    }
+
+    // Очистка выбранного преподавателя
+    function clearSelectedTeacher() {
+        teacherIdHidden.value = '';
+        teacherSearchInput.value = '';
+        selectedTeacherInfo.classList.remove('show');
+        teacherSearchInput.style.borderColor = '';
+        teacherSearchInput.focus();
+    }
+
+    // Обработка ввода
+    teacherSearchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        currentSearchQuery = query;
+
+        if (query === '') {
+            clearSelectedTeacher();
+        }
+
+        if (teacherIdHidden.value && query !== teacherSearchInput.value) {
+            clearSelectedTeacher();
+        }
+
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchTeachers(query);
+        }, 300);
+    });
+
+    // Скрываем результаты при клике вне
+    document.addEventListener('click', (e) => {
+        if (!teacherSearchInput.contains(e.target) && !searchResultsDiv.contains(e.target)) {
+            searchResultsDiv.style.display = 'none';
+        }
+    });
+
+    teacherSearchInput.addEventListener('focus', () => {
+        if (currentSearchQuery && currentSearchQuery.length >= 2 && teacherIdHidden.value === '') {
+            searchTeachers(currentSearchQuery);
+        }
+    });
+
+    // Обработка клавиш
+    teacherSearchInput.addEventListener('keydown', (e) => {
+        const items = document.querySelectorAll('.teacher-search-result-item');
+        let currentIndex = -1;
+
+        items.forEach((item, idx) => {
+            if (item.classList.contains('selected')) {
+                currentIndex = idx;
+                item.classList.remove('selected');
+            }
+        });
+
+        if (e.key === 'ArrowDown' && items.length > 0) {
+            e.preventDefault();
+            const newIndex = currentIndex + 1 < items.length ? currentIndex + 1 : 0;
+            items[newIndex].classList.add('selected');
+            items[newIndex].scrollIntoView({ block: 'nearest' });
+        }
+        else if (e.key === 'ArrowUp' && items.length > 0) {
+            e.preventDefault();
+            const newIndex = currentIndex - 1 >= 0 ? currentIndex - 1 : items.length - 1;
+            items[newIndex].classList.add('selected');
+            items[newIndex].scrollIntoView({ block: 'nearest' });
+        }
+        else if (e.key === 'Enter' && items.length > 0) {
+            e.preventDefault();
+            const selectedItem = document.querySelector('.teacher-search-result-item.selected');
+            if (selectedItem) {
+                const teacherId = selectedItem.dataset.teacherId;
+                const teacherName = selectedItem.dataset.teacherName;
+                selectTeacher(teacherId, teacherName);
+            }
+        }
+        else if (e.key === 'Escape') {
+            searchResultsDiv.style.display = 'none';
+        }
+    });
+
+    clearTeacherBtn.addEventListener('click', clearSelectedTeacher);
+
+    // Валидация перед отправкой
+    const form = document.querySelector('form');
+    form.addEventListener('submit', (e) => {
+        // Проверка выбора преподавателя для студента
+        if (teacherSearchInput.value && !teacherIdHidden.value) {
+            e.preventDefault();
+            teacherSearchInput.style.borderColor = 'red';
+            alert('Пожалуйста, выберите преподавателя из списка');
+        }
+    });
+</script>
+{% endif %}
 {% endblock %}

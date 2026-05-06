@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, TestResult, LabWork, TestQuestion, TeacherTest, LabSubmission
+from .models import UserProfile, TestResult, LabWork, TestQuestion, TeacherTest, LabSubmission, TeacherPersonalQuestion
 
 
 class RegistrationForm(UserCreationForm):
@@ -33,6 +33,8 @@ class RegistrationForm(UserCreationForm):
         super().__init__(*args, **kwargs)
         self.fields['teacher'].queryset = User.objects.filter(profile__role='teacher')
         self.fields['teacher'].required = False
+        # Добавьте эти атрибуты для скрытого поля
+        self.fields['teacher'].widget = forms.HiddenInput()
 
     def clean_teacher(self):
         teacher = self.cleaned_data.get('teacher')
@@ -97,6 +99,47 @@ class UserUpdateForm(forms.ModelForm):
         }
 
 
+# Добавьте после существующих форм
+
+class ProfileEditForm(forms.ModelForm):
+    """Форма для редактирования профиля ученика (группа, курс, преподаватель)"""
+
+    group = forms.CharField(max_length=20, label="Группа", required=False)
+    course = forms.IntegerField(min_value=1, max_value=6, label="Курс", required=False)
+    teacher = forms.ModelChoiceField(
+        queryset=User.objects.filter(profile__role='teacher'),
+        required=False,
+        label="Преподаватель",
+        empty_label="-- Выберите преподавателя --",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+    def __init__(self, *args, **kwargs):
+        self.user_profile = kwargs.pop('profile', None)
+        super().__init__(*args, **kwargs)
+
+        # Если есть профиль, заполняем поля
+        if self.user_profile:
+            self.fields['group'].initial = self.user_profile.group
+            self.fields['course'].initial = self.user_profile.course
+            self.fields['teacher'].initial = self.user_profile.teacher if self.user_profile.teacher else None
+
+        # Настройка queryset для преподавателей
+        self.fields['teacher'].queryset = User.objects.filter(profile__role='teacher')
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        if commit and self.user_profile:
+            # Обновляем профиль
+            self.user_profile.group = self.cleaned_data.get('group')
+            self.user_profile.course = self.cleaned_data.get('course')
+            self.user_profile.teacher = self.cleaned_data.get('teacher')
+            self.user_profile.save()
+        return user
 class PasswordChangeForm(forms.Form):
     """Форма смены пароля"""
     old_password = forms.CharField(
@@ -258,3 +301,55 @@ class GradeLabForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+# forms.py - добавьте новую форму
+
+class TeacherPersonalQuestionForm(forms.ModelForm):
+    """Форма для создания личного вопроса учителя"""
+
+    class Meta:
+        model = TeacherPersonalQuestion
+        fields = ['question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option', 'category']
+        widgets = {
+            'question_text': forms.Textarea(
+                attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Введите текст вопроса'}),
+            'option_a': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Вариант А'}),
+            'option_b': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Вариант Б'}),
+            'option_c': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Вариант В'}),
+            'option_d': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Вариант Г'}),
+            'correct_option': forms.Select(attrs={'class': 'form-control'},
+                                           choices=[('a', 'А'), ('b', 'Б'), ('c', 'В'), ('d', 'Г')]),
+            'category': forms.TextInput(
+                attrs={'class': 'form-control', 'placeholder': 'Например: Алгебра, Геометрия, Программирование...'}),
+        }
+
+
+class TeacherTestWithPersonalForm(forms.ModelForm):
+    """Обновленная форма создания теста с личными вопросами"""
+    existing_questions = forms.ModelMultipleChoiceField(
+        queryset=TestQuestion.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Выбрать вопросы из общей базы"
+    )
+    personal_questions = forms.ModelMultipleChoiceField(
+        queryset=TeacherPersonalQuestion.objects.none(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Мои личные вопросы"
+    )
+
+    class Meta:
+        model = TeacherTest
+        fields = ['title', 'description']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название теста'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Описание теста'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['personal_questions'].queryset = TeacherPersonalQuestion.objects.filter(teacher=user)

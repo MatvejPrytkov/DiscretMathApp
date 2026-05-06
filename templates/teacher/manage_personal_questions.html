@@ -1,0 +1,83 @@
+{% extends 'teacher/base_teacher.html' %}
+{% block teacher_content %}
+
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>📝 Мои личные вопросы</h2>
+    <a href="{% url 'add_personal_question' %}" class="btn btn-success">➕ Добавить вопрос</a>
+</div>
+
+<p class="text-muted" style="margin-bottom: 20px;">
+    Эти вопросы используются только в ваших тестах и НЕ попадают во входное и итоговое тестирование.
+</p>
+
+{% if questions %}
+<div class="questions-list">
+    {% for question in questions %}
+    <div class="question-card" style="background: white; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid #e2e8f0;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+            <div style="flex: 1;">
+                <div style="font-weight: 700; font-size: 16px; margin-bottom: 12px; color: #1e293b;">
+                    {{ question.question_text }}
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 13px; color: #475569;">
+                    <div><strong>А:</strong> {{ question.option_a|truncatechars:50 }}</div>
+                    <div><strong>Б:</strong> {{ question.option_b|truncatechars:50 }}</div>
+                    <div><strong>В:</strong> {{ question.option_c|truncatechars:50 }}</div>
+                    <div><strong>Г:</strong> {{ question.option_d|truncatechars:50 }}</div>
+                </div>
+                <div style="margin-top: 12px;">
+                    <span class="badge" style="background: #e0e7ff; color: #4f46e5; padding: 4px 12px; border-radius: 20px; font-size: 12px;">
+                        ✅ Правильный: {{ question.get_correct_option_display }}
+                    </span>
+                    {% if question.category %}
+                    <span class="badge" style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 12px;">
+                        📁 {{ question.category }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <a href="{% url 'edit_personal_question' question.id %}" class="btn btn-sm btn-primary">✏️</a>
+                <button onclick="deleteQuestion({{ question.id }}, '{{ question.question_text|escapejs }}')" class="btn btn-sm btn-danger">🗑️</button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" style="text-align: center; padding: 60px; background: #f8fafc; border-radius: 20px;">
+    <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+    <h3>У вас пока нет личных вопросов</h3>
+    <p style="color: #64748b;">Создайте свой первый вопрос, который будете использовать в своих тестах.</p>
+    <a href="{% url 'add_personal_question' %}" class="btn btn-primary" style="margin-top: 16px;">➕ Создать вопрос</a>
+</div>
+{% endif %}
+
+<script>
+function deleteQuestion(questionId, questionText) {
+    if (confirm(`Вы уверены, что хотите удалить вопрос "${questionText}"?`)) {
+        fetch(`/teacher/personal-questions/delete/${questionId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Ошибка при удалении');
+            }
+        });
+    }
+}
+</script>
+
+<style>
+.btn-sm { padding: 6px 12px; font-size: 14px; border-radius: 8px; text-decoration: none; }
+.btn-primary { background: #6366f1; color: white; }
+.btn-danger { background: #ef4444; color: white; border: none; cursor: pointer; }
+.question-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: all 0.2s; }
+</style>
+
+{% endblock %}

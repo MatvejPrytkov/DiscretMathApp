@@ -3,14 +3,71 @@
 {% block title %}Регистрация{% endblock %}
 
 {% block extra_css %}
+<style>
+    .teacher-search-container {
+        position: relative;
+    }
 
+    .teacher-search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .teacher-search-result-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        transition: background 0.2s;
+    }
+
+    .teacher-search-result-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .teacher-search-result-item.selected {
+        background-color: #e3f2fd;
+    }
+
+    .teacher-search-highlight {
+        font-weight: bold;
+        color: #2f66ff;
+    }
+
+    .selected-teacher-info {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: #e8f5e9;
+        border-radius: 6px;
+        display: none;
+    }
+
+    .selected-teacher-info.show {
+        display: block;
+    }
+
+    .teacher-search-loading {
+        padding: 10px 15px;
+        text-align: center;
+        color: #666;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <main class="card">
     <h1>Регистрация</h1>
 
-    <form method="post" autocomplete="on">
+    <form method="post" autocomplete="off">
         {% csrf_token %}
 
         {% if form.errors %}
@@ -51,7 +108,20 @@
             {{ form.course }}
 
             <label>Преподаватель</label>
-            {{ form.teacher }}
+            <div class="teacher-search-container">
+                <input type="text"
+                       id="teacher-search-input"
+                       class="form-control"
+                       placeholder="Начните вводить ФИО преподавателя..."
+                       autocomplete="off">
+                <input type="hidden" name="teacher" id="teacher-id-hidden">
+                <div id="teacher-search-results" class="teacher-search-results"></div>
+            </div>
+            <div id="selected-teacher-info" class="selected-teacher-info">
+                <span>✅ Выбран преподаватель: </span>
+                <strong id="selected-teacher-name"></strong>
+                <button type="button" id="clear-teacher-btn" style="margin-left: 10px; background: none; border: none; color: red; cursor: pointer;">✖</button>
+            </div>
         </div>
 
         <label>Имя пользователя</label>
@@ -80,34 +150,217 @@
 </main>
 
 <script>
+    // DOM элементы
+    const teacherSearchInput = document.getElementById('teacher-search-input');
+    const teacherIdHidden = document.getElementById('teacher-id-hidden');
+    const searchResultsDiv = document.getElementById('teacher-search-results');
+    const selectedTeacherInfo = document.getElementById('selected-teacher-info');
+    const selectedTeacherName = document.getElementById('selected-teacher-name');
+    const clearTeacherBtn = document.getElementById('clear-teacher-btn');
     const form = document.querySelector('form');
     const p1 = document.getElementById('id_password1');
     const p2 = document.getElementById('id_password2');
     const roleRadios = document.querySelectorAll('input[name="role"]');
     const studentFields = document.getElementById('student-fields');
 
-    // Одна функция обработки полей
-    function toggleStudentFields() {
-    const selectedRole = document.querySelector('input[name="role"]:checked').value;
-    studentFields.style.display = selectedRole === 'student' ? 'block' : 'none';
+    // Переменные для debounce
+    let searchTimeout = null;
+    let currentSearchQuery = '';
 
-    const groupField = document.getElementById('id_group');
-    const courseField = document.getElementById('id_course');
-    const teacherField = document.getElementById('id_teacher');
+    // Функция поиска преподавателей
+    async function searchTeachers(query) {
+        if (!query || query.length < 2) {
+            searchResultsDiv.style.display = 'none';
+            return;
+        }
 
-    if (selectedRole === 'student') {
-        if(groupField) { groupField.required = true; groupField.disabled = false; }
-        if(courseField) { courseField.required = true; courseField.disabled = false; }
-        if(teacherField) { teacherField.required = true; teacherField.disabled = false; }
-    } else {
-        if(groupField) { groupField.required = false; groupField.disabled = true; }
-        if(courseField) { courseField.required = false; courseField.disabled = true; }
-        if(teacherField) { teacherField.required = false; teacherField.disabled = true; }
+        // Показываем индикатор загрузки
+        searchResultsDiv.innerHTML = '<div class="teacher-search-loading">🔍 Поиск...</div>';
+        searchResultsDiv.style.display = 'block';
+
+        try {
+            const response = await fetch(`/api/search-teachers/?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+
+            if (data.success && data.teachers.length > 0) {
+                renderSearchResults(data.teachers, query);
+            } else {
+                searchResultsDiv.innerHTML = '<div class="teacher-search-loading">❌ Преподаватели не найдены</div>';
+            }
+        } catch (error) {
+            console.error('Ошибка поиска:', error);
+            searchResultsDiv.innerHTML = '<div class="teacher-search-loading">⚠️ Ошибка при поиске</div>';
+        }
     }
-}
 
-    // Обработка совпадения паролей
+    // Функция отображения результатов
+    function renderSearchResults(teachers, query) {
+        const html = teachers.map(teacher => {
+            // Подсветка совпадений
+            const fullName = teacher.full_name;
+            const highlightedName = highlightMatch(fullName, query);
+
+            return `
+                <div class="teacher-search-result-item" data-teacher-id="${teacher.id}" data-teacher-name="${fullName}">
+                    <div class="teacher-name">${highlightedName}</div>
+                    <div style="font-size: 12px; color: #666;">${teacher.email || ''}</div>
+                </div>
+            `;
+        }).join('');
+
+        searchResultsDiv.innerHTML = html;
+
+        // Добавляем обработчики кликов
+        document.querySelectorAll('.teacher-search-result-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const teacherId = item.dataset.teacherId;
+                const teacherName = item.dataset.teacherName;
+                selectTeacher(teacherId, teacherName);
+            });
+        });
+    }
+
+    // Функция подсветки совпадений
+    function highlightMatch(text, query) {
+        if (!query) return text;
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<span class="teacher-search-highlight">$1</span>');
+    }
+
+    // Функция выбора преподавателя
+    function selectTeacher(teacherId, teacherName) {
+        teacherIdHidden.value = teacherId;
+        teacherSearchInput.value = teacherName;
+        selectedTeacherName.textContent = teacherName;
+        selectedTeacherInfo.classList.add('show');
+        searchResultsDiv.style.display = 'none';
+
+        // Валидация - убираем ошибку если была
+        teacherSearchInput.style.borderColor = '';
+    }
+
+    // Очистка выбранного преподавателя
+    function clearSelectedTeacher() {
+        teacherIdHidden.value = '';
+        teacherSearchInput.value = '';
+        selectedTeacherInfo.classList.remove('show');
+        teacherSearchInput.style.borderColor = '';
+        teacherSearchInput.focus();
+    }
+
+    // Обработка ввода в поле поиска
+    teacherSearchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        currentSearchQuery = query;
+
+        // Если поле пустое - очищаем выбор
+        if (query === '') {
+            clearSelectedTeacher();
+        }
+
+        // Если выбранный преподаватель есть, но пользователь начал вводить новое имя
+        if (teacherIdHidden.value && query !== teacherSearchInput.value) {
+            clearSelectedTeacher();
+        }
+
+        // Debounce поиска
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchTeachers(query);
+        }, 300);
+    });
+
+    // Скрываем результаты при клике вне
+    document.addEventListener('click', (e) => {
+        if (!teacherSearchInput.contains(e.target) && !searchResultsDiv.contains(e.target)) {
+            searchResultsDiv.style.display = 'none';
+        }
+    });
+
+    // При фокусе на поле, показываем результаты если есть поисковый запрос
+    teacherSearchInput.addEventListener('focus', () => {
+        if (currentSearchQuery && currentSearchQuery.length >= 2 && teacherIdHidden.value === '') {
+            searchTeachers(currentSearchQuery);
+        }
+    });
+
+    // Обработка клавиш
+    teacherSearchInput.addEventListener('keydown', (e) => {
+        const items = document.querySelectorAll('.teacher-search-result-item');
+        let currentIndex = -1;
+
+        // Находим текущий выбранный элемент
+        items.forEach((item, idx) => {
+            if (item.classList.contains('selected')) {
+                currentIndex = idx;
+                item.classList.remove('selected');
+            }
+        });
+
+        if (e.key === 'ArrowDown' && items.length > 0) {
+            e.preventDefault();
+            const newIndex = currentIndex + 1 < items.length ? currentIndex + 1 : 0;
+            items[newIndex].classList.add('selected');
+            items[newIndex].scrollIntoView({ block: 'nearest' });
+        }
+        else if (e.key === 'ArrowUp' && items.length > 0) {
+            e.preventDefault();
+            const newIndex = currentIndex - 1 >= 0 ? currentIndex - 1 : items.length - 1;
+            items[newIndex].classList.add('selected');
+            items[newIndex].scrollIntoView({ block: 'nearest' });
+        }
+        else if (e.key === 'Enter' && items.length > 0) {
+            e.preventDefault();
+            const selectedItem = document.querySelector('.teacher-search-result-item.selected');
+            if (selectedItem) {
+                const teacherId = selectedItem.dataset.teacherId;
+                const teacherName = selectedItem.dataset.teacherName;
+                selectTeacher(teacherId, teacherName);
+            }
+        }
+        else if (e.key === 'Escape') {
+            searchResultsDiv.style.display = 'none';
+        }
+    });
+
+    clearTeacherBtn.addEventListener('click', clearSelectedTeacher);
+
+    // Функция переключения полей студента
+    function toggleStudentFields() {
+        const selectedRole = document.querySelector('input[name="role"]:checked').value;
+        studentFields.style.display = selectedRole === 'student' ? 'block' : 'none';
+
+        const groupField = document.getElementById('id_group');
+        const courseField = document.getElementById('id_course');
+        const teacherField = document.getElementById('teacher-id-hidden');
+
+        if (selectedRole === 'student') {
+            if(groupField) { groupField.required = true; groupField.disabled = false; }
+            if(courseField) { courseField.required = true; courseField.disabled = false; }
+            if(teacherField) { teacherField.required = true; }
+        } else {
+            if(groupField) { groupField.required = false; groupField.disabled = true; }
+            if(courseField) { courseField.required = false; courseField.disabled = true; }
+            if(teacherField) { teacherField.required = false; }
+        }
+    }
+
+    // Валидация перед отправкой формы
     form.addEventListener('submit', (e) => {
+        // Проверка выбора преподавателя для студента
+        const selectedRole = document.querySelector('input[name="role"]:checked').value;
+        if (selectedRole === 'student') {
+            const teacherId = teacherIdHidden.value;
+            if (!teacherId) {
+                e.preventDefault();
+                teacherSearchInput.style.borderColor = 'red';
+                teacherSearchInput.focus();
+                alert('Пожалуйста, выберите преподавателя из списка');
+                return;
+            }
+        }
+
+        // Проверка паролей
         if (p1 && p2 && p1.value !== p2.value) {
             e.preventDefault();
             p2.setCustomValidity('Пароли не совпадают');
@@ -115,14 +368,37 @@
         }
     });
 
+    // Сброс кастомной валидации при вводе
     if (p2) {
         p2.addEventListener('input', () => p2.setCustomValidity(''));
     }
 
+    teacherSearchInput.addEventListener('input', () => {
+        teacherSearchInput.style.borderColor = '';
+    });
+
+    // Инициализация
     roleRadios.forEach(radio => {
         radio.addEventListener('change', toggleStudentFields);
     });
 
-    document.addEventListener('DOMContentLoaded', toggleStudentFields);
+    document.addEventListener('DOMContentLoaded', () => {
+        toggleStudentFields();
+
+        // Если есть предустановленное значение (при ошибке валидации)
+        const existingTeacherId = document.querySelector('input[name="teacher"]').value;
+        if (existingTeacherId) {
+            // Можно сделать запрос для получения имени преподавателя
+            fetch(`/api/search-teachers/?q=&id=${existingTeacherId}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.teachers.length > 0) {
+                        const teacher = data.teachers[0];
+                        selectTeacher(teacher.id, teacher.full_name);
+                    }
+                })
+                .catch(console.error);
+        }
+    });
 </script>
 {% endblock %}

@@ -81,7 +81,10 @@
            class="teacher-nav-link {% if 'teacher_manage_tests' in request.resolver_match.url_name or 'teacher_test_detail' in request.resolver_match.url_name or 'create_teacher_test' in request.resolver_match.url_name or 'edit_test_assignment' in request.resolver_match.url_name %}active{% endif %}">
             Мои тесты
         </a>
-
+        <a href="{% url 'manage_personal_questions' %}"
+       class="teacher-nav-link {% if 'manage_personal_questions' in request.resolver_match.url_name or 'add_personal_question' in request.resolver_match.url_name %}active{% endif %}">
+        📝 Мои вопросы
+    </a>
         <a href="{% url 'teacher_labs' %}"
            class="teacher-nav-link {% if 'teacher_labs' in request.resolver_match.url_name or 'lab_detail' in request.resolver_match.url_name or 'create_lab' in request.resolver_match.url_name or 'submission_detail' in request.resolver_match.url_name %}active{% endif %}">
             Лабораторные

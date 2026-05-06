@@ -1,121 +1,179 @@
+<!-- result_detail.html (учительский шаблон) - нужно создать/обновить -->
 {% extends 'teacher/base_teacher.html' %}
+{% load tz %}
+{% load test_extras %}
+
+{% block title %}{{ result.get_test_type_display }} - Результат ученика{% endblock %}
 
 {% block teacher_content %}
-    <div class="result-header">
-        <h1>{{ result.get_test_type_display }}</h1>
+<div class="result-header">
+    <h1>{{ result.get_test_type_display }}</h1>
+    <div class="result-meta">
         <div class="result-meta-item">
-            <i>👨‍🎓</i>
-            <strong>Студент:</strong> {{ result.user.profile.full_name|default:result.user.username }}
+            <span>👨‍🎓</span>
+            <strong>Ученик:</strong> {{ result.user.profile.full_name|default:result.user.username }}
         </div>
-        <div class="result-meta">
-            <div class="result-meta-item">
-                <i>📅</i>
-                <strong>Дата:</strong> {{ result.date_completed|date:"d.m.Y H:i" }}
-            </div>
-            <div class="result-meta-item">
-                <i>📊</i>
-                <strong>Результат:</strong>
-                <span class="percent-{% if result.percent >= 90 %}excellent{% elif result.percent >= 70 %}good{% elif result.percent >= 50 %}average{% else %}poor{% endif %}">
-                    {{ result.score }} из {{ result.total_questions }} ({{ result.percent }}%)
-                </span>
-            </div>
+        <div class="result-meta-item">
+            <span>📅</span>
+            <strong>Дата:</strong> {{ result.date_completed|date:"d.m.Y H:i" }}
+        </div>
+        <div class="result-meta-item">
+            <span>📊</span>
+            <strong>Результат:</strong>
+            <span class="percent-{% if result.percent >= 90 %}excellent{% elif result.percent >= 70 %}good{% elif result.percent >= 50 %}average{% else %}poor{% endif %}">
+                {{ result.score }} из {{ result.total_questions }} ({{ result.percent|floatformat:1 }}%)
+            </span>
         </div>
     </div>
+</div>
 
-    {% if results_by_category %}
-    <div style="margin-top: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
-        <h3>Результаты по темам:</h3>
-        <ul style="list-style: none; padding-left: 0;">
-            {% for key, val in results_by_category.items %}
-                <li style="margin-bottom: 10px; font-size: 1.1em;">
-                    <strong>{{ val.name }}:</strong>
-                    <span style="color: {% if val.correct > 0 %}green{% else %}black{% endif %}">
+<!-- Результаты по категориям/темам -->
+{% if results_by_category %}
+<div style="margin-top: 20px; margin-bottom: 25px; border: 1px solid #ddd; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
+    <h3>📈 Результаты по темам:</h3>
+    <ul style="list-style: none; padding-left: 0;">
+        {% for key, val in results_by_category.items %}
+            <li style="margin-bottom: 10px; font-size: 1.1em;">
+                <strong>{{ val.name }}:</strong>
+                {% if val.total > 0 %}
+                    <span style="color: {% if val.correct == val.total %}#28a745{% elif val.correct > 0 %}#ffc107{% else %}#dc3545{% endif %}; font-weight: bold;">
                         {{ val.correct }}
                     </span>
                     из {{ val.total }}
-                </li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
+                    ({% widthratio val.correct val.total 100 %}%)
+                {% else %}
+                    <span style="color: #6c757d;">Нет вопросов</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
 
-    <h2>Детальные ответы</h2>
+<h2>📋 Детальные ответы студента</h2>
 <div class="answers-grid">
     {% for a in answers %}
         <div class="card">
-            <p><strong>Вопрос №</strong> {{ forloop.counter }}</p>
+            <p><strong>Вопрос №{{ forloop.counter }}</strong></p>
             {% if a.question_text %}
                 <p><strong>Вопрос:</strong> {{ a.question_text }}</p>
             {% endif %}
 
-            <p><strong>Ваш ответ:</strong> {{ a.user_answer_text|default_if_none:"" }}</p>
-            <p><strong>Правильный ответ:</strong> {{ a.correct_answer_text|default_if_none:"" }}</p>
+            <!-- ИСПРАВЛЕНО: для учителя показывает "Ответ студента" -->
+            {% if a.user_answer %}
+                <p>
+                    <strong>Ответ студента:</strong>
+                    <span class="answer-cyrillic">{{ a.user_answer|to_cyrillic_letter }}</span>
+                    {% if a.user_answer_text %}
+                        - {{ a.user_answer_text }}
+                    {% endif %}
+                </p>
+                <p>
+                    <strong>Правильный ответ:</strong>
+                    <span class="answer-cyrillic">{{ a.correct_answer|to_cyrillic_letter }}</span>
+                    {% if a.correct_answer_text %}
+                        - {{ a.correct_answer_text }}
+                    {% endif %}
+                </p>
+                {% if not a.is_correct %}
+                    <p class="text-muted small">Правильный ответ показан для проверки.</p>
+                {% endif %}
+            {% else %}
+                <p><strong>Ответ студента:</strong> <span class="text-warning">❌ Ученик не ответил на этот вопрос </span></p>
+                <p class="text-muted small">Студент не выбрал ответ на этот вопрос.</p>
+            {% endif %}
 
             {% if a.is_correct %}
-                <p class="ok"><strong>Верно</strong></p>
+                <p class="ok"><strong>✅ Верно</strong></p>
             {% else %}
-                <p class="no"><strong>Неверно</strong></p>
+                <p class="no"><strong> Неверно</strong></p>
             {% endif %}
         </div>
     {% empty %}
         <p>Нет сохранённых ответов для этой попытки.</p>
     {% endfor %}
 </div>
-    <!-- ФОРМА ВЫСТАВЛЕНИЯ ОЦЕНКИ (только для учителя) -->
-    {% if is_teacher %}
-    <div class="grade-form">
-        <h2>Выставление оценки</h2>
 
-        <!-- Показ текущей оценки, если уже выставлена -->
-        {% if result.grade %}
-        <div style="margin-bottom: 15px; padding: 10px; background-color: #e9ecef; border-radius: 5px;">
-            <strong>Текущая оценка:</strong>
-            <span style="color:
-                {% if result.grade == 5 %}#28a745
-                {% elif result.grade == 4 %}#17a2b8
-                {% elif result.grade == 3 %}#ffc107
-                {% else %}#dc3545
-                {% endif %}; font-weight: bold;">
-                {{ result.get_grade_display }}
-            </span>
-            {% if result.teacher_comment %}
-                <br><strong>Комментарий:</strong> {{ result.teacher_comment }}
-            {% endif %}
-            <br><small>Оценку выставил: {{ result.graded_by.profile.full_name|default:result.graded_by.username }}
-            ({{ result.graded_at|date:"d.m.Y H:i" }})</small>
-        </div>
-        {% endif %}
+<hr style="margin: 30px 0;">
 
-        <form method="post">
-            {% csrf_token %}
+<div style="display: flex; gap: 15px; flex-wrap: wrap;">
+    <a href="{% url 'student_results' %}" class="btn" style="background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+        📊 Назад к результатам учеников
+    </a>
+</div>
 
-            <div style="margin-bottom: 15px;">
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">{{ form.grade.label }}</label>
-                {{ form.grade }}
-                {% if form.grade.errors %}
-                    <div style="color: red; font-size: 0.9em;">{{ form.grade.errors }}</div>
-                {% endif %}
-            </div>
+<style>
+    .result-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 16px;
+        padding: 25px 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+    }
+    .result-header h1 {
+        margin: 0 0 15px 0;
+        font-size: 28px;
+    }
+    .result-meta {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .result-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: white;
+        padding: 10px 18px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .percent-excellent { color: #059669; font-weight: bold; }
+    .percent-good { color: #3b82f6; font-weight: bold; }
+    .percent-average { color: #f59e0b; font-weight: bold; }
+    .percent-poor { color: #ef4444; font-weight: bold; }
 
-            <div style="margin-bottom: 15px;">
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">{{ form.teacher_comment.label }}</label>
-                {{ form.teacher_comment }}
-                {% if form.teacher_comment.errors %}
-                    <div style="color: red; font-size: 0.9em;">{{ form.teacher_comment.errors }}</div>
-                {% endif %}
-            </div>
+    .answer-cyrillic {
+        display: inline-block;
+        font-weight: bold;
+        min-width: 30px;
+        padding: 2px 8px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        text-align: center;
+    }
 
-            <button type="submit" class="btn" style="background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer;">
-                Сохранить оценку
-            </button>
-        </form>
-    </div>
-    {% endif %}
+    .answers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+        margin: 30px 0;
+    }
+    .answers-grid .card {
+        background: white;
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        border-radius: 16px;
+        padding: 20px;
+        transition: all 0.3s;
+    }
+    .answers-grid .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .answers-grid .ok strong { color: #059669; }
+    .answers-grid .no strong { color: #dc2626; }
 
-    <hr>
-    <div style="margin-top: 20px;">
-        <a href="{% url back_url %}" class="btn" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-            {{ back_text }}
-        </a>
-    </div>
+    @media (max-width: 768px) {
+        .answers-grid {
+            grid-template-columns: 1fr;
+        }
+        .result-meta {
+            flex-direction: column;
+        }
+        .result-header {
+            padding: 20px;
+        }
+    }
+</style>
 {% endblock %}

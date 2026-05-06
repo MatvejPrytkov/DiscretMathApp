@@ -3,6 +3,11 @@
 
 {% block teacher_content %}
 <div class="create-test-page container-fluid py-4">
+    <div class="form-section">
+    <h4>📝 Мои личные вопросы</h4>
+    <p class="text-muted">Эти вопросы используются только в ваших тестах</p>
+    {{ test_form.personal_questions }}
+</div>
     <div class="page-title-wrap mb-4">
         <h2 class="page-title mb-1">Создание нового теста</h2>
         <p class="page-subtitle mb-0">Заполните основную информацию, выберите готовые вопросы или добавьте свои.</p>
