@@ -12,22 +12,22 @@
         <table class="custom-tests-table">
             <thead>
                 <tr>
-                    <th style="width: 40%">Название</th>
-                    <th style="width: 20%">Количество вопросов</th>
-                    <th style="width: 25%">Дата создания</th>
-                    <th style="width: 15%">Действия</th>
+                    <th style="width: 45%; text-align: center;">Название</th>
+                    <th style="width: 15%; text-align: center;">Вопросов</th>
+                    <th style="width: 25%; text-align: center;">Дата создания</th>
+                    <th style="width: 15%; text-align: center;">Действия</th>
                 </tr>
             </thead>
             <tbody>
                 {% for test in tests %}
-                <tr>
-                    <td style="width: 40%">{{ test.title }}</td>
-                    <td style="width: 20%">{{ test.questions.count }}</td>
-                    <td style="width: 25%">{{ test.created_at|date:"d.m.Y H:i" }}</td>
-                    <td style="width: 15%">
+                <tr class="clickable-row" data-href="{% url 'teacher_test_detail' test.id %}">
+                    <td style="width: 45%; text-align: center;">{{ test.title }}</td>
+                    <td style="width: 15%; text-align: center;">{{ test.questions.count|add:test.personal_questions.count }}</td>
+                    <td style="width: 25%; text-align: center;">{{ test.created_at|date:"d.m.Y H:i" }}</td>
+                    <td style="width: 15%; text-align: center;">
                         <div class="action-buttons-group">
-                            <a href="{% url 'teacher_test_detail' test.id %}" class="btn-custom-info">Просмотр</a>
-                            <form method="POST" action="{% url 'delete_teacher_test' test.id %}" class="delete-form" data-test-title="{{ test.title }}">
+                            <a href="{% url 'teacher_test_detail' test.id %}" class="btn-custom-info" onclick="event.stopPropagation();">Просмотр</a>
+                            <form method="POST" action="{% url 'delete_teacher_test' test.id %}" class="delete-form" data-test-title="{{ test.title }}" onclick="event.stopPropagation();">
                                 {% csrf_token %}
                                 <button type="button" class="btn-custom-danger">Удалить</button>
                             </form>
@@ -129,24 +129,54 @@
     position: sticky;
     top: 0;
     z-index: 20;
-    background: #1e293b !important;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     color: white !important;
     font-weight: 700;
-    padding: 14px 16px;
+    padding: 12px 12px;
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    text-align: left;
+    text-align: center;
     border-bottom: none;
 }
 
 /* Ячейки таблицы */
 .custom-tests-table tbody tr td {
-    padding: 12px 16px;
+    padding: 10px 12px;
     vertical-align: middle;
     border-bottom: 1px solid #f0f0f0;
     color: #334155;
     background: white;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+/* Кликабельные строки */
+.clickable-row {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Подсветка при наведении на строку */
+.clickable-row:hover {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);
+}
+
+.clickable-row:hover td {
+    background: transparent;
+}
+
+/* Первая колонка - название теста (жирный шрифт) */
+.custom-tests-table tbody tr td:first-child {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+/* Подсветка первой колонки при наведении */
+.clickable-row:hover td:first-child {
+    color: #0284c7;
 }
 
 /* Последняя строка - без нижней границы */
@@ -154,16 +184,12 @@
     border-bottom: none;
 }
 
-/* Hover эффект */
-.custom-tests-table tbody tr:hover td {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-}
-
 /* Группа кнопок действий */
 .action-buttons-group {
-    display: flex;
-    gap: 10px;
+    display: inline-flex;
+    gap: 8px;
     align-items: center;
+    justify-content: center;
     flex-wrap: wrap;
 }
 
@@ -172,10 +198,10 @@
     background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
     border: none;
     color: white;
-    padding: 6px 14px;
+    padding: 5px 12px;
     font-size: 12px;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: 6px;
     transition: all 0.2s ease;
     text-decoration: none;
     display: inline-flex;
@@ -186,8 +212,8 @@
 
 .btn-custom-info:hover {
     background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
     color: white;
     text-decoration: none;
 }
@@ -197,10 +223,10 @@
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     border: none;
     color: white;
-    padding: 6px 14px;
+    padding: 5px 12px;
     font-size: 12px;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: 6px;
     transition: all 0.2s ease;
     cursor: pointer;
     display: inline-flex;
@@ -210,8 +236,8 @@
 
 .btn-custom-danger:hover {
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
 /* Сообщение об отсутствии тестов */
@@ -259,48 +285,90 @@
     }
 
     .action-buttons-group {
-        flex-direction: column;
+        flex-direction: row;
         gap: 8px;
     }
 
     .action-buttons-group .btn-custom-info,
     .action-buttons-group .btn-custom-danger {
-        width: 100%;
-        text-align: center;
+        padding: 5px 10px;
+        font-size: 11px;
     }
 
     .custom-table-wrapper {
         max-height: 350px;
+    }
+
+    .custom-tests-table thead tr th,
+    .custom-tests-table tbody tr td {
+        padding: 8px 10px;
+        font-size: 12px;
     }
 }
 
 @media (max-width: 576px) {
     .custom-tests-table thead tr th,
     .custom-tests-table tbody tr td {
-        padding: 10px 12px;
-        font-size: 12px;
+        padding: 8px 8px;
+        font-size: 11px;
     }
 
     .btn-custom-info,
     .btn-custom-danger {
-        padding: 5px 10px;
-        font-size: 11px;
+        padding: 4px 8px;
+        font-size: 10px;
     }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Делаем строки таблицы кликабельными
+    const clickableRows = document.querySelectorAll('.clickable-row');
+
+    clickableRows.forEach(row => {
+        row.addEventListener('click', function(e) {
+            // Предотвращаем срабатывание, если клик был по кнопке или ссылке внутри
+            if (e.target.closest('.btn-custom-info') ||
+                e.target.closest('.btn-custom-danger') ||
+                e.target.closest('.delete-form')) {
+                return;
+            }
+
+            const href = this.dataset.href;
+            if (href) {
+                window.location.href = href;
+            }
+        });
+    });
+
+    // Обработчики для удаления
     const deleteForms = document.querySelectorAll('.delete-form');
 
     deleteForms.forEach(form => {
         const deleteBtn = form.querySelector('.btn-custom-danger');
         deleteBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             const testTitle = form.dataset.testTitle;
             if (confirm(`Вы уверены, что хотите удалить тест "${testTitle}"?`)) {
                 form.submit();
             }
+        });
+    });
+
+    // Эффект ряби при клике на строку (опционально)
+    clickableRows.forEach(row => {
+        row.addEventListener('mousedown', function(e) {
+            if (e.target.closest('.btn-custom-info') ||
+                e.target.closest('.btn-custom-danger') ||
+                e.target.closest('.delete-form')) {
+                return;
+            }
+            this.style.transform = 'translateX(1px)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 100);
         });
     });
 });

@@ -1,13 +1,526 @@
 {% extends 'teacher/base_teacher.html' %}
 {% load static %}
 
+{% block extra_css %}
+{{ block.super }}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+    .create-test-page {
+        background: linear-gradient(180deg, #f8fbff 0%, #f4f6fb 100%);
+        border-radius: 20px;
+    }
+
+    .page-title-wrap {
+        padding: 8px 4px;
+    }
+
+    .page-title {
+        font-weight: 700;
+        color: #1f2d3d;
+    }
+
+    .page-subtitle {
+        color: #6c7a89;
+        font-size: 0.98rem;
+    }
+
+    .custom-card {
+        border: none;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(31, 45, 61, 0.08);
+        background: #ffffff;
+    }
+
+    .custom-card-header {
+        background: linear-gradient(135deg, #4f8cff 0%, #6ea8fe 100%);
+        color: #fff;
+        border-bottom: none;
+        padding: 16px 20px;
+    }
+
+    .custom-card-header h5 {
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
+
+    .custom-card-body {
+        padding: 22px 20px;
+    }
+
+    .section-label,
+    .create-test-page label {
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 8px;
+        display: inline-block;
+    }
+
+    /* Стили для фильтрации */
+    .filter-section {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-group label {
+        font-size: 12px;
+        margin-bottom: 4px;
+        font-weight: 500;
+        color: #475569;
+    }
+
+    .filter-group select,
+    .filter-group input {
+        width: 100%;
+        border: 1px solid #d8e1ee;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 14px;
+        background-color: white;
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+        border-color: #6ea8fe;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(110, 168, 254, 0.2);
+    }
+
+    /* Кнопки быстрого выбора */
+    .quick-select-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .btn-quick-select {
+        padding: 6px 14px;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+
+    .btn-quick-select:hover {
+        background: #e2e8f0;
+        transform: translateY(-1px);
+    }
+
+    .btn-quick-select:first-child {
+        background: #10b981;
+        color: white;
+    }
+
+    .btn-quick-select:first-child:hover {
+        background: #059669;
+    }
+
+    .btn-quick-select:nth-child(2) {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .btn-quick-select:nth-child(2):hover {
+        background: #2563eb;
+    }
+
+    .btn-quick-select:last-child {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-quick-select:last-child:hover {
+        background: #dc2626;
+    }
+
+    .create-test-page input[type="text"],
+    .create-test-page input[type="number"],
+    .create-test-page input[type="email"],
+    .create-test-page input[type="date"],
+    .create-test-page select,
+    .create-test-page textarea {
+        width: 100%;
+        border: 1px solid #d8e1ee;
+        border-radius: 12px;
+        padding: 10px 14px;
+        background-color: #fbfdff;
+        transition: all 0.25s ease;
+        box-shadow: none;
+    }
+
+    .create-test-page input[type="text"]:focus,
+    .create-test-page input[type="number"]:focus,
+    .create-test-page input[type="email"]:focus,
+    .create-test-page input[type="date"]:focus,
+    .create-test-page select:focus,
+    .create-test-page textarea:focus {
+        border-color: #6ea8fe;
+        background-color: #ffffff;
+        box-shadow: 0 0 0 0.2rem rgba(78, 140, 255, 0.15);
+        outline: none;
+    }
+
+    /* Список существующих вопросов */
+    .existing-questions-list {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 8px 4px 8px 2px;
+    }
+
+    /* Список учеников */
+    .students-list {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 8px 4px 8px 2px;
+    }
+
+    .existing-question-item,
+    .student-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 1px solid #edf2f7;
+        border-radius: 12px;
+        background: #f9fbff;
+        transition: all 0.2s ease;
+    }
+
+    .existing-question-item:not(:last-child),
+    .student-item:not(:last-child) {
+        margin-bottom: 10px;
+    }
+
+    .existing-question-item:hover,
+    .student-item:hover {
+        background: #f1f6ff;
+        border-color: #d8e7ff;
+    }
+
+    .existing-question-checkbox {
+        margin-top: 4px;
+        flex-shrink: 0;
+        transform: scale(1.1);
+        cursor: pointer;
+    }
+
+    .student-checkbox {
+        margin-top: 4px;
+        flex-shrink: 0;
+        transform: scale(1.1);
+        cursor: pointer;
+    }
+
+    .existing-question-label,
+    .student-label {
+        margin: 0;
+        line-height: 1.45;
+        cursor: pointer;
+        flex: 1;
+        word-break: break-word;
+        color: #2f3b4a;
+    }
+
+    .question-category {
+        display: inline-block;
+        background: #e0e7ff;
+        color: #4f46e5;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-right: 8px;
+    }
+
+    .my-question-badge {
+        display: inline-block;
+        background: #10b981;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        margin-right: 6px;
+    }
+
+    .student-name {
+        display: block;
+        font-weight: 600;
+    }
+
+    .student-group {
+        display: block;
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-top: 2px;
+    }
+
+    .question-actions {
+        flex-shrink: 0;
+    }
+
+    .btn-delete-question-from-list {
+        background: none;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        color: #94a3b8;
+    }
+
+    .btn-delete-question-from-list:hover {
+        background: #fee2e2;
+        color: #ef4444;
+        transform: scale(1.05);
+    }
+
+    /* Блоки вопросов */
+    .question-block {
+        background: linear-gradient(180deg, #f9fbff 0%, #f4f8ff 100%);
+        border: 1px solid #e3ecf8;
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+        position: relative;
+    }
+
+    .question-block:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(79, 140, 255, 0.08);
+        border-color: #cfe0ff;
+    }
+
+    .question-block-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e5edf8;
+    }
+
+    .question-block-header h6 {
+        font-weight: 700;
+        color: #234;
+    }
+
+    /* Кнопка удаления вопроса */
+    .delete-question-btn-container {
+        margin-top: 15px;
+        text-align: right;
+    }
+
+    .btn-delete-question {
+        padding: 6px 12px;
+        background: #fee2e2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        color: #dc2626;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-delete-question:hover {
+        background: #fecaca;
+        transform: translateY(-1px);
+    }
+
+    /* Кнопка добавления вопроса */
+    .add-question-btn {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 18px;
+        background: linear-gradient(135deg, #eef4ff 0%, #dbeafe 100%);
+        color: #2356a8;
+        font-weight: 600;
+        transition: all 0.25s ease;
+        cursor: pointer;
+    }
+
+    .add-question-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(79, 140, 255, 0.15);
+        background: linear-gradient(135deg, #dfeeff 0%, #cde3ff 100%);
+        color: #1d4f9c;
+    }
+
+    /* Кнопка создания теста */
+    .create-test-btn {
+        border: none;
+        border-radius: 14px;
+        padding: 14px 30px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #28c76f 0%, #20b15a 100%);
+        box-shadow: 0 10px 22px rgba(40, 199, 111, 0.22);
+        transition: all 0.25s ease;
+    }
+
+    .create-test-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 28px rgba(40, 199, 111, 0.28);
+    }
+
+    /* Toast уведомления */
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 12px;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        z-index: 10000;
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+        border-left: 4px solid;
+        max-width: 350px;
+    }
+
+    .toast-notification.show {
+        transform: translateX(0);
+    }
+
+    .toast-notification.success {
+        border-left-color: #10b981;
+    }
+
+    .toast-notification.error {
+        border-left-color: #ef4444;
+    }
+
+    .toast-icon {
+        font-size: 20px;
+    }
+
+    .toast-message {
+        font-size: 14px;
+        color: #1e293b;
+    }
+
+    /* Скроллбары */
+    .existing-questions-list::-webkit-scrollbar,
+    .students-list::-webkit-scrollbar,
+    .personal-questions-list::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .existing-questions-list::-webkit-scrollbar-thumb,
+    .students-list::-webkit-scrollbar-thumb,
+    .personal-questions-list::-webkit-scrollbar-thumb {
+        background: #c8d7ee;
+        border-radius: 10px;
+    }
+
+    .existing-questions-list::-webkit-scrollbar-track,
+    .students-list::-webkit-scrollbar-track,
+    .personal-questions-list::-webkit-scrollbar-track {
+        background: #edf3fb;
+        border-radius: 10px;
+    }
+
+    /* Стили для личных вопросов */
+    .personal-questions-list {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 8px 4px 8px 2px;
+    }
+
+    .personal-question-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 1px solid #fde68a;
+        border-radius: 12px;
+        background: #fffbeb;
+        transition: all 0.2s ease;
+    }
+
+    .personal-question-item:hover {
+        background: #fef3c7;
+        border-color: #f59e0b;
+    }
+
+    .personal-question-badge {
+        display: inline-block;
+        background: #f59e0b;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        margin-right: 8px;
+    }
+
+    .btn-delete-personal-question {
+        background: none;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        color: #94a3b8;
+    }
+
+    .btn-delete-personal-question:hover {
+        background: #fee2e2;
+        color: #ef4444;
+        transform: scale(1.05);
+    }
+
+    /* Адаптивность */
+    @media (max-width: 991.98px) {
+        .custom-card-body {
+            padding: 18px 16px;
+        }
+
+        .page-title {
+            font-size: 1.6rem;
+        }
+
+        .filter-row {
+            flex-direction: column;
+        }
+
+        .quick-select-buttons {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block teacher_content %}
 <div class="create-test-page container-fluid py-4">
-    <div class="form-section">
-    <h4>📝 Мои личные вопросы</h4>
-    <p class="text-muted">Эти вопросы используются только в ваших тестах</p>
-    {{ test_form.personal_questions }}
-</div>
     <div class="page-title-wrap mb-4">
         <h2 class="page-title mb-1">Создание нового теста</h2>
         <p class="page-subtitle mb-0">Заполните основную информацию, выберите готовые вопросы или добавьте свои.</p>
@@ -18,7 +531,7 @@
 
         <div class="row g-4 align-items-start">
             <!-- ЛЕВАЯ КОЛОНКА -->
-            <div class="col-xl-4 col-lg-5">
+            <div class="col-xl-5 col-lg-6">
                 <!-- Основные поля теста -->
                 <div class="card custom-card mb-4">
                     <div class="card-header custom-card-header">
@@ -31,7 +544,6 @@
                             {{ test_form.title.label_tag }}
                             {{ test_form.title }}
                         </div>
-
                         <div class="form-group mb-3">
                             {{ test_form.description.label_tag }}
                             {{ test_form.description }}
@@ -39,7 +551,51 @@
                     </div>
                 </div>
 
-                <!-- Выбор студентов с фильтрацией -->
+                <!-- Выбор существующих вопросов из общей базы -->
+                <div class="card custom-card mb-4">
+                    <div class="card-header custom-card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-database me-2"></i>Выберите вопросы из общей базы
+                        </h5>
+                    </div>
+                    <div class="card-body custom-card-body">
+                        <div class="existing-questions-list">
+                            {% for question in all_questions %}
+                                <div class="existing-question-item" data-question-id="{{ question.id }}">
+                                    <div class="question-checkbox-wrapper">
+                                        <input type="checkbox"
+                                               name="existing_questions"
+                                               value="{{ question.id }}"
+                                               id="question_{{ question.id }}"
+                                               class="existing-question-checkbox">
+                                    </div>
+                                    <label for="question_{{ question.id }}" class="existing-question-label">
+                                        <span class="question-category">[{{ question.category.name }}]</span>
+                                        {% if question.created_by == request.user %}
+                                            <span class="my-question-badge">МОЙ</span>
+                                        {% endif %}
+                                        {{ question.question_text|truncatechars:100 }}
+                                    </label>
+                                    <div class="question-actions">
+                                        {% if question.created_by == request.user or request.user.is_superuser %}
+                                            <button type="button"
+                                                    class="btn-delete-question-from-list"
+                                                    data-question-id="{{ question.id }}"
+                                                    data-question-text="{{ question.question_text|escapejs }}"
+                                                    title="Удалить вопрос">
+                                                🗑️
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted mb-0">В базе данных пока нет вопросов</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Назначение теста ученикам (ПЕРЕНЕСЕНО СЛЕВА) -->
                 <div class="card custom-card mb-4">
                     <div class="card-header custom-card-header">
                         <h5 class="mb-0">
@@ -53,7 +609,6 @@
                                 Если ни один ученик не выбран, тест будет доступен всем вашим ученикам.
                             </p>
 
-                            <!-- Блок фильтрации -->
                             <div class="filter-section">
                                 <div class="filter-row">
                                     <div class="filter-group">
@@ -81,7 +636,6 @@
                                 </div>
                             </div>
 
-                            <!-- Кнопки быстрого выбора -->
                             <div class="quick-select-buttons mb-3">
                                 <button type="button" class="btn-quick-select" id="selectAllBtn">✓ Выбрать всех</button>
                                 <button type="button" class="btn-quick-select" id="selectAllFilteredBtn">✓ Выбрать всех (по фильтру)</button>
@@ -89,58 +643,77 @@
                             </div>
 
                             <div class="students-list" id="studentsList">
-    {% for student_profile in students %}
-        <div class="student-item"
-             data-group="{{ student_profile.group|default:'' }}"
-             data-course="{{ student_profile.course|default:'' }}"
-             data-name="{{ student_profile.full_name|lower }}">
-            <input class="form-check-input student-checkbox"
-                   type="checkbox"
-                   name="selected_students"
-                   value="{{ student_profile.user.id }}"
-                   id="student_{{ student_profile.user.id }}">
-            <label class="student-label" for="student_{{ student_profile.user.id }}">
-                <span class="student-name">{{ student_profile.full_name }}</span>
-                <span class="student-group">
-                    Группа: {{ student_profile.group|default:"не указана" }},
-                    Курс: {{ student_profile.course|default:"не указан" }}
-                </span>
-            </label>
-        </div>
-    {% empty %}
-        <p class="text-warning mb-0">У вас пока нет привязанных учеников.</p>
-    {% endfor %}
-</div>
+                                {% for student_profile in students %}
+                                    <div class="student-item"
+                                         data-group="{{ student_profile.group|default:'' }}"
+                                         data-course="{{ student_profile.course|default:'' }}"
+                                         data-name="{{ student_profile.full_name|lower }}">
+                                        <input class="form-check-input student-checkbox"
+                                               type="checkbox"
+                                               name="selected_students"
+                                               value="{{ student_profile.user.id }}"
+                                               id="student_{{ student_profile.user.id }}">
+                                        <label class="student-label" for="student_{{ student_profile.user.id }}">
+                                            <span class="student-name">{{ student_profile.full_name }}</span>
+                                            <span class="student-group">
+                                                Группа: {{ student_profile.group|default:"не указана" }},
+                                                Курс: {{ student_profile.course|default:"не указан" }}
+                                            </span>
+                                        </label>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-warning mb-0">У вас пока нет привязанных учеников.</p>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- ПРАВАЯ КОЛОНКА -->
-            <div class="col-xl-8 col-lg-7">
-                <!-- Выбор существующих вопросов -->
+            <div class="col-xl-7 col-lg-6">
+                <!-- Блок ЛИЧНЫХ вопросов учителя -->
                 <div class="card custom-card mb-4">
-                    <div class="card-header custom-card-header">
+                    <div class="card-header custom-card-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
                         <h5 class="mb-0">
-                            <i class="fas fa-list-check me-2"></i>Выберите вопросы из уже существующих
+                            <i class="fas fa-user-lock me-2"></i>📝 Мои личные вопросы
                         </h5>
                     </div>
                     <div class="card-body custom-card-body">
-                        <div class="existing-questions-list">
-                            {% for question in all_questions %}
-                            <div class="existing-question-item">
-                                <input type="checkbox"
-                                       name="existing_questions"
-                                       value="{{ question.id }}"
-                                       id="question_{{ question.id }}"
-                                       class="existing-question-checkbox">
-                                <label for="question_{{ question.id }}" class="existing-question-label">
-                                    {{ question.question_text|truncatechars:100 }}
-                                </label>
-                            </div>
-                            {% empty %}
-                            <p class="text-muted mb-0">В базе данных пока нет вопросов</p>
-                            {% endfor %}
+                        <p class="text-muted small mb-3">
+                            Эти вопросы видны только вам и не попадают в общую базу вопросов.
+                        </p>
+                        <div class="personal-questions-list">
+                            {% if personal_questions %}
+                                {% for question in personal_questions %}
+                                    <div class="personal-question-item" data-question-id="{{ question.id }}">
+                                        <div class="question-checkbox-wrapper">
+                                            <input type="checkbox"
+                                                   name="personal_questions"
+                                                   value="{{ question.id }}"
+                                                   id="personal_question_{{ question.id }}"
+                                                   class="existing-question-checkbox">
+                                        </div>
+                                        <label for="personal_question_{{ question.id }}" class="existing-question-label">
+                                            <span class="personal-question-badge">ЛИЧНЫЙ</span>
+                                            {{ question.question_text|truncatechars:100 }}
+                                        </label>
+                                        <div class="question-actions">
+                                            <button type="button"
+                                                    class="btn-delete-personal-question"
+                                                    data-question-id="{{ question.id }}"
+                                                    data-question-text="{{ question.question_text|escapejs }}"
+                                                    title="Удалить личный вопрос">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted mb-0">У вас пока нет личных вопросов.
+                                    <a href="{% url 'add_personal_question' %}">Создайте</a> свой первый вопрос.
+                                </p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -149,17 +722,15 @@
                 <div class="card custom-card mb-4">
                     <div class="card-header custom-card-header">
                         <h5 class="mb-0">
-                            <i class="fas fa-circle-plus me-2"></i>Добавить свои новые вопросы (необязательно)
+                            <i class="fas fa-circle-plus me-2"></i>Добавить новые вопросы в тест (только для этого теста)
                         </h5>
                     </div>
                     <div class="card-body custom-card-body">
                         <div id="questions-container">
-                            <!-- Первый вопрос -->
                             <div class="question-block" id="question-block-0">
                                 <div class="question-block-header">
                                     <h6 class="mb-0">Вопрос 1</h6>
                                 </div>
-
                                 <div class="form-group mb-3">
                                     <label>Текст вопроса:</label>
                                     <textarea name="question_form-0-question_text"
@@ -167,59 +738,43 @@
                                               rows="2"
                                               placeholder="Введите текст вопроса"></textarea>
                                 </div>
-
                                 <div class="form-group mb-3">
                                     <label>Категория вопроса:</label>
                                     <select name="question_form-0-category" class="form-control">
                                         <option value="">Выберите категорию</option>
                                         {% for category in categories %}
-                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                            <option value="{{ category.id }}">{{ category.name }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
-
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label>Вариант ответа 1:</label>
-                                            <input type="text"
-                                                   name="question_form-0-option1"
-                                                   class="form-control"
-                                                   placeholder="Вариант 1">
+                                            <input type="text" name="question_form-0-option1" class="form-control" placeholder="Вариант 1">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label>Вариант ответа 2:</label>
-                                            <input type="text"
-                                                   name="question_form-0-option2"
-                                                   class="form-control"
-                                                   placeholder="Вариант 2">
+                                            <input type="text" name="question_form-0-option2" class="form-control" placeholder="Вариант 2">
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label>Вариант ответа 3:</label>
-                                            <input type="text"
-                                                   name="question_form-0-option3"
-                                                   class="form-control"
-                                                   placeholder="Вариант 3">
+                                            <input type="text" name="question_form-0-option3" class="form-control" placeholder="Вариант 3">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label>Вариант ответа 4:</label>
-                                            <input type="text"
-                                                   name="question_form-0-option4"
-                                                   class="form-control"
-                                                   placeholder="Вариант 4">
+                                            <input type="text" name="question_form-0-option4" class="form-control" placeholder="Вариант 4">
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="form-group mb-3">
                                     <label>Правильный ответ:</label>
                                     <select name="question_form-0-correct_answer" class="form-control">
@@ -230,16 +785,13 @@
                                         <option value="4">Вариант 4</option>
                                     </select>
                                 </div>
-
-                                <!-- Кнопка удаления вопроса (для всех, кроме первого) -->
                                 <div class="delete-question-btn-container" style="display: none;">
                                     <button type="button" class="btn-delete-question" onclick="deleteQuestionBlock(0)">
-                                        <i class="fas fa-trash-alt me-1"></i>Удалить вопрос
+                                        🗑️ Удалить вопрос
                                     </button>
                                 </div>
                             </div>
                         </div>
-
                         <div id="add-question-button-container" class="mt-3">
                             <button type="button" class="btn add-question-btn" id="add-question-btn">
                                 <i class="fas fa-plus me-2"></i>Добавить ещё один вопрос
@@ -250,9 +802,8 @@
             </div>
         </div>
 
-        <!-- Кнопка создания теста -->
         <div class="text-center mt-4 mb-5">
-            <button type="submit" class="btn create-test-btn btn-lg">
+            <button type="submit" class="btn create-test-btn btn-lg" id="submitTestBtn">
                 <i class="fas fa-save me-2"></i>Создать тест
             </button>
         </div>
@@ -264,8 +815,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let questionCount = 1;
     const questionsContainer = document.getElementById('questions-container');
     const addQuestionBtn = document.getElementById('add-question-btn');
+    const submitBtn = document.getElementById('submitTestBtn');
 
-    // Элементы фильтрации
+    // Элементы фильтрации учеников
     const groupFilter = document.getElementById('groupFilter');
     const courseFilter = document.getElementById('courseFilter');
     const searchNameInput = document.getElementById('searchNameInput');
@@ -275,12 +827,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const studentsList = document.getElementById('studentsList');
     let allStudentItems = [];
 
-    // Получаем все элементы учеников
     if (studentsList) {
         allStudentItems = Array.from(studentsList.querySelectorAll('.student-item'));
     }
 
-    // Функция фильтрации учеников
     function filterStudents() {
         const groupValue = groupFilter ? groupFilter.value : '';
         const courseValue = courseFilter ? courseFilter.value : '';
@@ -295,45 +845,27 @@ document.addEventListener('DOMContentLoaded', function() {
             const matchesCourse = courseValue === '' || itemCourse === courseValue;
             const matchesSearch = searchValue === '' || itemName.includes(searchValue);
 
-            if (matchesGroup && matchesCourse && matchesSearch) {
-                item.style.display = '';
-            } else {
-                item.style.display = 'none';
-            }
+            item.style.display = (matchesGroup && matchesCourse && matchesSearch) ? '' : 'none';
         });
     }
 
-    // Функция получения видимых (отфильтрованных) чекбоксов
     function getFilteredCheckboxes() {
         const visibleItems = allStudentItems.filter(item => item.style.display !== 'none');
         return visibleItems.map(item => item.querySelector('.student-checkbox'));
     }
 
-    // Выбрать всех учеников
     function selectAllStudents() {
-        const checkboxes = studentsList.querySelectorAll('.student-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = true;
-        });
+        document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = true);
     }
 
-    // Выбрать только отфильтрованных учеников
     function selectFilteredStudents() {
-        const filteredCheckboxes = getFilteredCheckboxes();
-        filteredCheckboxes.forEach(checkbox => {
-            checkbox.checked = true;
-        });
+        getFilteredCheckboxes().forEach(checkbox => checkbox.checked = true);
     }
 
-    // Очистить все выборы
     function clearAllStudents() {
-        const checkboxes = studentsList.querySelectorAll('.student-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = false;
-        });
+        document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = false);
     }
 
-    // Добавляем обработчики событий для фильтров
     if (groupFilter) groupFilter.addEventListener('change', filterStudents);
     if (courseFilter) courseFilter.addEventListener('change', filterStudents);
     if (searchNameInput) searchNameInput.addEventListener('input', filterStudents);
@@ -341,51 +873,31 @@ document.addEventListener('DOMContentLoaded', function() {
     if (selectAllFilteredBtn) selectAllFilteredBtn.addEventListener('click', selectFilteredStudents);
     if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllStudents);
 
-    const categoryOptions = `
-        {% for category in categories %}
-        <option value="{{ category.id }}">{{ category.name }}</option>
-        {% endfor %}
-    `;
+    const categoryOptions = `{% for category in categories %}<option value="{{ category.id }}">{{ category.name }}</option>{% endfor %}`;
 
-    // Функция удаления блока вопроса
     window.deleteQuestionBlock = function(blockId) {
         const block = document.getElementById(`question-block-${blockId}`);
         if (block) {
             block.remove();
-            // Перенумеровываем оставшиеся блоки
             renumberQuestionBlocks();
         }
     };
 
-    // Функция перенумерации блоков вопросов
     function renumberQuestionBlocks() {
         const blocks = document.querySelectorAll('.question-block');
         blocks.forEach((block, index) => {
-            const newId = index;
-            block.id = `question-block-${newId}`;
-
-            // Обновляем заголовок
+            block.id = `question-block-${index}`;
             const header = block.querySelector('.question-block-header h6');
-            if (header) {
-                header.textContent = `Вопрос ${newId + 1}`;
-            }
+            if (header) header.textContent = `Вопрос ${index + 1}`;
 
-            // Обновляем атрибуты name у всех полей внутри блока
-            const inputs = block.querySelectorAll('input, textarea, select');
-            inputs.forEach(input => {
+            block.querySelectorAll('input, textarea, select').forEach(input => {
                 if (input.name) {
-                    input.name = input.name.replace(/question_form-\d+-/, `question_form-${newId}-`);
+                    input.name = input.name.replace(/question_form-\d+-/, `question_form-${index}-`);
                 }
             });
 
-            // Обновляем кнопку удаления
-            const deleteBtnContainer = block.querySelector('.delete-question-btn-container');
-            if (deleteBtnContainer) {
-                const deleteBtn = deleteBtnContainer.querySelector('button');
-                if (deleteBtn) {
-                    deleteBtn.setAttribute('onclick', `deleteQuestionBlock(${newId})`);
-                }
-            }
+            const deleteBtn = block.querySelector('.delete-question-btn-container button');
+            if (deleteBtn) deleteBtn.setAttribute('onclick', `deleteQuestionBlock(${index})`);
         });
         questionCount = blocks.length;
     }
@@ -394,20 +906,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const newBlock = document.createElement('div');
         newBlock.className = 'question-block';
         newBlock.id = `question-block-${questionCount}`;
-
         newBlock.innerHTML = `
-            <div class="question-block-header">
-                <h6 class="mb-0">Вопрос ${questionCount + 1}</h6>
-            </div>
-
+            <div class="question-block-header"><h6 class="mb-0">Вопрос ${questionCount + 1}</h6></div>
             <div class="form-group mb-3">
                 <label>Текст вопроса:</label>
-                <textarea name="question_form-${questionCount}-question_text"
-                          class="form-control question-text"
-                          rows="2"
-                          placeholder="Введите текст вопроса"></textarea>
+                <textarea name="question_form-${questionCount}-question_text" class="form-control question-text" rows="2" placeholder="Введите текст вопроса"></textarea>
             </div>
-
             <div class="form-group mb-3">
                 <label>Категория вопроса:</label>
                 <select name="question_form-${questionCount}-category" class="form-control">
@@ -415,460 +919,192 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${categoryOptions}
                 </select>
             </div>
-
             <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label>Вариант ответа 1:</label>
-                        <input type="text"
-                               name="question_form-${questionCount}-option1"
-                               class="form-control"
-                               placeholder="Вариант 1">
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label>Вариант ответа 2:</label>
-                        <input type="text"
-                               name="question_form-${questionCount}-option2"
-                               class="form-control"
-                               placeholder="Вариант 2">
-                    </div>
-                </div>
+                <div class="col-md-6"><div class="form-group mb-3"><label>Вариант ответа 1:</label><input type="text" name="question_form-${questionCount}-option1" class="form-control" placeholder="Вариант 1"></div></div>
+                <div class="col-md-6"><div class="form-group mb-3"><label>Вариант ответа 2:</label><input type="text" name="question_form-${questionCount}-option2" class="form-control" placeholder="Вариант 2"></div></div>
             </div>
-
             <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label>Вариант ответа 3:</label>
-                        <input type="text"
-                               name="question_form-${questionCount}-option3"
-                               class="form-control"
-                               placeholder="Вариант 3">
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label>Вариант ответа 4:</label>
-                        <input type="text"
-                               name="question_form-${questionCount}-option4"
-                               class="form-control"
-                               placeholder="Вариант 4">
-                    </div>
-                </div>
+                <div class="col-md-6"><div class="form-group mb-3"><label>Вариант ответа 3:</label><input type="text" name="question_form-${questionCount}-option3" class="form-control" placeholder="Вариант 3"></div></div>
+                <div class="col-md-6"><div class="form-group mb-3"><label>Вариант ответа 4:</label><input type="text" name="question_form-${questionCount}-option4" class="form-control" placeholder="Вариант 4"></div></div>
             </div>
-
             <div class="form-group mb-3">
                 <label>Правильный ответ:</label>
                 <select name="question_form-${questionCount}-correct_answer" class="form-control">
                     <option value="">Выберите правильный ответ</option>
-                    <option value="1">Вариант 1</option>
-                    <option value="2">Вариант 2</option>
-                    <option value="3">Вариант 3</option>
-                    <option value="4">Вариант 4</option>
+                    <option value="1">Вариант 1</option><option value="2">Вариант 2</option>
+                    <option value="3">Вариант 3</option><option value="4">Вариант 4</option>
                 </select>
             </div>
-
             <div class="delete-question-btn-container">
-                <button type="button" class="btn-delete-question" onclick="deleteQuestionBlock(${questionCount})">
-                    <i class="fas fa-trash-alt me-1"></i>Удалить вопрос
-                </button>
+                <button type="button" class="btn-delete-question" onclick="deleteQuestionBlock(${questionCount})">🗑️ Удалить вопрос</button>
             </div>
         `;
-
         questionsContainer.appendChild(newBlock);
         questionCount++;
         newBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     if (addQuestionBtn) {
-        addQuestionBtn.addEventListener('click', function() {
-            addNewQuestionBlock();
+        addQuestionBtn.addEventListener('click', addNewQuestionBlock);
+    }
+
+    // Проверка перед отправкой - есть ли хотя бы один вопрос
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function(e) {
+            // Проверяем выбранные вопросы из общей базы
+            const selectedExisting = document.querySelectorAll('input[name="existing_questions"]:checked').length;
+            // Проверяем выбранные личные вопросы
+            const selectedPersonal = document.querySelectorAll('input[name="personal_questions"]:checked').length;
+            // Проверяем динамические вопросы (заполненные)
+            let dynamicQuestionsCount = 0;
+            const dynamicTextareas = document.querySelectorAll('textarea[name^="question_form-"][name$="-question_text"]');
+            dynamicTextareas.forEach(textarea => {
+                if (textarea.value.trim()) {
+                    dynamicQuestionsCount++;
+                }
+            });
+
+            const totalQuestions = selectedExisting + selectedPersonal + dynamicQuestionsCount;
+
+            if (totalQuestions === 0) {
+                e.preventDefault();
+                alert('Невозможно создать тест без вопросов! Добавьте хотя бы один вопрос.');
+            }
         });
     }
 
-    // Инициализация фильтрации
-    filterStudents();
-
-    // Инициализация: у первого вопроса скрываем кнопку удаления
-    const firstBlock = document.getElementById('question-block-0');
-    if (firstBlock) {
-        const deleteContainer = firstBlock.querySelector('.delete-question-btn-container');
-        if (deleteContainer) {
-            deleteContainer.style.display = 'none';
+    function getCsrfToken() {
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag) return metaTag.getAttribute('content');
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 'csrftoken'.length + 1) === ('csrftoken' + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring('csrftoken'.length + 1));
+                    break;
+                }
+            }
         }
+        return cookieValue;
+    }
+
+    function showToast(type, message) {
+        document.querySelectorAll('.toast-notification').forEach(toast => toast.remove());
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        toast.innerHTML = `<div class="toast-icon">${type === 'success' ? '✅' : '❌'}</div><div class="toast-message">${message}</div>`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    // Удаление вопросов из общей базы (только для своих)
+    function deleteQuestion(questionId, buttonElement) {
+        const csrfToken = getCsrfToken();
+        if (!csrfToken) {
+            showToast('error', 'Ошибка безопасности: CSRF-токен не найден. Обновите страницу.');
+            return;
+        }
+
+        const originalText = buttonElement.innerHTML;
+        buttonElement.innerHTML = '⏳';
+        buttonElement.disabled = true;
+
+        fetch(`/teacher/questions/delete-ajax/${questionId}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                buttonElement.closest('.existing-question-item').remove();
+                showToast('success', data.message);
+            } else {
+                showToast('error', data.error || 'Ошибка при удалении вопроса');
+                buttonElement.innerHTML = originalText;
+                buttonElement.disabled = false;
+            }
+        })
+        .catch(error => {
+            showToast('error', 'Произошла ошибка при удалении вопроса');
+            buttonElement.innerHTML = originalText;
+            buttonElement.disabled = false;
+        });
+    }
+
+    // Удаление личных вопросов учителя
+    function deletePersonalQuestion(questionId, buttonElement) {
+        const csrfToken = getCsrfToken();
+        if (!csrfToken) {
+            showToast('error', 'Ошибка безопасности: CSRF-токен не найден. Обновите страницу.');
+            return;
+        }
+
+        const originalText = buttonElement.innerHTML;
+        buttonElement.innerHTML = '⏳';
+        buttonElement.disabled = true;
+
+        fetch(`/teacher/personal-questions/delete-ajax/${questionId}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                buttonElement.closest('.personal-question-item').remove();
+                showToast('success', data.message);
+            } else {
+                showToast('error', data.error || 'Ошибка при удалении личного вопроса');
+                buttonElement.innerHTML = originalText;
+                buttonElement.disabled = false;
+            }
+        })
+        .catch(error => {
+            showToast('error', 'Произошла ошибка при удалении личного вопроса');
+            buttonElement.innerHTML = originalText;
+            buttonElement.disabled = false;
+        });
+    }
+
+    // Обработчики для удаления общих вопросов
+    document.querySelectorAll('.btn-delete-question-from-list').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const questionId = this.dataset.questionId;
+            const questionText = this.dataset.questionText;
+            if (confirm(`Вы уверены, что хотите удалить вопрос "${questionText}"?\n\nВНИМАНИЕ: Вопрос будет удалён из всех тестов, где он используется!`)) {
+                deleteQuestion(questionId, this);
+            }
+        });
+    });
+
+    // Обработчики для удаления личных вопросов
+    document.querySelectorAll('.btn-delete-personal-question').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const questionId = this.dataset.questionId;
+            const questionText = this.dataset.questionText;
+            if (confirm(`Вы уверены, что хотите удалить личный вопрос "${questionText}"?\n\nВНИМАНИЕ: Вопрос будет удалён из всех ваших тестов!`)) {
+                deletePersonalQuestion(questionId, this);
+            }
+        });
+    });
+
+    // Инициализация
+    filterStudents();
+    const firstBlock = document.getElementById('question-block-0');
+    if (firstBlock && firstBlock.querySelector('.delete-question-btn-container')) {
+        firstBlock.querySelector('.delete-question-btn-container').style.display = 'none';
     }
 });
 </script>
 
-<style>
-.create-test-page {
-    background: linear-gradient(180deg, #f8fbff 0%, #f4f6fb 100%);
-    border-radius: 20px;
-}
-
-.page-title-wrap {
-    padding: 8px 4px;
-}
-
-.page-title {
-    font-weight: 700;
-    color: #1f2d3d;
-}
-
-.page-subtitle {
-    color: #6c7a89;
-    font-size: 0.98rem;
-}
-
-.custom-card {
-    border: none;
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(31, 45, 61, 0.08);
-    background: #ffffff;
-}
-
-.custom-card-header {
-    background: linear-gradient(135deg, #4f8cff 0%, #6ea8fe 100%);
-    color: #fff;
-    border-bottom: none;
-    padding: 16px 20px;
-}
-
-.custom-card-header h5 {
-    font-weight: 600;
-    font-size: 1.05rem;
-}
-
-.custom-card-body {
-    padding: 22px 20px;
-}
-
-.section-label,
-.create-test-page label {
-    font-weight: 600;
-    color: #334155;
-    margin-bottom: 8px;
-    display: inline-block;
-}
-
-/* Стили для фильтрации */
-.filter-section {
-    background: #f8fafc;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    border: 1px solid #e2e8f0;
-}
-
-.filter-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    align-items: flex-end;
-}
-
-.filter-group {
-    flex: 1;
-    min-width: 150px;
-}
-
-.filter-group label {
-    font-size: 12px;
-    margin-bottom: 4px;
-    font-weight: 500;
-    color: #475569;
-}
-
-.filter-group select,
-.filter-group input {
-    width: 100%;
-    border: 1px solid #d8e1ee;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 14px;
-    background-color: white;
-}
-
-.filter-group select:focus,
-.filter-group input:focus {
-    border-color: #6ea8fe;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(110, 168, 254, 0.2);
-}
-
-/* Кнопки быстрого выбора */
-.quick-select-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-.btn-quick-select {
-    padding: 6px 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: #f1f5f9;
-    color: #1e293b;
-}
-
-.btn-quick-select:hover {
-    background: #e2e8f0;
-    transform: translateY(-1px);
-}
-
-.btn-quick-select:first-child {
-    background: #10b981;
-    color: white;
-}
-
-.btn-quick-select:first-child:hover {
-    background: #059669;
-}
-
-.btn-quick-select:nth-child(2) {
-    background: #3b82f6;
-    color: white;
-}
-
-.btn-quick-select:nth-child(2):hover {
-    background: #2563eb;
-}
-
-.btn-quick-select:last-child {
-    background: #ef4444;
-    color: white;
-}
-
-.btn-quick-select:last-child:hover {
-    background: #dc2626;
-}
-
-.create-test-page input[type="text"],
-.create-test-page input[type="number"],
-.create-test-page input[type="email"],
-.create-test-page input[type="date"],
-.create-test-page select,
-.create-test-page textarea {
-    width: 100%;
-    border: 1px solid #d8e1ee;
-    border-radius: 12px;
-    padding: 10px 14px;
-    background-color: #fbfdff;
-    transition: all 0.25s ease;
-    box-shadow: none;
-}
-
-.create-test-page input[type="text"]:focus,
-.create-test-page input[type="number"]:focus,
-.create-test-page input[type="email"]:focus,
-.create-test-page input[type="date"]:focus,
-.create-test-page select:focus,
-.create-test-page textarea:focus {
-    border-color: #6ea8fe;
-    background-color: #ffffff;
-    box-shadow: 0 0 0 0.2rem rgba(78, 140, 255, 0.15);
-    outline: none;
-}
-
-/* Список существующих вопросов */
-.existing-questions-list {
-    max-height: 340px;
-    overflow-y: auto;
-    padding: 8px 4px 8px 2px;
-}
-
-/* Список учеников */
-.students-list {
-    max-height: 400px;
-    overflow-y: auto;
-    padding: 8px 4px 8px 2px;
-}
-
-.existing-question-item,
-.student-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 10px 8px;
-    border: 1px solid #edf2f7;
-    border-radius: 12px;
-    background: #f9fbff;
-    transition: all 0.2s ease;
-}
-
-.existing-question-item:not(:last-child),
-.student-item:not(:last-child) {
-    margin-bottom: 10px;
-}
-
-.existing-question-item:hover,
-.student-item:hover {
-    background: #f1f6ff;
-    border-color: #d8e7ff;
-}
-
-.existing-question-checkbox,
-.student-checkbox {
-    margin-top: 4px;
-    flex-shrink: 0;
-    transform: scale(1.1);
-    cursor: pointer;
-}
-
-.existing-question-label,
-.student-label {
-    margin: 0;
-    line-height: 1.45;
-    cursor: pointer;
-    flex: 1;
-    word-break: break-word;
-    color: #2f3b4a;
-}
-
-.student-name {
-    display: block;
-    font-weight: 600;
-}
-
-.student-group {
-    display: block;
-    font-size: 0.9rem;
-    color: #6b7280;
-    margin-top: 2px;
-}
-
-/* Блоки вопросов */
-.question-block {
-    background: linear-gradient(180deg, #f9fbff 0%, #f4f8ff 100%);
-    border: 1px solid #e3ecf8;
-    border-radius: 16px;
-    padding: 18px;
-    margin-bottom: 16px;
-    transition: all 0.3s ease;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
-    position: relative;
-}
-
-.question-block:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(79, 140, 255, 0.08);
-    border-color: #cfe0ff;
-}
-
-.question-block-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #e5edf8;
-}
-
-.question-block-header h6 {
-    font-weight: 700;
-    color: #234;
-}
-
-/* Кнопка удаления вопроса */
-.delete-question-btn-container {
-    margin-top: 15px;
-    text-align: right;
-}
-
-.btn-delete-question {
-    padding: 6px 12px;
-    background: #fee2e2;
-    border: 1px solid #fecaca;
-    border-radius: 8px;
-    color: #dc2626;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn-delete-question:hover {
-    background: #fecaca;
-    transform: translateY(-1px);
-}
-
-/* Кнопка добавления вопроса */
-.add-question-btn {
-    border: none;
-    border-radius: 12px;
-    padding: 12px 18px;
-    background: linear-gradient(135deg, #eef4ff 0%, #dbeafe 100%);
-    color: #2356a8;
-    font-weight: 600;
-    transition: all 0.25s ease;
-    cursor: pointer;
-}
-
-.add-question-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 18px rgba(79, 140, 255, 0.15);
-    background: linear-gradient(135deg, #dfeeff 0%, #cde3ff 100%);
-    color: #1d4f9c;
-}
-
-/* Кнопка создания теста */
-.create-test-btn {
-    border: none;
-    border-radius: 14px;
-    padding: 14px 30px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #28c76f 0%, #20b15a 100%);
-    box-shadow: 0 10px 22px rgba(40, 199, 111, 0.22);
-    transition: all 0.25s ease;
-}
-
-.create-test-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 28px rgba(40, 199, 111, 0.28);
-}
-
-/* Скроллбары */
-.existing-questions-list::-webkit-scrollbar,
-.students-list::-webkit-scrollbar {
-    width: 8px;
-}
-
-.existing-questions-list::-webkit-scrollbar-thumb,
-.students-list::-webkit-scrollbar-thumb {
-    background: #c8d7ee;
-    border-radius: 10px;
-}
-
-.existing-questions-list::-webkit-scrollbar-track,
-.students-list::-webkit-scrollbar-track {
-    background: #edf3fb;
-    border-radius: 10px;
-}
-
-/* Адаптивность */
-@media (max-width: 991.98px) {
-    .custom-card-body {
-        padding: 18px 16px;
-    }
-
-    .page-title {
-        font-size: 1.6rem;
-    }
-
-    .filter-row {
-        flex-direction: column;
-    }
-
-    .quick-select-buttons {
-        flex-wrap: wrap;
-    }
-}
-</style>
 {% endblock %}

@@ -45,6 +45,23 @@
         gap: 15px;
         flex-wrap: wrap;
         align-items: center;
+        padding: 15px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 16px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .filter-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+        margin-right: 5px;
     }
 
     .filter-btn {
@@ -55,6 +72,7 @@
         cursor: pointer;
         transition: all 0.3s ease;
         font-weight: 500;
+        font-size: 13px;
     }
 
     .filter-btn.active {
@@ -67,11 +85,44 @@
         background: #f1f5f9;
     }
 
-    /* ========== СЕТКА КАРТОЧЕК - ГОРИЗОНТАЛЬНОЕ РАСПОЛОЖЕНИЕ ========== */
+    .filter-divider {
+        width: 1px;
+        height: 30px;
+        background: #e2e8f0;
+        margin: 0 5px;
+    }
+
+    /* ========== КОНТЕЙНЕР С ПРОКРУТКОЙ ========== */
+    .results-container {
+        max-height: 600px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 8px;
+    }
+
+    /* Кастомный скроллбар */
+    .results-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .results-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .results-container::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+        border-radius: 10px;
+    }
+
+    .results-container::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+    }
+
+    /* ========== СЕТКА КАРТОЧЕК ========== */
     .results-list {
         display: grid;
         gap: 24px;
-        margin-top: 20px;
     }
 
     /* Адаптивные колонки */
@@ -288,6 +339,20 @@
         margin-bottom: 20px;
     }
 
+    /* Счетчик результатов */
+    .results-counter {
+        text-align: right;
+        margin-bottom: 15px;
+        font-size: 13px;
+        color: #64748b;
+        padding: 0 8px;
+    }
+
+    .results-counter span {
+        font-weight: 700;
+        color: #4f46e5;
+    }
+
     /* Адаптивность */
     @media (max-width: 768px) {
         .stats-cards {
@@ -318,6 +383,19 @@
             padding: 4px 10px;
             white-space: nowrap;
         }
+
+        .filter-section {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .filter-divider {
+            display: none;
+        }
+
+        .results-container {
+            max-height: 500px;
+        }
     }
 
     @media (max-width: 480px) {
@@ -325,13 +403,16 @@
             grid-template-columns: 1fr;
         }
 
-        .filter-section {
-            flex-wrap: wrap;
+        .filter-group {
+            width: 100%;
+            justify-content: space-between;
         }
 
         .filter-btn {
             flex: 1;
             text-align: center;
+            font-size: 12px;
+            padding: 6px 12px;
         }
 
         .grade-2 {
@@ -342,6 +423,10 @@
 
         .result-name {
             font-size: 13px;
+        }
+
+        .results-container {
+            max-height: 450px;
         }
     }
 </style>
@@ -376,50 +461,71 @@
 </div>
 
 <div class="filter-section">
-    <button class="filter-btn active" data-filter="all">Все тесты</button>
-    <button class="filter-btn" data-filter="start">Входные</button>
-    <button class="filter-btn" data-filter="final">Итоговое</button>
-    <button class="filter-btn" data-filter="teacher">Тесты учителя</button>
+    <div class="filter-group">
+        <span class="filter-label">📋 По типу:</span>
+        <button class="filter-btn active" data-filter="all">Все тесты</button>
+        <button class="filter-btn" data-filter="start">Входные</button>
+        <button class="filter-btn" data-filter="final">Итоговое</button>
+        <button class="filter-btn" data-filter="teacher">Тесты учителя</button>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+        <span class="filter-label">✅ По статусу:</span>
+        <button class="filter-btn status-filter active" data-status="all">Все</button>
+        <button class="filter-btn status-filter" data-status="graded">Проверенные</button>
+        <button class="filter-btn status-filter" data-status="pending">На проверке</button>
+    </div>
 </div>
 
 {% if test_results %}
-<div class="results-list" id="results-list">
-    {% for result in test_results %}
-    <div class="result-card" data-test-type="{{ result.test_type }}" onclick="window.location.href='{{ result.detail_url }}?from=results'">
-        <div class="result-card-header">
-            <div class="result-title">
-                <span class="result-icon">{{ result.icon }}</span>
-                <span class="result-name">{{ result.type_name }}</span>
-            </div>
-            <span class="result-badge badge-{{ result.test_type }}">
-                {% if result.test_type == 'start' %}Входной
-                {% elif result.test_type == 'final' %}Итоговый
-                {% else %}Тест учителя{% endif %}
-            </span>
-        </div>
-        <div class="result-card-body">
-            <div class="result-stats">
-                <div class="result-stat">
-                    <div class="result-stat-value">{{ result.score }}/{{ result.total_questions }}</div>
-                    <div class="result-stat-label">Правильных</div>
-                </div>
-                <div class="result-stat">
-                    <div class="result-stat-value">{{ result.percent|floatformat:1 }}%</div>
-                    <div class="result-stat-label">Процент</div>
-                </div>
-            </div>
-            <div class="result-grade grade-{% if result.grade %}{{ result.grade }}{% else %}pending{% endif %}">
-                {{ result.grade_display }}
-            </div>
-        </div>
-        <div class="result-date">
-            📅 {{ result.date_completed|date:"d.m.Y H:i" }}
-            {% if result.graded_at %}
-                • ✅ Проверено: {{ result.graded_at|date:"d.m.Y H:i" }}
-            {% endif %}
-        </div>
+<div class="results-container">
+    <div class="results-counter" id="resultsCounter">
+        Показано: <span id="visibleCount">0</span> из <span id="totalCount">{{ test_results|length }}</span>
     </div>
-    {% endfor %}
+    <div class="results-list" id="results-list">
+        {% for result in test_results %}
+        <div class="result-card"
+             data-test-type="{{ result.test_type }}"
+             data-graded="{% if result.grade %}graded{% else %}pending{% endif %}"
+             data-grade-value="{{ result.grade|default:'pending' }}"
+             onclick="window.location.href='{{ result.detail_url }}?from=results'">
+            <div class="result-card-header">
+                <div class="result-title">
+                    <span class="result-icon">{{ result.icon }}</span>
+                    <span class="result-name">{{ result.type_name }}</span>
+                </div>
+                <span class="result-badge badge-{{ result.test_type }}">
+                    {% if result.test_type == 'start' %}Входной
+                    {% elif result.test_type == 'final' %}Итоговый
+                    {% else %}Тест учителя{% endif %}
+                </span>
+            </div>
+            <div class="result-card-body">
+                <div class="result-stats">
+                    <div class="result-stat">
+                        <div class="result-stat-value">{{ result.score }}/{{ result.total_questions }}</div>
+                        <div class="result-stat-label">Правильных</div>
+                    </div>
+                    <div class="result-stat">
+                        <div class="result-stat-value">{{ result.percent|floatformat:1 }}%</div>
+                        <div class="result-stat-label">Процент</div>
+                    </div>
+                </div>
+                <div class="result-grade grade-{% if result.grade %}{{ result.grade }}{% else %}pending{% endif %}">
+                    {{ result.grade_display }}
+                </div>
+            </div>
+            <div class="result-date">
+                📅 {{ result.date_completed|date:"d.m.Y H:i" }}
+                {% if result.graded_at %}
+                    • ✅ Проверено: {{ result.graded_at|date:"d.m.Y H:i" }}
+                {% else %}
+                    • ⏳ Ожидает проверки
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 {% else %}
 <div class="empty-state">
@@ -433,33 +539,98 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const filterBtns = document.querySelectorAll('.filter-btn');
+    const typeFilterBtns = document.querySelectorAll('.filter-btn[data-filter]');
+    const statusFilterBtns = document.querySelectorAll('.status-filter');
     const resultCards = document.querySelectorAll('.result-card');
+    const visibleCountSpan = document.getElementById('visibleCount');
+    const totalCount = resultCards.length;
 
-    function filterCards() {
-        const activeBtn = document.querySelector('.filter-btn.active');
-        if (!activeBtn) return;
-
-        const filterValue = activeBtn.getAttribute('data-filter');
-
-        resultCards.forEach(card => {
-            if (filterValue === 'all') {
-                card.style.display = '';
-            } else {
-                const testType = card.getAttribute('data-test-type');
-                if (testType === filterValue) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            }
-        });
+    if (visibleCountSpan) {
+        document.getElementById('totalCount').innerText = totalCount;
     }
 
-    filterBtns.forEach(btn => {
+    function filterCards() {
+        // Получаем активный фильтр по типу
+        const activeTypeBtn = document.querySelector('.filter-btn[data-filter].active');
+        const typeFilterValue = activeTypeBtn ? activeTypeBtn.getAttribute('data-filter') : 'all';
+
+        // Получаем активный фильтр по статусу
+        const activeStatusBtn = document.querySelector('.status-filter.active');
+        const statusFilterValue = activeStatusBtn ? activeStatusBtn.getAttribute('data-status') : 'all';
+
+        let visibleCount = 0;
+
+        resultCards.forEach(card => {
+            let showByType = true;
+            let showByStatus = true;
+
+            // Фильтр по типу
+            if (typeFilterValue !== 'all') {
+                const testType = card.getAttribute('data-test-type');
+                showByType = (testType === typeFilterValue);
+            }
+
+            // Фильтр по статусу
+            if (statusFilterValue !== 'all') {
+                const gradedStatus = card.getAttribute('data-graded');
+                showByStatus = (gradedStatus === statusFilterValue);
+            }
+
+            if (showByType && showByStatus) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Обновляем счетчик
+        if (visibleCountSpan) {
+            visibleCountSpan.innerText = visibleCount;
+        }
+
+        // Показываем сообщение, если нет результатов
+        const resultsList = document.getElementById('results-list');
+        const emptyFilterMessage = document.getElementById('emptyFilterMessage');
+
+        if (visibleCount === 0) {
+            if (!emptyFilterMessage) {
+                const message = document.createElement('div');
+                message.id = 'emptyFilterMessage';
+                message.className = 'empty-state';
+                message.style.padding = '40px';
+                message.innerHTML = `
+                    <div class="empty-icon">🔍</div>
+                    <h3>Нет результатов</h3>
+                    <p>По выбранным фильтрам нет результатов. Попробуйте изменить параметры фильтрации.</p>
+                `;
+                resultsList.parentNode.appendChild(message);
+            }
+        } else {
+            const existingMessage = document.getElementById('emptyFilterMessage');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+        }
+    }
+
+    // Обработчики для фильтров по типу
+    typeFilterBtns.forEach(btn => {
         btn.addEventListener('click', function() {
-            // Убираем активный класс со всех кнопок
-            filterBtns.forEach(b => b.classList.remove('active'));
+            // Убираем активный класс со всех кнопок типа
+            typeFilterBtns.forEach(b => b.classList.remove('active'));
+            // Добавляем активный класс на текущую
+            this.classList.add('active');
+            // Применяем фильтрацию
+            filterCards();
+        });
+    });
+
+    // Обработчики для фильтров по статусу
+    statusFilterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Убираем активный класс со всех кнопок статуса
+            statusFilterBtns.forEach(b => b.classList.remove('active'));
             // Добавляем активный класс на текущую
             this.classList.add('active');
             // Применяем фильтрацию

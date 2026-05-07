@@ -1,4 +1,3 @@
-<!-- result_detail.html (учительский шаблон) - нужно создать/обновить -->
 {% extends 'teacher/base_teacher.html' %}
 {% load tz %}
 {% load test_extras %}
@@ -29,78 +28,131 @@
 
 <!-- Результаты по категориям/темам -->
 {% if results_by_category %}
-<div style="margin-top: 20px; margin-bottom: 25px; border: 1px solid #ddd; padding: 15px; border-radius: 8px; background-color: #f9f9f9;">
+<div class="categories-stats">
     <h3>📈 Результаты по темам:</h3>
-    <ul style="list-style: none; padding-left: 0;">
+    <div class="categories-grid">
         {% for key, val in results_by_category.items %}
-            <li style="margin-bottom: 10px; font-size: 1.1em;">
-                <strong>{{ val.name }}:</strong>
+            <div class="category-item">
+                <span class="category-name">{{ val.name }}:</span>
                 {% if val.total > 0 %}
-                    <span style="color: {% if val.correct == val.total %}#28a745{% elif val.correct > 0 %}#ffc107{% else %}#dc3545{% endif %}; font-weight: bold;">
+                    <span class="category-score {% if val.correct == val.total %}full{% elif val.correct > 0 %}partial{% else %}none{% endif %}">
                         {{ val.correct }}
                     </span>
-                    из {{ val.total }}
-                    ({% widthratio val.correct val.total 100 %}%)
+                    <span class="category-total">из {{ val.total }}</span>
+                    <span class="category-percent">({% widthratio val.correct val.total 100 %}%)</span>
                 {% else %}
-                    <span style="color: #6c757d;">Нет вопросов</span>
+                    <span class="category-score none">Нет вопросов</span>
                 {% endif %}
-            </li>
+            </div>
         {% endfor %}
-    </ul>
+    </div>
 </div>
 {% endif %}
 
 <h2>📋 Детальные ответы студента</h2>
 <div class="answers-grid">
     {% for a in answers %}
-        <div class="card">
-            <p><strong>Вопрос №{{ forloop.counter }}</strong></p>
+        <div class="answer-card {% if a.is_correct %}correct{% else %}incorrect{% endif %}">
+            <div class="answer-header">
+                <span class="question-num">Вопрос №{{ forloop.counter }}</span>
+                {% if a.is_correct %}
+                    <span class="status-badge correct">✅ Верно</span>
+                {% else %}
+                    <span class="status-badge incorrect">❌ Неверно</span>
+                {% endif %}
+            </div>
             {% if a.question_text %}
-                <p><strong>Вопрос:</strong> {{ a.question_text }}</p>
+                <div class="question-text">
+                    <strong>Вопрос:</strong> {{ a.question_text }}
+                </div>
             {% endif %}
-
-            <!-- ИСПРАВЛЕНО: для учителя показывает "Ответ студента" -->
-            {% if a.user_answer %}
-                <p>
+            <div class="answer-details">
+                <div class="user-answer">
                     <strong>Ответ студента:</strong>
-                    <span class="answer-cyrillic">{{ a.user_answer|to_cyrillic_letter }}</span>
+                    <span class="answer-cyrillic">{{ a.user_answer|to_cyrillic_letter|default:"—" }}</span>
                     {% if a.user_answer_text %}
                         - {{ a.user_answer_text }}
                     {% endif %}
-                </p>
-                <p>
+                </div>
+                <div class="correct-answer">
                     <strong>Правильный ответ:</strong>
                     <span class="answer-cyrillic">{{ a.correct_answer|to_cyrillic_letter }}</span>
                     {% if a.correct_answer_text %}
                         - {{ a.correct_answer_text }}
                     {% endif %}
-                </p>
-                {% if not a.is_correct %}
-                    <p class="text-muted small">Правильный ответ показан для проверки.</p>
+                </div>
+                {% if not a.user_answer %}
+                    <div class="no-answer-warning">
+                        ⚠️ Ученик не выбрал ответ на этот вопрос
+                    </div>
                 {% endif %}
-            {% else %}
-                <p><strong>Ответ студента:</strong> <span class="text-warning">❌ Ученик не ответил на этот вопрос </span></p>
-                <p class="text-muted small">Студент не выбрал ответ на этот вопрос.</p>
-            {% endif %}
-
-            {% if a.is_correct %}
-                <p class="ok"><strong>✅ Верно</strong></p>
-            {% else %}
-                <p class="no"><strong> Неверно</strong></p>
-            {% endif %}
+                {% if not a.is_correct and a.user_answer %}
+                    <div class="explanation-hint">
+                        💡 Правильный ответ показан для проверки.
+                    </div>
+                {% endif %}
+            </div>
         </div>
     {% empty %}
-        <p>Нет сохранённых ответов для этой попытки.</p>
+        <div class="empty-answers">
+            <p>❌ Нет сохранённых ответов для этой попытки.</p>
+        </div>
     {% endfor %}
 </div>
 
-<hr style="margin: 30px 0;">
+<!-- Форма выставления оценки - теперь внизу страницы -->
+<div class="grade-form-container">
+    <div class="grade-form-header">
+        <h2>🎯 Выставить оценку</h2>
+        {% if result.grade %}
+            <div class="current-grade-badge">
+                ⭐ Текущая оценка: <strong>{{ result.get_grade_display }}</strong>
+            </div>
+        {% endif %}
+    </div>
 
-<div style="display: flex; gap: 15px; flex-wrap: wrap;">
-    <a href="{% url 'student_results' %}" class="btn" style="background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-        📊 Назад к результатам учеников
+    <form method="post" id="gradeForm" class="grade-form">
+        {% csrf_token %}
+
+        <div class="form-row">
+            <div class="form-group grade-group">
+                <label for="{{ form.grade.id_for_label }}">
+                    <span class="label-icon">📝</span> Оценка:
+                </label>
+                {{ form.grade }}
+                {% if form.grade.errors %}
+                    <div class="form-error">{{ form.grade.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group comment-group">
+                <label for="{{ form.teacher_comment.id_for_label }}">
+                    <span class="label-icon">💬</span> Комментарий учителя:
+                </label>
+                {{ form.teacher_comment }}
+                {% if form.teacher_comment.errors %}
+                    <div class="form-error">{{ form.teacher_comment.errors }}</div>
+                {% endif %}
+                <small class="form-hint">Необязательное поле. Здесь можно указать замечания, рекомендации или похвалу.</small>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="submitGradeBtn">
+                💾 Сохранить оценку
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="back-button">
+    <a href="{% url 'student_results' %}" class="btn btn-secondary">
+        ← Назад к результатам учеников
     </a>
 </div>
+
+<!-- Контейнер для уведомлений -->
+<div id="toastContainer"></div>
 
 <style>
     .result-header {
@@ -114,6 +166,11 @@
     .result-header h1 {
         margin: 0 0 15px 0;
         font-size: 28px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
     }
     .result-meta {
         display: flex;
@@ -134,35 +191,344 @@
     .percent-average { color: #f59e0b; font-weight: bold; }
     .percent-poor { color: #ef4444; font-weight: bold; }
 
+    /* Категории */
+    .categories-stats {
+        background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 25px;
+        border: 1px solid #e0e7ff;
+    }
+    .categories-stats h3 {
+        margin: 0 0 15px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .categories-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .category-item {
+        background: white;
+        padding: 8px 16px;
+        border-radius: 30px;
+        font-size: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .category-name {
+        font-weight: 600;
+        color: #475569;
+    }
+    .category-score {
+        font-weight: 700;
+        margin-left: 8px;
+    }
+    .category-score.full { color: #059669; }
+    .category-score.partial { color: #f59e0b; }
+    .category-score.none { color: #ef4444; }
+    .category-total { color: #64748b; }
+    .category-percent { color: #94a3b8; font-size: 12px; }
+
+    /* Форма оценки - новая версия */
+    .grade-form-container {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 20px;
+        padding: 28px 32px;
+        margin: 30px 0;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    .grade-form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .grade-form-header h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .current-grade-badge {
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+        padding: 8px 18px;
+        border-radius: 40px;
+        font-size: 14px;
+        color: #4f46e5;
+        font-weight: 500;
+    }
+    .current-grade-badge strong {
+        font-weight: 700;
+        font-size: 16px;
+    }
+    .form-row {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    .grade-form .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    .grade-group {
+        flex: 0.4;
+        min-width: 180px;
+    }
+    .comment-group {
+        flex: 1;
+    }
+    .grade-form label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #334155;
+        font-size: 14px;
+    }
+    .label-icon {
+        font-size: 16px;
+    }
+    .grade-form select,
+    .grade-form textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        font-size: 14px;
+        transition: all 0.2s;
+        background: white;
+        font-family: inherit;
+    }
+    .grade-form select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 20px;
+    }
+    .grade-form select:focus,
+    .grade-form textarea:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    .grade-form textarea {
+        resize: vertical;
+        min-height: 85px;
+    }
+    .form-hint {
+        display: block;
+        margin-top: 8px;
+        font-size: 12px;
+        color: #94a3b8;
+    }
+    .form-error {
+        color: #ef4444;
+        font-size: 12px;
+        margin-top: 6px;
+    }
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 8px;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+        padding: 12px 32px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+    }
+
+    /* Ответы */
+    .answers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+    }
+    .answer-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        transition: all 0.3s;
+        border-left: 4px solid;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    .answer-card.correct {
+        border-left-color: #10b981;
+    }
+    .answer-card.incorrect {
+        border-left-color: #ef4444;
+    }
+    .answer-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .answer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .question-num {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 15px;
+    }
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .status-badge.correct {
+        background: #d1fae5;
+        color: #059669;
+    }
+    .status-badge.incorrect {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    .question-text {
+        margin-bottom: 12px;
+        font-size: 14px;
+        color: #334155;
+        line-height: 1.5;
+    }
+    .answer-details {
+        font-size: 13px;
+    }
+    .user-answer, .correct-answer {
+        margin-bottom: 8px;
+        padding: 8px;
+        border-radius: 10px;
+    }
+    .user-answer {
+        background: #f8fafc;
+    }
+    .correct-answer {
+        background: #ecfdf5;
+    }
     .answer-cyrillic {
         display: inline-block;
         font-weight: bold;
         min-width: 30px;
         padding: 2px 8px;
-        background: #f0f0f0;
-        border-radius: 4px;
+        background: #e2e8f0;
+        border-radius: 6px;
         text-align: center;
     }
-
-    .answers-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 25px;
-        margin: 30px 0;
+    .no-answer-warning {
+        margin-top: 8px;
+        padding: 8px;
+        background: #fef3c7;
+        border-radius: 8px;
+        color: #d97706;
+        font-size: 12px;
     }
-    .answers-grid .card {
-        background: white;
-        border: 1px solid rgba(99, 102, 241, 0.15);
+    .explanation-hint {
+        margin-top: 8px;
+        font-size: 11px;
+        color: #94a3b8;
+        font-style: italic;
+    }
+    .empty-answers {
+        text-align: center;
+        padding: 40px;
+        background: #f8fafc;
         border-radius: 16px;
-        padding: 20px;
-        transition: all 0.3s;
+        color: #64748b;
     }
-    .answers-grid .card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+
+    /* Кнопка назад */
+    .back-button {
+        margin-top: 10px;
+        margin-bottom: 20px;
     }
-    .answers-grid .ok strong { color: #059669; }
-    .answers-grid .no strong { color: #dc2626; }
+    .btn-secondary {
+        background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+        color: white;
+        padding: 10px 24px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, #475569 0%, #334155 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(71, 85, 105, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Toast уведомления */
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 12px;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        z-index: 10000;
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+        border-left: 4px solid;
+        max-width: 350px;
+    }
+    .toast-notification.show {
+        transform: translateX(0);
+    }
+    .toast-notification.success {
+        border-left-color: #10b981;
+    }
+    .toast-notification.error {
+        border-left-color: #ef4444;
+    }
+    .toast-icon {
+        font-size: 20px;
+    }
+    .toast-message {
+        font-size: 14px;
+        color: #1e293b;
+    }
 
     @media (max-width: 768px) {
         .answers-grid {
@@ -174,6 +540,89 @@
         .result-header {
             padding: 20px;
         }
+        .grade-form-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .form-row {
+            flex-direction: column;
+            gap: 18px;
+        }
+        .grade-group, .comment-group {
+            flex: auto;
+            width: 100%;
+        }
+        .form-actions {
+            justify-content: stretch;
+        }
+        .btn-primary {
+            width: 100%;
+            justify-content: center;
+        }
+        .categories-grid {
+            flex-direction: column;
+            gap: 8px;
+        }
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .grade-form-container {
+            padding: 20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .grade-form-container {
+            padding: 16px;
+        }
+        .grade-form-header h2 {
+            font-size: 18px;
+        }
+        .current-grade-badge {
+            font-size: 12px;
+            padding: 6px 14px;
+        }
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const gradeForm = document.getElementById('gradeForm');
+
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        toast.innerHTML = `
+            <div class="toast-icon">${type === 'success' ? '✅' : '❌'}</div>
+            <div class="toast-message">${message}</div>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    if (gradeForm) {
+        gradeForm.addEventListener('submit', function(e) {
+            const gradeSelect = document.getElementById('{{ form.grade.id_for_label }}');
+            if (gradeSelect && !gradeSelect.value) {
+                e.preventDefault();
+                showToast('Пожалуйста, выберите оценку', 'error');
+                gradeSelect.focus();
+            }
+        });
+    }
+
+    // Сообщения из Django messages
+    {% if messages %}
+        {% for message in messages %}
+            showToast('{{ message|escapejs }}', '{% if message.tags == "success" %}success{% else %}error{% endif %}');
+        {% endfor %}
+    {% endif %}
+});
+</script>
 {% endblock %}

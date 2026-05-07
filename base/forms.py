@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, TestResult, LabWork, TestQuestion, TeacherTest, LabSubmission, TeacherPersonalQuestion
+from .models import UserProfile, TestResult, LabWork, TestQuestion, TeacherTest, LabSubmission, TeacherPersonalQuestion, \
+    TeacherTestQuestion
 
 
 class RegistrationForm(UserCreationForm):
@@ -326,7 +327,6 @@ class TeacherPersonalQuestionForm(forms.ModelForm):
 
 
 class TeacherTestWithPersonalForm(forms.ModelForm):
-    """Обновленная форма создания теста с личными вопросами"""
     existing_questions = forms.ModelMultipleChoiceField(
         queryset=TestQuestion.objects.all(),
         widget=forms.CheckboxSelectMultiple,
@@ -343,13 +343,28 @@ class TeacherTestWithPersonalForm(forms.ModelForm):
     class Meta:
         model = TeacherTest
         fields = ['title', 'description']
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название теста'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Описание теста'}),
-        }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         if user:
             self.fields['personal_questions'].queryset = TeacherPersonalQuestion.objects.filter(teacher=user)
+            self.fields['personal_questions'].label_from_instance = lambda obj: obj.question_text[:100]
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if commit:
+            instance.save()
+            # ОЧИЩАЕМ существующие связи
+            instance.questions.clear()
+            instance.personal_questions.clear()
+
+            # Сохраняем личные вопросы
+            if self.cleaned_data.get('personal_questions'):
+                instance.personal_questions.set(self.cleaned_data['personal_questions'])
+
+            # Сохраняем общие вопросы
+            if self.cleaned_data.get('existing_questions'):
+                for question in self.cleaned_data['existing_questions']:
+                    TeacherTestQuestion.objects.get_or_create(test=instance, question=question)
+        return instance

@@ -17,9 +17,14 @@
                 <span class="detail-badge">📚 Курс: {{ course }}</span>
             </div>
         </div>
-        <a href="{% url 'teacher_students_list' %}" class="btn-back-list">
-            ← Назад к списку
-        </a>
+        <div class="header-buttons">
+            <a href="{% url 'teacher_student_chat_detail' student.id %}" class="btn-chat">
+                💬 Перейти к диалогу со студентом
+            </a>
+            <a href="{% url 'teacher_students_list' %}" class="btn-back-list">
+                ← Назад к списку
+            </a>
+        </div>
     </div>
 
     <!-- Карточки со статистикой -->
@@ -71,7 +76,7 @@
             <span class="section-count">{{ tests_data|length }} тестов</span>
         </div>
 
-        <div class="items-grid">
+        <div class="items-grid" id="tests-grid">
             {% for item in tests_data %}
             <div class="item-card {% if item.is_completed %}completed{% else %}pending{% endif %}">
                 <div class="item-status">
@@ -121,7 +126,7 @@
             <span class="section-count">{{ labs_data|length }} работ</span>
         </div>
 
-        <div class="items-grid">
+        <div class="items-grid" id="labs-grid">
             {% for item in labs_data %}
             <div class="item-card {% if item.is_submitted %}submitted{% else %}pending{% endif %}">
                 <div class="item-status">
@@ -183,7 +188,7 @@
             <span class="section-count">{{ all_works|length }} работ</span>
         </div>
 
-        <div class="summary-table-wrapper">
+        <div class="summary-table-wrapper" id="summary-wrapper">
             <table class="summary-table">
                 <thead>
                     <tr>
@@ -235,7 +240,54 @@
 </div>
 
 <style>
-        /* Скролл для сетки тестов и лабораторных */
+    /* Хедер с двумя кнопками */
+    .header-buttons {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-chat {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        padding: 10px 20px;
+        border-radius: 12px;
+        text-decoration: none;
+        color: white;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .btn-chat:hover {
+        background: linear-gradient(135deg, #4f46e5, #4338ca);
+        transform: translateX(-2px);
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-back-list {
+        background: #e2e8f0;
+        padding: 10px 20px;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #1e293b;
+        font-size: 14px;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-back-list:hover {
+        background: #cbd5e1;
+        transform: translateX(-4px);
+        color: #1e293b;
+    }
+
+    /* Скролл для сетки тестов и лабораторных - общие стили */
     .items-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -243,9 +295,28 @@
     }
 
     .items-grid.has-scroll {
-        max-height: 450px;
+        max-height: 600px;
         overflow-y: auto;
-        padding-right: 8px;
+        padding-right: 12px;
+    }
+
+    /* Кастомизация скроллбара для сеток */
+    .items-grid.has-scroll::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .items-grid.has-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .items-grid.has-scroll::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+        border-radius: 10px;
+    }
+
+    .items-grid.has-scroll::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #94a3b8, #64748b);
     }
 
     /* Скролл для сводной таблицы */
@@ -254,7 +325,7 @@
     }
 
     .summary-table-wrapper.has-scroll {
-        max-height: 400px;
+        max-height: 500px;
         overflow-y: auto;
     }
 
@@ -267,35 +338,32 @@
         box-shadow: 0 2px 0 0 #e2e8f0;
     }
 
-    /* Кастомизация скроллбара */
-    .items-grid.has-scroll::-webkit-scrollbar,
+    /* Кастомизация скроллбара для таблицы */
     .summary-table-wrapper.has-scroll::-webkit-scrollbar {
         width: 8px;
         height: 8px;
     }
 
-    .items-grid.has-scroll::-webkit-scrollbar-track,
     .summary-table-wrapper.has-scroll::-webkit-scrollbar-track {
         background: #f1f1f1;
         border-radius: 10px;
     }
 
-    .items-grid.has-scroll::-webkit-scrollbar-thumb,
     .summary-table-wrapper.has-scroll::-webkit-scrollbar-thumb {
         background: linear-gradient(135deg, #cbd5e1, #94a3b8);
         border-radius: 10px;
     }
 
-    .items-grid.has-scroll::-webkit-scrollbar-thumb:hover,
     .summary-table-wrapper.has-scroll::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(135deg, #94a3b8, #64748b);
     }
+
     .student-stats-container {
         max-width: 1400px;
         margin: 0 auto;
     }
 
-   .student-header {
+    .student-header {
         background: #f8fafc;
         border-radius: 24px;
         padding: 28px 32px;
@@ -327,7 +395,7 @@
 
     .student-info h1 {
         margin: 0 0 8px 0;
-        color: #1e293b;  /* ← черный цвет */
+        color: #1e293b;
         font-size: 28px;
     }
 
@@ -344,22 +412,6 @@
         font-size: 13px;
         color: #1e293b;
         font-weight: 500;
-    }
-
-     .btn-back-list {
-        background: #e2e8f0;
-        padding: 10px 20px;
-        border-radius: 12px;
-        text-decoration: none;
-        color: #1e293b;
-        font-size: 14px;
-        transition: all 0.2s;
-    }
-
-    .btn-back-list:hover {
-        background: #cbd5e1;
-        transform: translateX(-4px);
-        color: #1e293b;
     }
 
     /* Сетка статистики */
@@ -725,8 +777,16 @@
             justify-content: center;
         }
 
+        .header-buttons {
+            justify-content: center;
+        }
+
         .summary-table {
             min-width: 600px;
+        }
+
+        .items-grid.has-scroll {
+            max-height: 500px;
         }
     }
 </style>
@@ -745,26 +805,30 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-});
-        // Активация скролла для сетки тестов (при более чем 5 элементах)
-    const testsGrid = document.querySelector('.section-card:first-of-type .items-grid');
-    const testsItems = testsGrid ? testsGrid.querySelectorAll('.item-card').length : 0;
-    if (testsGrid && testsItems > 5) {
-        testsGrid.classList.add('has-scroll');
+
+    // Функция для применения скролла, если элементов больше 6
+    function applyScrollIfNeeded(gridId, threshold = 6) {
+        const grid = document.getElementById(gridId);
+        if (!grid) return;
+
+        const items = grid.querySelectorAll('.item-card').length;
+        if (items > threshold) {
+            grid.classList.add('has-scroll');
+        }
     }
 
-    // Активация скролла для сетки лабораторных (при более чем 5 элементах)
-    const labsGrid = document.querySelectorAll('.section-card')[1]?.querySelector('.items-grid');
-    const labsItems = labsGrid ? labsGrid.querySelectorAll('.item-card').length : 0;
-    if (labsGrid && labsItems > 5) {
-        labsGrid.classList.add('has-scroll');
-    }
+    // Применяем скролл для сетки тестов (ID = tests-grid)
+    applyScrollIfNeeded('tests-grid', 6);
 
-    // Активация скролла для сводной таблицы (при более чем 5 записях)
-    const summaryWrapper = document.querySelector('.summary-table-wrapper');
-    const summaryRows = document.querySelectorAll('.summary-row');
-    if (summaryWrapper && summaryRows.length > 5) {
+    // Применяем скролл для сетки лабораторных (ID = labs-grid)
+    applyScrollIfNeeded('labs-grid', 6);
+
+    // Активация скролла для сводной таблицы (при более чем 8 записях)
+    const summaryWrapper = document.getElementById('summary-wrapper');
+    const summaryRowsTable = document.querySelectorAll('.summary-row');
+    if (summaryWrapper && summaryRowsTable.length > 8) {
         summaryWrapper.classList.add('has-scroll');
     }
+});
 </script>
 {% endblock %}

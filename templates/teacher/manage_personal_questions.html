@@ -1,51 +1,80 @@
 {% extends 'teacher/base_teacher.html' %}
 {% block teacher_content %}
 
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <h2>📝 Мои личные вопросы</h2>
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+        <h2>📝 Мои личные вопросы</h2>
+        <p class="text-muted">Эти вопросы используются только в ваших тестах</p>
+    </div>
     <a href="{% url 'add_personal_question' %}" class="btn btn-success">➕ Добавить вопрос</a>
 </div>
 
-<p class="text-muted" style="margin-bottom: 20px;">
-    Эти вопросы используются только в ваших тестах и НЕ попадают во входное и итоговое тестирование.
-</p>
-
 {% if questions %}
-<div class="questions-list">
-    {% for question in questions %}
-    <div class="question-card" style="background: white; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid #e2e8f0;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-            <div style="flex: 1;">
-                <div style="font-weight: 700; font-size: 16px; margin-bottom: 12px; color: #1e293b;">
-                    {{ question.question_text }}
+<div class="questions-container">
+    <div class="questions-grid">
+        {% for question in questions %}
+        <div class="question-card" id="question-{{ question.id }}">
+            <div class="question-card-content">
+                <div class="question-text">
+                    {{ question.question_text|truncatechars:100 }}
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 13px; color: #475569;">
-                    <div><strong>А:</strong> {{ question.option_a|truncatechars:50 }}</div>
-                    <div><strong>Б:</strong> {{ question.option_b|truncatechars:50 }}</div>
-                    <div><strong>В:</strong> {{ question.option_c|truncatechars:50 }}</div>
-                    <div><strong>Г:</strong> {{ question.option_d|truncatechars:50 }}</div>
+                <div class="question-options">
+                    <div class="option-item">
+                        <span class="option-letter option-a">А</span>
+                        <span class="option-text">{{ question.option_a|truncatechars:35 }}</span>
+                    </div>
+                    <div class="option-item">
+                        <span class="option-letter option-b">Б</span>
+                        <span class="option-text">{{ question.option_b|truncatechars:35 }}</span>
+                    </div>
+                    <div class="option-item">
+                        <span class="option-letter option-c">В</span>
+                        <span class="option-text">{{ question.option_c|truncatechars:35 }}</span>
+                    </div>
+                    <div class="option-item">
+                        <span class="option-letter option-d">Г</span>
+                        <span class="option-text">{{ question.option_d|truncatechars:35 }}</span>
+                    </div>
                 </div>
-                <div style="margin-top: 12px;">
-                    <span class="badge" style="background: #e0e7ff; color: #4f46e5; padding: 4px 12px; border-radius: 20px; font-size: 12px;">
-                        ✅ Правильный: {{ question.get_correct_option_display }}
+                <div class="question-meta">
+                    <h6>Правильный ответ: </h6>
+                    <span class="badge-correct">
+                        ✅ {{ question.get_correct_option_display }}
                     </span>
                     {% if question.category %}
-                    <span class="badge" style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 12px;">
-                        📁 {{ question.category }}
+                    <span class="badge-category">
+                        📁 {{ question.category|truncatechars:15 }}
                     </span>
                     {% endif %}
+                    <span class="badge-date">
+                        📅 {{ question.created_at|date:"d.m.Y" }}
+                    </span>
                 </div>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <a href="{% url 'edit_personal_question' question.id %}" class="btn btn-sm btn-primary">✏️</a>
-                <button onclick="deleteQuestion({{ question.id }}, '{{ question.question_text|escapejs }}')" class="btn btn-sm btn-danger">🗑️</button>
+            <div class="question-card-actions">
+                <a href="{% url 'edit_personal_question' question.id %}" class="btn-edit" title="Редактировать вопрос">✏️</a>
+                <button onclick="deletePersonalQuestion({{ question.id }}, '{{ question.question_text|escapejs }}')" class="btn-delete" title="Удалить вопрос">🗑️</button>
             </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
+
+<!-- Счетчик и статистика -->
+<div class="questions-stats">
+    <span class="stats-count">📊 Всего вопросов: {{ questions|length }}</span>
+    <div class="stats-categories">
+        <span>🏷️ Категории:</span>
+        {% for cat in questions %}
+            {% if cat.category %}
+                <span class="stats-category">{{ cat.category|truncatechars:20 }}</span>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
 {% else %}
-<div class="empty-state" style="text-align: center; padding: 60px; background: #f8fafc; border-radius: 20px;">
+<div class="empty-state" style="text-align: center; padding: 40px; background: #f8fafc; border-radius: 20px;">
     <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
     <h3>У вас пока нет личных вопросов</h3>
     <p style="color: #64748b;">Создайте свой первый вопрос, который будете использовать в своих тестах.</p>
@@ -53,31 +82,472 @@
 </div>
 {% endif %}
 
+<style>
+/* Контейнер с прокруткой */
+.questions-container {
+    max-height: 550px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-bottom: 20px;
+    border-radius: 16px;
+    padding-right: 6px;
+}
+
+/* Кастомный скроллбар */
+.questions-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.questions-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.questions-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+    border-radius: 10px;
+}
+
+.questions-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+}
+
+/* Сетка карточек - несколько по горизонтали */
+.questions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    padding: 4px;
+}
+
+/* Карточка вопроса - компактная */
+.question-card {
+    background: white;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.question-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+}
+
+/* Контент карточки */
+.question-card-content {
+    padding: 14px;
+    flex: 1;
+}
+
+/* Текст вопроса - уменьшенный */
+.question-text {
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #1e293b;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 36px;
+}
+
+/* Варианты ответов - компактные */
+.question-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.option-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.option-a {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.option-b {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.option-c {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.option-d {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.option-text {
+    color: #475569;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Мета-информация - компактная */
+.question-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.badge-correct,
+.badge-category,
+.badge-date {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.badge-correct {
+    background: #e0e7ff;
+    color: #4f46e5;
+}
+
+.badge-category {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-date {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* Кнопки действий - в правом верхнем углу */
+.question-card-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.question-card:hover .question-card-actions {
+    opacity: 1;
+}
+
+.btn-edit, .btn-delete {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-edit {
+    background: #e0e7ff;
+    color: #4f46e5;
+}
+
+.btn-edit:hover {
+    background: #c7d2fe;
+    transform: scale(1.05);
+}
+
+.btn-delete {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.btn-delete:hover {
+    background: #fecaca;
+    transform: scale(1.05);
+}
+
+/* Статистика внизу */
+.questions-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    font-size: 13px;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.stats-count {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.stats-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.stats-category {
+    display: inline-block;
+    background: #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    color: #475569;
+}
+
+/* Toast уведомления */
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    z-index: 10000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    border-left: 4px solid;
+}
+
+.toast-notification.show {
+    transform: translateX(0);
+}
+
+.toast-notification.success {
+    border-left-color: #10b981;
+}
+
+.toast-notification.error {
+    border-left-color: #ef4444;
+}
+
+.toast-icon {
+    font-size: 20px;
+}
+
+.toast-message {
+    font-size: 14px;
+    color: #1e293b;
+}
+
+/* Пустое состояние */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f8fafc;
+    border-radius: 20px;
+    border: 1px dashed #cbd5e1;
+}
+
+.empty-state h3 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    color: #1e293b;
+}
+
+.empty-state p {
+    margin: 0;
+    color: #64748b;
+}
+
+/* Адаптивность */
+@media (max-width: 900px) {
+    .questions-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .questions-container {
+        max-height: 480px;
+    }
+
+    .questions-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+    }
+
+    .questions-stats {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .stats-categories {
+        flex-wrap: wrap;
+    }
+
+    .question-card-actions {
+        opacity: 1;
+        top: 6px;
+        right: 6px;
+    }
+
+    .btn-edit, .btn-delete {
+        width: 26px;
+        height: 26px;
+        font-size: 12px;
+    }
+
+    .question-text {
+        font-size: 12px;
+        -webkit-line-clamp: 3;
+        min-height: 46px;
+    }
+
+    .option-text {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 640px) {
+    .questions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .questions-container {
+        max-height: 450px;
+    }
+
+    .question-card-content {
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .questions-container {
+        max-height: 400px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .page-header .btn {
+        text-align: center;
+        justify-content: center;
+    }
+}
+</style>
+
 <script>
-function deleteQuestion(questionId, questionText) {
-    if (confirm(`Вы уверены, что хотите удалить вопрос "${questionText}"?`)) {
-        fetch(`/teacher/personal-questions/delete/${questionId}/`, {
+function deletePersonalQuestion(questionId, questionText) {
+    if (confirm(`Вы уверены, что хотите удалить вопрос "${questionText}"?\n\nВНИМАНИЕ: Вопрос будет удалён из всех тестов, где он используется!`)) {
+        fetch(`/teacher/personal-questions/delete-ajax/${questionId}/`, {
             method: 'POST',
             headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
-        }).then(response => {
-            if (response.ok) {
-                location.reload();
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const questionCard = document.getElementById(`question-${questionId}`);
+                if (questionCard) {
+                    questionCard.remove();
+                }
+                showToast('success', data.message);
+
+                // Если вопросов не осталось, перезагружаем страницу
+                const remainingQuestions = document.querySelectorAll('.question-card').length;
+                if (remainingQuestions === 0) {
+                    location.reload();
+                }
             } else {
-                alert('Ошибка при удалении');
+                showToast('error', data.error || 'Ошибка при удалении');
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('error', 'Произошла ошибка при удалении');
         });
     }
 }
-</script>
 
-<style>
-.btn-sm { padding: 6px 12px; font-size: 14px; border-radius: 8px; text-decoration: none; }
-.btn-primary { background: #6366f1; color: white; }
-.btn-danger { background: #ef4444; color: white; border: none; cursor: pointer; }
-.question-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: all 0.2s; }
-</style>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showToast(type, message) {
+    // Удаляем существующие тосты
+    const existingToasts = document.querySelectorAll('.toast-notification');
+    existingToasts.forEach(toast => toast.remove());
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">${type === 'success' ? '✅' : '❌'}</div>
+        <div class="toast-message">${message}</div>
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+</script>
 
 {% endblock %}

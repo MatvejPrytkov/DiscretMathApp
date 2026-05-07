@@ -81,6 +81,9 @@ urlpatterns = [
     path('teacher/tests/<int:test_id>/', views.teacher_test_detail, name='teacher_test_detail'),
     path('teacher/tests/delete/<int:test_id>/', views.delete_teacher_test, name='delete_teacher_test'),
     path('teacher/tests/<int:test_id>/assign/', views.edit_test_assignment, name='edit_test_assignment'),
+path('teacher/tests/edit-question/<int:test_id>/', views.edit_question_in_test, name='edit_question_in_test'),
+    path('teacher/tests/add-question-to-test/<int:test_id>/', views.add_question_to_test, name='add_question_to_test'),
+    path('teacher/tests/remove-question/<int:test_id>/', views.remove_question_from_test, name='remove_question_from_test'),
 
     # ==================== УВЕДОМЛЕНИЯ (ОБЩИЕ) ====================
     path('notifications/get/', views.get_notifications, name='get_notifications'),
@@ -103,6 +106,8 @@ urlpatterns = [
          name='delete_personal_question'),
     path('teacher/personal-questions/edit/<int:question_id>/', views.edit_personal_question,
          name='edit_personal_question'),
+    path('teacher/questions/delete-ajax/<int:question_id>/', views.delete_question_ajax, name='delete_question_ajax'),
+path('teacher/personal-questions/delete-ajax/<int:question_id>/', views.delete_personal_question_ajax, name='delete_personal_question_ajax'),
 ]
 
 if settings.DEBUG:

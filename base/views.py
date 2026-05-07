@@ -9,7 +9,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib import messages
 from .forms import RegistrationForm, GradeTestForm, ProfileEditForm
-from .models import LabWork, LabSubmission, TestResult, TestKindCategory, TestKindConfig, Notification, TeacherPersonalQuestion
+from .models import LabWork, LabSubmission, TestResult, TestKindCategory, TestKindConfig, Notification, TeacherPersonalQuestion, TeacherTestPersonalQuestion
 from django.contrib.auth.forms import AuthenticationForm
 import pandas as pd
 import random
@@ -1651,34 +1651,111 @@ def create_teacher_test(request):
         test_form = TeacherTestWithPersonalForm(request.POST, user=request.user)
 
         if test_form.is_valid():
+            # Получаем выбранные вопросы из разных источников
+            selected_question_ids = request.POST.getlist('existing_questions')
+            selected_personal_ids = request.POST.getlist('personal_questions')
+
+            # Считаем количество динамических вопросов
+            dynamic_questions_count = 0
+            i = 0
+            dynamic_questions_data = []
+
+            while f'question_form-{i}-question_text' in request.POST:
+                question_text = request.POST.get(f'question_form-{i}-question_text', '').strip()
+                if question_text:
+                    dynamic_questions_count += 1
+                    # Сохраняем данные динамического вопроса для последующего создания
+                    dynamic_questions_data.append({
+                        'question_text': question_text,
+                        'option_a': request.POST.get(f'question_form-{i}-option1', ''),
+                        'option_b': request.POST.get(f'question_form-{i}-option2', ''),
+                        'option_c': request.POST.get(f'question_form-{i}-option3', ''),
+                        'option_d': request.POST.get(f'question_form-{i}-option4', ''),
+                        'correct_option': request.POST.get(f'question_form-{i}-correct_answer', ''),
+                        'category': request.POST.get(f'question_form-{i}-category', ''),
+                    })
+                i += 1
+
+            total_questions_count = len(selected_question_ids) + len(selected_personal_ids) + dynamic_questions_count
+
+            # Проверяем, что есть хотя бы один вопрос
+            if total_questions_count == 0:
+                messages.error(request, 'Невозможно создать тест без вопросов! Добавьте хотя бы один вопрос.')
+                context = {
+                    'test_form': test_form,
+                    'all_questions': TestQuestion.objects.all(),
+                    'personal_questions': TeacherPersonalQuestion.objects.filter(teacher=request.user),
+                    'categories': TestCategory.objects.all(),
+                    'students': students,
+                    'unique_groups': unique_groups,
+                    'unique_courses': unique_courses,
+                }
+                return render(request, 'teacher/create_teacher_test.html', context)
+
+            # Создаем тест
             test = test_form.save(commit=False)
             test.teacher = request.user
             test.save()
 
-            # Добавляем вопросы из общей базы
-            selected_question_ids = request.POST.getlist('existing_questions')
-            selected_questions = TestQuestion.objects.filter(id__in=selected_question_ids)
-            for question in selected_questions:
-                TeacherTestQuestion.objects.create(test=test, question=question, order=0)
+            # 1. Добавляем вопросы из общей базы
+            if selected_question_ids:
+                selected_questions = TestQuestion.objects.filter(id__in=selected_question_ids)
+                for order, question in enumerate(selected_questions):
+                    TeacherTestQuestion.objects.create(test=test, question=question, order=order)
 
-            # Добавляем личные вопросы
-            selected_personal_ids = request.POST.getlist('personal_questions')
-            selected_personal = TeacherPersonalQuestion.objects.filter(
-                id__in=selected_personal_ids,
-                teacher=request.user
-            )
-            for question in selected_personal:
-                TeacherTestPersonalQuestion.objects.create(test=test, question=question, order=0)
+            # 2. Добавляем существующие личные вопросы учителя
+            if selected_personal_ids:
+                selected_personal = TeacherPersonalQuestion.objects.filter(
+                    id__in=selected_personal_ids,
+                    teacher=request.user
+                )
+                for order, question in enumerate(selected_personal):
+                    TeacherTestPersonalQuestion.objects.create(test=test, question=question, order=order)
 
-            # Обработка выбранных учеников
+            # 3. Добавляем НОВЫЕ вопросы - теперь они создаются как ЛИЧНЫЕ вопросы учителя
+            for idx, q_data in enumerate(dynamic_questions_data):
+                # Получаем категорию (если выбрана)
+                category_text = q_data['category']
+                if category_text:
+                    try:
+                        category_obj = TestCategory.objects.get(id=category_text)
+                        category_name = category_obj.name
+                    except (TestCategory.DoesNotExist, ValueError):
+                        category_name = ""
+                else:
+                    category_name = ""
+
+                # Преобразуем правильный ответ из 1/2/3/4 в a/b/c/d
+                correct_option_raw = q_data['correct_option']
+                correct_option_map = {'1': 'a', '2': 'b', '3': 'c', '4': 'd'}
+                correct_option = correct_option_map.get(correct_option_raw, 'a')
+
+                # СОЗДАЕМ ЛИЧНЫЙ ВОПРОС УЧИТЕЛЯ (не в общую базу)
+                personal_question = TeacherPersonalQuestion.objects.create(
+                    teacher=request.user,
+                    question_text=q_data['question_text'],
+                    option_a=q_data['option_a'],
+                    option_b=q_data['option_b'],
+                    option_c=q_data['option_c'],
+                    option_d=q_data['option_d'],
+                    correct_option=correct_option,
+                    category=category_name if category_name else None
+                )
+
+                # Связываем личный вопрос с тестом
+                TeacherTestPersonalQuestion.objects.create(test=test, question=personal_question, order=idx)
+
+            # 4. Назначаем тест ученикам
             selected_student_ids = request.POST.getlist('selected_students')
             if selected_student_ids:
                 selected_students = User.objects.filter(
                     id__in=selected_student_ids,
-                    profile__teacher=request.user
+                    profile__teacher=request.user,
+                    profile__role='student'
                 )
                 test.assigned_to.set(selected_students)
             else:
+                # Если ни один ученик не выбран, назначаем всем
                 all_students = User.objects.filter(
                     profile__teacher=request.user,
                     profile__role='student'
@@ -1687,11 +1764,22 @@ def create_teacher_test(request):
                 if all_students.exists():
                     messages.info(request, 'Тест назначен всем вашим ученикам')
 
+            # 5. Отправляем уведомления ученикам
             for student in test.assigned_to.all():
                 notify_student_about_new_test(request.user, student, test, request=request)
 
-            messages.success(request, f'Тест "{test.title}" успешно создан!')
+            messages.success(
+                request,
+                f'Тест "{test.title}" успешно создан с {total_questions_count} вопросами и назначен {test.assigned_to.count()} ученикам! '
+                f'Новые вопросы сохранены в ваши личные вопросы.'
+            )
             return redirect('teacher_manage_tests')
+        else:
+            # Если форма не валидна, выводим ошибки
+            for field, errors in test_form.errors.items():
+                for error in errors:
+                    messages.error(request, f'Ошибка в поле {field}: {error}')
+
     else:
         test_form = TeacherTestWithPersonalForm(user=request.user)
 
@@ -1714,7 +1802,7 @@ def create_teacher_test(request):
 @teacher_required
 def teacher_manage_tests(request):
     """Управление тестами от учителя"""
-    tests = TeacherTest.objects.filter(teacher=request.user).order_by('-created_at')
+    tests = TeacherTest.objects.filter(teacher=request.user).prefetch_related('questions', 'personal_questions').order_by('-created_at')
     return render(request, 'teacher/manage_tests.html', {'tests': tests})
 
 
@@ -1723,12 +1811,30 @@ def teacher_manage_tests(request):
 def teacher_test_detail(request, test_id):
     """Детали теста от учителя"""
     try:
+        # Получаем тест
         test = TeacherTest.objects.get(id=test_id, teacher=request.user)
+
+        # Явно загружаем вопросы
+        test_questions = list(test.questions.all())
+        test_personal_questions = list(test.personal_questions.all())
+
+        # Для отладки (можно удалить после проверки)
+        print(f"=== teacher_test_detail ===")
+        print(f"Test: {test.title}")
+        print(f"Common questions: {len(test_questions)}")
+        print(f"Personal questions: {len(test_personal_questions)}")
+        print(f"Total: {len(test_questions) + len(test_personal_questions)}")
+
     except TeacherTest.DoesNotExist:
         messages.error(request, "Тест не найден или у вас нет доступа к нему")
         return redirect('teacher_manage_tests')
 
-    return render(request, 'teacher/test_detail.html', {'test': test})
+    return render(request, 'teacher/test_detail.html', {
+        'test': test,
+        'test_questions': test_questions,
+        'test_personal_questions': test_personal_questions,
+        'total_questions': len(test_questions) + len(test_personal_questions)
+    })
 
 @login_required
 @teacher_required
@@ -1784,7 +1890,7 @@ def student_teacher_tests(request):
     for test in tests:
         test.is_completed = test.id in completed_test_ids
         test.result = results_map.get(test.id)
-
+        test.total_questions = test.questions.count() + test.personal_questions.count()
     return render(request, 'student/teacher_tests.html', {'tests': tests})
 
 
@@ -2912,3 +3018,221 @@ def edit_personal_question(request, question_id):
         form = TeacherPersonalQuestionForm(instance=question)
 
     return render(request, 'teacher/edit_personal_question.html', {'form': form, 'question': question})
+
+
+# views.py - добавьте новую функцию
+
+@login_required
+@teacher_required
+@require_http_methods(["POST"])
+def delete_question_ajax(request, question_id):
+    """AJAX удаление вопроса"""
+    from django.db import transaction
+    from .models import TestQuestion, TeacherTestQuestion, TeacherTestPersonalQuestion
+
+    try:
+        question = get_object_or_404(TestQuestion, id=question_id)
+
+        # Проверка прав: только создатель вопроса может его удалить
+        # Или суперпользователь
+        if question.created_by != request.user and not request.user.is_superuser:
+            return JsonResponse({
+                'success': False,
+                'error': 'Вы не можете удалить вопрос, созданный другим учителем'
+            }, status=403)
+
+        # Проверяем, используется ли вопрос в тестах
+        used_in_tests = TeacherTestQuestion.objects.filter(question=question).count()
+
+        with transaction.atomic():
+            # Удаляем связи с тестами
+            TeacherTestQuestion.objects.filter(question=question).delete()
+            # Удаляем сам вопрос
+            question.delete()
+
+        message = f'Вопрос успешно удалён'
+        if used_in_tests > 0:
+            message = f'Вопрос успешно удалён из {used_in_tests} тестов'
+
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'deleted_id': question_id
+        })
+
+    except TestQuestion.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Вопрос не найден'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Ошибка при удалении: {str(e)}'
+        }, status=500)
+
+
+# views.py - добавьте функцию для AJAX удаления личных вопросов
+
+@login_required
+@teacher_required
+@require_http_methods(["POST"])
+def delete_personal_question_ajax(request, question_id):
+    """AJAX удаление личного вопроса учителя"""
+    from django.db import transaction
+    from .models import TeacherPersonalQuestion, TeacherTestPersonalQuestion
+
+    try:
+        question = get_object_or_404(TeacherPersonalQuestion, id=question_id, teacher=request.user)
+
+        with transaction.atomic():
+            # Удаляем связи с тестами
+            TeacherTestPersonalQuestion.objects.filter(question=question).delete()
+            # Удаляем вопрос
+            question.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Вопрос успешно удалён',
+            'deleted_id': question_id
+        })
+
+    except TeacherPersonalQuestion.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Вопрос не найден'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Ошибка при удалении: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@teacher_required
+@require_http_methods(["POST"])
+def add_question_to_test(request, test_id):
+    """Добавление вопроса в существующий тест"""
+    import json
+    from .models import TeacherTest, TeacherTestQuestion, TeacherTestPersonalQuestion, TeacherPersonalQuestion
+
+    test = get_object_or_404(TeacherTest, id=test_id, teacher=request.user)
+
+    try:
+        data = json.loads(request.body)
+        question_text = data.get('question_text')
+        option_a = data.get('option_a')
+        option_b = data.get('option_b')
+        option_c = data.get('option_c')
+        option_d = data.get('option_d')
+        correct_option = data.get('correct_option')
+        question_type = data.get('question_type', 'personal')
+
+        if question_type == 'common':
+            # Добавляем в общую базу
+            category = TestCategory.objects.first()
+            question = TestQuestion.objects.create(
+                category=category,
+                question_text=question_text,
+                option_a=option_a,
+                option_b=option_b,
+                option_c=option_c,
+                option_d=option_d,
+                correct_option=correct_option,
+                created_by=request.user
+            )
+            TeacherTestQuestion.objects.create(test=test, question=question, order=test.questions.count())
+        else:
+            # Личный вопрос (только для этого теста)
+            question = TeacherPersonalQuestion.objects.create(
+                teacher=request.user,
+                question_text=question_text,
+                option_a=option_a,
+                option_b=option_b,
+                option_c=option_c,
+                option_d=option_d,
+                correct_option=correct_option
+            )
+            TeacherTestPersonalQuestion.objects.create(test=test, question=question,
+                                                       order=test.personal_questions.count())
+
+        return JsonResponse({'success': True, 'question_id': question.id})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@teacher_required
+@require_http_methods(["POST"])
+def edit_question_in_test(request, test_id):
+    """Редактирование вопроса в тесте"""
+    import json
+    from .models import TeacherTest, TestQuestion, TeacherPersonalQuestion, TeacherTestQuestion, \
+        TeacherTestPersonalQuestion
+
+    test = get_object_or_404(TeacherTest, id=test_id, teacher=request.user)
+
+    try:
+        data = json.loads(request.body)
+        question_id = data.get('question_id')
+        question_type = data.get('question_type')
+        question_text = data.get('question_text')
+        option_a = data.get('option_a')
+        option_b = data.get('option_b')
+        option_c = data.get('option_c')
+        option_d = data.get('option_d')
+        correct_option = data.get('correct_option')
+
+        if question_type == 'common':
+            question = get_object_or_404(TestQuestion, id=question_id)
+            # Проверка прав: только создатель вопроса может его редактировать
+            if question.created_by != request.user and not request.user.is_superuser:
+                return JsonResponse({'success': False, 'error': 'Вы не можете редактировать этот вопрос'}, status=403)
+
+            question.question_text = question_text
+            question.option_a = option_a
+            question.option_b = option_b
+            question.option_c = option_c
+            question.option_d = option_d
+            question.correct_option = correct_option
+            question.save()
+        else:
+            question = get_object_or_404(TeacherPersonalQuestion, id=question_id, teacher=request.user)
+            question.question_text = question_text
+            question.option_a = option_a
+            question.option_b = option_b
+            question.option_c = option_c
+            question.option_d = option_d
+            question.correct_option = correct_option
+            question.save()
+
+        return JsonResponse({'success': True})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+@login_required
+@teacher_required
+@require_http_methods(["POST"])
+def remove_question_from_test(request, test_id):
+    """Удаление вопроса из теста (без удаления из БД)"""
+    import json
+    from .models import TeacherTest, TeacherTestQuestion, TeacherTestPersonalQuestion
+
+    test = get_object_or_404(TeacherTest, id=test_id, teacher=request.user)
+
+    try:
+        data = json.loads(request.body)
+        question_id = data.get('question_id')
+        question_type = data.get('question_type')
+
+        if question_type == 'common':
+            TeacherTestQuestion.objects.filter(test=test, question_id=question_id).delete()
+        else:
+            TeacherTestPersonalQuestion.objects.filter(test=test, question_id=question_id).delete()
+
+        return JsonResponse({'success': True})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

@@ -212,6 +212,17 @@ class TestQuestion(models.Model):
     def __str__(self):
         return f"{self.category.name}: {self.question_text[:50]}..."
 
+    # ДОБАВЬТЕ ЭТОТ МЕТОД
+    def get_correct_option_display(self):
+        """Возвращает правильный ответ в кириллице"""
+        mapping = {
+            'a': 'А',
+            'b': 'Б',
+            'c': 'В',
+            'd': 'Г',
+        }
+        return mapping.get(self.correct_option, self.correct_option.upper())
+
 # models.py - добавьте после модели TestQuestion
 
 class TeacherPersonalQuestion(models.Model):
@@ -248,6 +259,16 @@ class TeacherPersonalQuestion(models.Model):
 
     def __str__(self):
         return f"{self.teacher.profile.full_name}: {self.question_text[:50]}..."
+
+    def get_correct_option_display(self):
+        """Возвращает правильный ответ в кириллице"""
+        mapping = {
+            'a': 'А',
+            'b': 'Б',
+            'c': 'В',
+            'd': 'Г',
+        }
+        return mapping.get(self.correct_option, self.correct_option.upper())
 class TestKindConfig(models.Model):
     """Конфигурация типов тестов (хранится в БД)"""
     TEST_KIND_CHOICES = [
@@ -452,4 +473,6 @@ def assign_tests_to_new_student(sender, instance, created, **kwargs):
 
         for test in tests:
             test.assigned_to.add(instance.user)
+            # Добавьте save() если нужно
+            test.save()
             notify_student_about_new_test(instance.teacher, instance.user, test)

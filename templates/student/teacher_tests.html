@@ -212,7 +212,7 @@
                         {% endif %}
                         <div class="test-card-info">
                             <div class="test-card-questions">
-                                {{ test.questions.count }} вопросов
+                               {{ test.questions.count|add:test.personal_questions.count }} вопросов
                             </div>
                             <div class="test-card-result">
                                 <span>{{ test.result.score }}/{{ test.result.total_questions }} ({{ test.result.percent|floatformat:0 }}%)</span>
