@@ -9,21 +9,9 @@
         background: linear-gradient(180deg, #f8fbff 0%, #f4f6fb 100%);
         border-radius: 20px;
     }
-
-    .page-title-wrap {
-        padding: 8px 4px;
-    }
-
-    .page-title {
-        font-weight: 700;
-        color: #1f2d3d;
-    }
-
-    .page-subtitle {
-        color: #6c7a89;
-        font-size: 0.98rem;
-    }
-
+    .page-title-wrap { padding: 8px 4px; }
+    .page-title { font-weight: 700; color: #1f2d3d; }
+    .page-subtitle { color: #6c7a89; font-size: 0.98rem; }
     .custom-card {
         border: none;
         border-radius: 18px;
@@ -31,32 +19,20 @@
         box-shadow: 0 10px 30px rgba(31, 45, 61, 0.08);
         background: #ffffff;
     }
-
     .custom-card-header {
         background: linear-gradient(135deg, #4f8cff 0%, #6ea8fe 100%);
         color: #fff;
         border-bottom: none;
         padding: 16px 20px;
     }
-
-    .custom-card-header h5 {
-        font-weight: 600;
-        font-size: 1.05rem;
-    }
-
-    .custom-card-body {
-        padding: 22px 20px;
-    }
-
-    .section-label,
-    .create-test-page label {
+    .custom-card-header h5 { font-weight: 600; font-size: 1.05rem; }
+    .custom-card-body { padding: 22px 20px; }
+    .section-label, .create-test-page label {
         font-weight: 600;
         color: #334155;
         margin-bottom: 8px;
         display: inline-block;
     }
-
-    /* Стили для фильтрации */
     .filter-section {
         background: #f8fafc;
         padding: 15px;
@@ -64,28 +40,23 @@
         margin-bottom: 20px;
         border: 1px solid #e2e8f0;
     }
-
     .filter-row {
         display: flex;
         flex-wrap: wrap;
         gap: 15px;
         align-items: flex-end;
     }
-
     .filter-group {
         flex: 1;
         min-width: 150px;
     }
-
     .filter-group label {
         font-size: 12px;
         margin-bottom: 4px;
         font-weight: 500;
         color: #475569;
     }
-
-    .filter-group select,
-    .filter-group input {
+    .filter-group select, .filter-group input {
         width: 100%;
         border: 1px solid #d8e1ee;
         border-radius: 10px;
@@ -93,22 +64,17 @@
         font-size: 14px;
         background-color: white;
     }
-
-    .filter-group select:focus,
-    .filter-group input:focus {
+    .filter-group select:focus, .filter-group input:focus {
         border-color: #6ea8fe;
         outline: none;
         box-shadow: 0 0 0 2px rgba(110, 168, 254, 0.2);
     }
-
-    /* Кнопки быстрого выбора */
     .quick-select-buttons {
         display: flex;
         gap: 10px;
         margin-bottom: 15px;
         flex-wrap: wrap;
     }
-
     .btn-quick-select {
         padding: 6px 14px;
         border: none;
@@ -120,45 +86,19 @@
         background: #f1f5f9;
         color: #1e293b;
     }
-
     .btn-quick-select:hover {
         background: #e2e8f0;
         transform: translateY(-1px);
     }
-
-    .btn-quick-select:first-child {
-        background: #10b981;
-        color: white;
-    }
-
-    .btn-quick-select:first-child:hover {
-        background: #059669;
-    }
-
-    .btn-quick-select:nth-child(2) {
-        background: #3b82f6;
-        color: white;
-    }
-
-    .btn-quick-select:nth-child(2):hover {
-        background: #2563eb;
-    }
-
-    .btn-quick-select:last-child {
-        background: #ef4444;
-        color: white;
-    }
-
-    .btn-quick-select:last-child:hover {
-        background: #dc2626;
-    }
-
-    .create-test-page input[type="text"],
-    .create-test-page input[type="number"],
-    .create-test-page input[type="email"],
-    .create-test-page input[type="date"],
-    .create-test-page select,
-    .create-test-page textarea {
+    .btn-quick-select:first-child { background: #10b981; color: white; }
+    .btn-quick-select:first-child:hover { background: #059669; }
+    .btn-quick-select:nth-child(2) { background: #3b82f6; color: white; }
+    .btn-quick-select:nth-child(2):hover { background: #2563eb; }
+    .btn-quick-select:last-child { background: #ef4444; color: white; }
+    .btn-quick-select:last-child:hover { background: #dc2626; }
+    .create-test-page input[type="text"], .create-test-page input[type="number"],
+    .create-test-page input[type="email"], .create-test-page input[type="date"],
+    .create-test-page select, .create-test-page textarea {
         width: 100%;
         border: 1px solid #d8e1ee;
         border-radius: 12px;
@@ -167,35 +107,25 @@
         transition: all 0.25s ease;
         box-shadow: none;
     }
-
-    .create-test-page input[type="text"]:focus,
-    .create-test-page input[type="number"]:focus,
-    .create-test-page input[type="email"]:focus,
-    .create-test-page input[type="date"]:focus,
-    .create-test-page select:focus,
-    .create-test-page textarea:focus {
+    .create-test-page input[type="text"]:focus, .create-test-page input[type="number"]:focus,
+    .create-test-page input[type="email"]:focus, .create-test-page input[type="date"]:focus,
+    .create-test-page select:focus, .create-test-page textarea:focus {
         border-color: #6ea8fe;
         background-color: #ffffff;
         box-shadow: 0 0 0 0.2rem rgba(78, 140, 255, 0.15);
         outline: none;
     }
-
-    /* Список существующих вопросов */
     .existing-questions-list {
         max-height: 400px;
         overflow-y: auto;
         padding: 8px 4px 8px 2px;
     }
-
-    /* Список учеников */
     .students-list {
         max-height: 400px;
         overflow-y: auto;
         padding: 8px 4px 8px 2px;
     }
-
-    .existing-question-item,
-    .student-item {
+    .existing-question-item, .student-item {
         display: flex;
         align-items: center;
         gap: 12px;
@@ -205,34 +135,24 @@
         background: #f9fbff;
         transition: all 0.2s ease;
     }
-
-    .existing-question-item:not(:last-child),
-    .student-item:not(:last-child) {
-        margin-bottom: 10px;
-    }
-
-    .existing-question-item:hover,
-    .student-item:hover {
+    .existing-question-item:not(:last-child), .student-item:not(:last-child) { margin-bottom: 10px; }
+    .existing-question-item:hover, .student-item:hover {
         background: #f1f6ff;
         border-color: #d8e7ff;
     }
-
     .existing-question-checkbox {
         margin-top: 4px;
         flex-shrink: 0;
         transform: scale(1.1);
         cursor: pointer;
     }
-
     .student-checkbox {
         margin-top: 4px;
         flex-shrink: 0;
         transform: scale(1.1);
         cursor: pointer;
     }
-
-    .existing-question-label,
-    .student-label {
+    .existing-question-label, .student-label {
         margin: 0;
         line-height: 1.45;
         cursor: pointer;
@@ -240,7 +160,6 @@
         word-break: break-word;
         color: #2f3b4a;
     }
-
     .question-category {
         display: inline-block;
         background: #e0e7ff;
@@ -251,7 +170,6 @@
         font-weight: 600;
         margin-right: 8px;
     }
-
     .my-question-badge {
         display: inline-block;
         background: #10b981;
@@ -262,23 +180,14 @@
         font-weight: 600;
         margin-right: 6px;
     }
-
-    .student-name {
-        display: block;
-        font-weight: 600;
-    }
-
+    .student-name { display: block; font-weight: 600; }
     .student-group {
         display: block;
         font-size: 0.9rem;
         color: #6b7280;
         margin-top: 2px;
     }
-
-    .question-actions {
-        flex-shrink: 0;
-    }
-
+    .question-actions { flex-shrink: 0; }
     .btn-delete-question-from-list {
         background: none;
         border: none;
@@ -289,14 +198,11 @@
         transition: all 0.2s;
         color: #94a3b8;
     }
-
     .btn-delete-question-from-list:hover {
         background: #fee2e2;
         color: #ef4444;
         transform: scale(1.05);
     }
-
-    /* Блоки вопросов */
     .question-block {
         background: linear-gradient(180deg, #f9fbff 0%, #f4f8ff 100%);
         border: 1px solid #e3ecf8;
@@ -307,13 +213,11 @@
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
         position: relative;
     }
-
     .question-block:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(79, 140, 255, 0.08);
         border-color: #cfe0ff;
     }
-
     .question-block-header {
         display: flex;
         align-items: center;
@@ -322,18 +226,11 @@
         padding-bottom: 10px;
         border-bottom: 1px solid #e5edf8;
     }
-
-    .question-block-header h6 {
-        font-weight: 700;
-        color: #234;
-    }
-
-    /* Кнопка удаления вопроса */
+    .question-block-header h6 { font-weight: 700; color: #234; }
     .delete-question-btn-container {
         margin-top: 15px;
         text-align: right;
     }
-
     .btn-delete-question {
         padding: 6px 12px;
         background: #fee2e2;
@@ -345,13 +242,10 @@
         cursor: pointer;
         transition: all 0.2s ease;
     }
-
     .btn-delete-question:hover {
         background: #fecaca;
         transform: translateY(-1px);
     }
-
-    /* Кнопка добавления вопроса */
     .add-question-btn {
         border: none;
         border-radius: 12px;
@@ -362,15 +256,12 @@
         transition: all 0.25s ease;
         cursor: pointer;
     }
-
     .add-question-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 18px rgba(79, 140, 255, 0.15);
         background: linear-gradient(135deg, #dfeeff 0%, #cde3ff 100%);
         color: #1d4f9c;
     }
-
-    /* Кнопка создания теста */
     .create-test-btn {
         border: none;
         border-radius: 14px;
@@ -380,80 +271,15 @@
         box-shadow: 0 10px 22px rgba(40, 199, 111, 0.22);
         transition: all 0.25s ease;
     }
-
     .create-test-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 14px 28px rgba(40, 199, 111, 0.28);
     }
-
-    /* Toast уведомления */
-    .toast-notification {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: white;
-        border-radius: 12px;
-        padding: 12px 20px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        z-index: 10000;
-        transform: translateX(400px);
-        transition: transform 0.3s ease;
-        border-left: 4px solid;
-        max-width: 350px;
-    }
-
-    .toast-notification.show {
-        transform: translateX(0);
-    }
-
-    .toast-notification.success {
-        border-left-color: #10b981;
-    }
-
-    .toast-notification.error {
-        border-left-color: #ef4444;
-    }
-
-    .toast-icon {
-        font-size: 20px;
-    }
-
-    .toast-message {
-        font-size: 14px;
-        color: #1e293b;
-    }
-
-    /* Скроллбары */
-    .existing-questions-list::-webkit-scrollbar,
-    .students-list::-webkit-scrollbar,
-    .personal-questions-list::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .existing-questions-list::-webkit-scrollbar-thumb,
-    .students-list::-webkit-scrollbar-thumb,
-    .personal-questions-list::-webkit-scrollbar-thumb {
-        background: #c8d7ee;
-        border-radius: 10px;
-    }
-
-    .existing-questions-list::-webkit-scrollbar-track,
-    .students-list::-webkit-scrollbar-track,
-    .personal-questions-list::-webkit-scrollbar-track {
-        background: #edf3fb;
-        border-radius: 10px;
-    }
-
-    /* Стили для личных вопросов */
     .personal-questions-list {
         max-height: 400px;
         overflow-y: auto;
         padding: 8px 4px 8px 2px;
     }
-
     .personal-question-item {
         display: flex;
         align-items: center;
@@ -464,12 +290,10 @@
         background: #fffbeb;
         transition: all 0.2s ease;
     }
-
     .personal-question-item:hover {
         background: #fef3c7;
         border-color: #f59e0b;
     }
-
     .personal-question-badge {
         display: inline-block;
         background: #f59e0b;
@@ -480,7 +304,6 @@
         font-weight: 600;
         margin-right: 8px;
     }
-
     .btn-delete-personal-question {
         background: none;
         border: none;
@@ -491,30 +314,16 @@
         transition: all 0.2s;
         color: #94a3b8;
     }
-
     .btn-delete-personal-question:hover {
         background: #fee2e2;
         color: #ef4444;
         transform: scale(1.05);
     }
-
-    /* Адаптивность */
     @media (max-width: 991.98px) {
-        .custom-card-body {
-            padding: 18px 16px;
-        }
-
-        .page-title {
-            font-size: 1.6rem;
-        }
-
-        .filter-row {
-            flex-direction: column;
-        }
-
-        .quick-select-buttons {
-            flex-wrap: wrap;
-        }
+        .custom-card-body { padding: 18px 16px; }
+        .page-title { font-size: 1.6rem; }
+        .filter-row { flex-direction: column; }
+        .quick-select-buttons { flex-wrap: wrap; }
     }
 </style>
 {% endblock %}

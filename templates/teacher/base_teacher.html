@@ -3,6 +3,32 @@
 {% block extra_css %}
 {{ block.super }}
 <style>
+    /* ============================================
+       БАЗОВЫЕ СТИЛИ ДЛЯ УЧИТЕЛЬСКОЙ ПАНЕЛИ
+       ============================================ */
+
+    /* Общие переменные */
+    :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --success: #10b981;
+        --success-dark: #059669;
+        --danger: #ef4444;
+        --danger-dark: #dc2626;
+        --warning: #f59e0b;
+        --info: #06b6d4;
+        --gray-100: #f8fafc;
+        --gray-200: #f1f5f9;
+        --gray-300: #e2e8f0;
+        --gray-400: #cbd5e1;
+        --gray-500: #94a3b8;
+        --gray-600: #64748b;
+        --gray-700: #475569;
+        --gray-800: #1e293b;
+        --gray-900: #0f172a;
+    }
+
+    /* ========== ЛЕЙАУТ УЧИТЕЛЯ ========== */
     .teacher-layout {
         display: flex;
         flex-direction: column;
@@ -15,7 +41,7 @@
         gap: 12px;
         padding: 16px 20px;
         background: #ffffff;
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--gray-300);
         border-radius: 10px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
@@ -23,11 +49,11 @@
     .teacher-nav-link {
         display: inline-block;
         padding: 10px 16px;
-        border: 1px solid #ced4da;
+        border: 1px solid var(--gray-400);
         border-radius: 8px;
         text-decoration: none;
         color: #212529;
-        background-color: #f8f9fa;
+        background-color: var(--gray-200);
         transition: all 0.2s ease;
         font-weight: 500;
     }
@@ -38,15 +64,628 @@
     }
 
     .teacher-nav-link.active {
-        background-color: #0d6efd;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: #fff;
-        border-color: #0d6efd;
+        border-color: var(--primary);
     }
 
     .teacher-content {
         width: 100%;
     }
 
+    /* ========== ТОСТ-УВЕДОМЛЕНИЯ ========== */
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 12px;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        z-index: 10000;
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+        border-left: 4px solid;
+        max-width: 350px;
+    }
+
+    .toast-notification.show {
+        transform: translateX(0);
+    }
+
+    .toast-notification.success {
+        border-left-color: var(--success);
+    }
+
+    .toast-notification.error {
+        border-left-color: var(--danger);
+    }
+
+    .toast-icon {
+        font-size: 20px;
+    }
+
+    .toast-message {
+        font-size: 14px;
+        color: var(--gray-800);
+    }
+
+    /* ========== КАРТОЧКИ ========== */
+    .custom-card {
+        border: none;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(31, 45, 61, 0.08);
+        background: #ffffff;
+    }
+
+    .custom-card-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--info) 100%);
+        color: #fff;
+        border-bottom: none;
+        padding: 16px 20px;
+    }
+
+    .custom-card-header h5, .custom-card-header h6 {
+        font-weight: 600;
+        font-size: 1.05rem;
+        margin: 0;
+    }
+
+    .custom-card-body {
+        padding: 22px 20px;
+    }
+
+    /* ========== КНОПКИ ========== */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, var(--gray-600) 0%, var(--gray-700) 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, var(--gray-700) 0%, var(--gray-800) 100%);
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        border: 1px solid var(--gray-400);
+        color: var(--gray-700);
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-outline-secondary:hover {
+        background: var(--gray-200);
+        border-color: var(--gray-500);
+        transform: translateY(-1px);
+        text-decoration: none;
+        color: var(--gray-800);
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .btn-lg {
+        padding: 14px 28px;
+        font-size: 15px;
+    }
+
+    /* ========== ФОРМЫ ========== */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--gray-800);
+        font-size: 14px;
+    }
+
+    .form-label.required::after {
+        content: " *";
+        color: var(--danger);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--gray-400);
+        border-radius: 12px;
+        font-size: 14px;
+        transition: all 0.2s;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    select.form-control {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 20px;
+    }
+
+    .form-hint {
+        display: block;
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+
+    .form-error {
+        color: var(--danger);
+        font-size: 12px;
+        margin-top: 6px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 16px;
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid var(--gray-300);
+    }
+
+    /* ========== ТАБЛИЦЫ ========== */
+    .custom-table-container {
+        border: 1px solid var(--gray-300);
+        border-radius: 16px;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .custom-table-wrapper {
+        max-height: 450px;
+        overflow-y: auto;
+        overflow-x: auto;
+    }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .custom-table thead tr th {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%);
+        color: white !important;
+        font-weight: 700;
+        padding: 12px 16px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+    }
+
+    .custom-table tbody tr td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        color: var(--gray-700);
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+    .custom-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .custom-table tbody tr:hover {
+        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
+    }
+
+    .custom-table tbody tr:hover td {
+        background: transparent;
+    }
+
+    /* ========== ПРОГРЕСС-БАРЫ ========== */
+    .progress-cell {
+        min-width: 120px;
+    }
+
+    .progress-stats {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        margin-bottom: 6px;
+        font-size: 13px;
+    }
+
+    .progress-completed {
+        font-weight: 700;
+        color: var(--success);
+        font-size: 14px;
+    }
+
+    .progress-sep {
+        color: var(--gray-400);
+    }
+
+    .progress-total {
+        color: var(--gray-600);
+    }
+
+    .progress-bar-custom {
+        width: 100%;
+        height: 6px;
+        background: var(--gray-300);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--success), var(--success-dark));
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+
+    /* ========== БЕЙДЖИ ОЦЕНОК ========== */
+    .grade-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .grade-5 { background: linear-gradient(135deg, var(--success), var(--success-dark)); color: white; }
+    .grade-4 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
+    .grade-3 { background: linear-gradient(135deg, var(--warning), #d97706); color: white; }
+    .grade-2 { background: linear-gradient(135deg, var(--danger), var(--danger-dark)); color: white; }
+    .grade-none { background: var(--gray-200); color: var(--gray-500); }
+
+    /* ========== ФИЛЬТРЫ ========== */
+    .filter-section {
+        background: var(--gray-100);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid var(--gray-300);
+    }
+
+    .filter-title {
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: var(--gray-800);
+        font-size: 14px;
+        border-bottom: 1px solid var(--gray-300);
+        padding-bottom: 8px;
+    }
+
+    .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 160px;
+    }
+
+    .filter-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-700);
+    }
+
+    .filter-group select,
+    .filter-group input {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        background: white;
+        font-size: 14px;
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+    }
+
+    .btn-filter {
+        background: var(--primary);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        border: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-filter:hover {
+        background: var(--primary-dark);
+    }
+
+    .btn-reset {
+        background: #6c757d;
+        color: white;
+        padding: 8px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        border: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-reset:hover {
+        background: #5a6268;
+    }
+
+    .active-filters {
+        margin-top: 15px;
+        padding-top: 12px;
+        border-top: 1px solid var(--gray-300);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .active-filters-label {
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .filter-badge {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .filter-badge .remove {
+        cursor: pointer;
+        font-weight: bold;
+        margin-left: 4px;
+        color: white;
+    }
+
+    .filter-badge .remove:hover {
+        opacity: 0.8;
+    }
+
+    /* ========== АВАТАРЫ ========== */
+    .student-avatar-sm {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .student-avatar {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: 700;
+        flex-shrink: 0;
+        color: white;
+    }
+
+    /* ========== ПУСТЫЕ СОСТОЯНИЯ ========== */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 20px;
+    }
+
+    .empty-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        color: var(--gray-800);
+        margin-bottom: 10px;
+        font-size: 20px;
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+    }
+
+    .empty-message {
+        text-align: center;
+        padding: 40px;
+        background: linear-gradient(135deg, #ffffff 0%, var(--gray-100) 100%);
+        border-radius: 16px;
+        border: 1px dashed var(--gray-400);
+        color: var(--gray-600);
+        font-size: 16px;
+        margin: 0;
+    }
+
+    /* ========== ОБЩИЕ СТИЛИ ЗАГОЛОВКОВ ========== */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        margin: 0 0 8px 0;
+        font-size: 28px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--gray-800) 0%, var(--primary) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .page-subtitle {
+        color: var(--gray-600);
+        margin: 0;
+        font-size: 14px;
+    }
+
+    /* ========== СКРОЛЛБАРЫ ========== */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--gray-200);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, var(--gray-400), var(--gray-500));
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, var(--gray-500), var(--gray-600));
+    }
+
+    /* ========== АДАПТИВНОСТЬ ========== */
     @media (max-width: 768px) {
         .teacher-nav {
             flex-direction: column;
@@ -54,45 +693,92 @@
 
         .teacher-nav-link {
             width: 100%;
-            box-sizing: border-box;
             text-align: center;
+        }
+
+        .filter-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-actions {
+            flex-direction: column;
+        }
+
+        .btn-filter, .btn-reset {
+            width: 100%;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .custom-table-wrapper {
+            max-height: 350px;
+        }
+
+        .custom-table thead tr th,
+        .custom-table tbody tr td {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .page-header {
+            flex-direction: column;
+        }
+
+        .student-avatar {
+            width: 60px;
+            height: 60px;
+            font-size: 28px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .custom-table thead tr th,
+        .custom-table tbody tr td {
+            padding: 8px 8px;
+            font-size: 11px;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-
 <div class="teacher-layout">
     <nav class="teacher-nav" aria-label="Навигация преподавателя">
         <a href="{% url 'teacher_dashboard' %}"
            class="teacher-nav-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}">
-            Панель управления
+            📊 Панель управления
         </a>
         <a href="{% url 'teacher_students_list' %}"
            class="teacher-nav-link {% if 'teacher_students_list' in request.resolver_match.url_name or 'teacher_student_stats' in request.resolver_match.url_name %}active{% endif %}">
             👨‍🎓 Мои ученики
         </a>
-       <a href="{% url 'teacher_student_chat_list' %}"
-   class="teacher-nav-link {% if 'teacher_student_chat_list' in request.resolver_match.url_name or 'teacher_student_chat_detail' in request.resolver_match.url_name %}active{% endif %}">
-    💬 Чаты с учениками
-</a>
+        <a href="{% url 'teacher_student_chat_list' %}"
+           class="teacher-nav-link {% if 'teacher_student_chat_list' in request.resolver_match.url_name or 'teacher_student_chat_detail' in request.resolver_match.url_name %}active{% endif %}">
+            💬 Чаты с учениками
+        </a>
         <a href="{% url 'teacher_manage_tests' %}"
            class="teacher-nav-link {% if 'teacher_manage_tests' in request.resolver_match.url_name or 'teacher_test_detail' in request.resolver_match.url_name or 'create_teacher_test' in request.resolver_match.url_name or 'edit_test_assignment' in request.resolver_match.url_name %}active{% endif %}">
-            Мои тесты
+            📝 Мои тесты
         </a>
         <a href="{% url 'manage_personal_questions' %}"
-       class="teacher-nav-link {% if 'manage_personal_questions' in request.resolver_match.url_name or 'add_personal_question' in request.resolver_match.url_name %}active{% endif %}">
-        📝 Мои вопросы
-    </a>
+           class="teacher-nav-link {% if 'manage_personal_questions' in request.resolver_match.url_name or 'add_personal_question' in request.resolver_match.url_name or 'edit_personal_question' in request.resolver_match.url_name %}active{% endif %}">
+            📋 Мои вопросы
+        </a>
         <a href="{% url 'teacher_labs' %}"
            class="teacher-nav-link {% if 'teacher_labs' in request.resolver_match.url_name or 'lab_detail' in request.resolver_match.url_name or 'create_lab' in request.resolver_match.url_name or 'submission_detail' in request.resolver_match.url_name %}active{% endif %}">
-            Лабораторные
+            🧪 Лабораторные
         </a>
-
         <a href="{% url 'student_results' %}"
            class="teacher-nav-link {% if 'student_results' in request.resolver_match.url_name or 'export_student_results' in request.resolver_match.url_name or 'teacher_result_detail' in request.resolver_match.url_name %}active{% endif %}">
-            Результаты учеников
+            📊 Результаты учеников
         </a>
     </nav>
 
@@ -100,4 +786,73 @@
         {% block teacher_content %}{% endblock %}
     </div>
 </div>
+
+<script>
+    // Глобальная функция для получения CSRF токена
+    function getCsrfToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 'csrftoken'.length + 1) === ('csrftoken' + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring('csrftoken'.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Глобальная функция для показа уведомлений
+    function showToast(message, type = 'success') {
+        const existingToasts = document.querySelectorAll('.toast-notification');
+        existingToasts.forEach(toast => toast.remove());
+
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        toast.innerHTML = `
+            <div class="toast-icon">${type === 'success' ? '✅' : '❌'}</div>
+            <div class="toast-message">${escapeHtml(message)}</div>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // Глобальная функция для экранирования HTML
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Глобальная функция для форматирования даты
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch(e) {
+            return dateString;
+        }
+    }
+
+    // Глобальная функция для подтверждения действий
+    function confirmAction(message, callback) {
+        if (confirm(message)) {
+            callback();
+        }
+    }
+</script>
 {% endblock %}

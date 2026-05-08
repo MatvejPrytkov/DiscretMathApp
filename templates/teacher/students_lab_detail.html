@@ -194,31 +194,24 @@
 </div>
 
 <style>
-    /* Основной контейнер */
     .lab-detail-container {
         max-width: 1400px;
         margin: 0 auto;
         padding: 20px;
     }
-
-    /* Двухколоночный макет */
     .two-column-layout {
         display: flex;
         gap: 24px;
         flex-wrap: wrap;
     }
-
     .work-info-column {
         flex: 2;
         min-width: 300px;
     }
-
     .grade-column {
         flex: 1;
         min-width: 320px;
     }
-
-    /* Карточки */
     .info-card {
         background: white;
         border-radius: 16px;
@@ -226,8 +219,6 @@
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
         margin-bottom: 20px;
     }
-
-    /* Заголовки карточек */
     .card-header-custom {
         padding: 14px 20px;
         display: flex;
@@ -236,55 +227,20 @@
         flex-wrap: wrap;
         gap: 10px;
     }
-
-    .card-header-custom h5,
-    .card-header-custom h6 {
-        margin: 0;
-        color: white;
-    }
-
-    .header-primary {
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    }
-
-    .header-success {
-        background: linear-gradient(135deg, #10b981, #059669);
-    }
-
-    .header-warning {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-    }
-
-    .header-info {
-        background: linear-gradient(135deg, #06b6d4, #0891b2);
-    }
-
-    /* Бейджи статуса */
-    .status-badge-custom {
-        display: inline-block;
-    }
-
-    .badge-success-custom {
+    .card-header-custom h5, .card-header-custom h6 { margin: 0; color: white; }
+    .header-primary { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .header-success { background: linear-gradient(135deg, #10b981, #059669); }
+    .header-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .header-info { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+    .status-badge-custom { display: inline-block; }
+    .badge-success-custom, .badge-warning-custom {
         background: rgba(255, 255, 255, 0.25);
         padding: 4px 12px;
         border-radius: 20px;
         font-size: 0.75rem;
         font-weight: 500;
     }
-
-    .badge-warning-custom {
-        background: rgba(255, 255, 255, 0.25);
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    /* Тело карточки */
-    .card-body-custom {
-        padding: 20px;
-    }
-
+    .card-body-custom { padding: 20px; }
     .work-title {
         font-size: 1.3rem;
         margin: 0 0 16px 0;
@@ -292,40 +248,30 @@
         padding-bottom: 12px;
         border-bottom: 2px solid #e5e7eb;
     }
-
-    /* Строки информации */
     .info-row {
         display: flex;
         flex-wrap: wrap;
         padding: 8px 0;
         border-bottom: 1px solid #f0f0f0;
     }
-
     .info-label-custom {
         width: 130px;
         font-weight: 600;
         color: #4b5563;
         font-size: 0.85rem;
     }
-
     .info-value-custom {
         flex: 1;
         color: #1f2937;
         font-size: 0.9rem;
     }
-
-    /* Секции с контентом */
-    .info-section {
-        margin: 16px 0;
-    }
-
+    .info-section { margin: 16px 0; }
     .section-title {
         font-weight: 600;
         color: #374151;
         margin-bottom: 8px;
         font-size: 0.9rem;
     }
-
     .section-content {
         background: #f8fafc;
         padding: 12px;
@@ -334,8 +280,6 @@
         line-height: 1.5;
         color: #334155;
     }
-
-    /* Файл */
     .file-info {
         display: flex;
         justify-content: space-between;
@@ -343,13 +287,11 @@
         flex-wrap: wrap;
         gap: 12px;
     }
-
     .file-name {
         font-size: 0.85rem;
         color: #4b5563;
         word-break: break-all;
     }
-
     .btn-file {
         padding: 6px 14px;
         background: #e2e8f0;
@@ -359,46 +301,34 @@
         font-size: 0.8rem;
         transition: all 0.2s;
     }
-
     .btn-file:hover {
         background: #cbd5e1;
         transform: translateY(-1px);
     }
-
-    /* Информация о проверке */
     .graded-info {
         background: #f0fdf4;
         border-radius: 12px;
         padding: 12px;
         margin-top: 16px;
     }
-
-    .grade-details {
-        font-size: 0.85rem;
-        color: #065f46;
-    }
-
+    .grade-details { font-size: 0.85rem; color: #065f46; }
     .grade-value-custom {
         font-size: 1.1rem;
         margin-bottom: 8px;
     }
-
     .grade-value-custom strong {
         font-size: 1.3rem;
         color: #059669;
     }
-
     .comment-block {
         margin-top: 12px;
         padding-top: 12px;
         border-top: 1px solid rgba(5, 150, 105, 0.2);
     }
-
     .comment-label-custom {
         font-weight: 600;
         margin-bottom: 6px;
     }
-
     .comment-text-custom {
         background: white;
         padding: 10px;
@@ -406,14 +336,11 @@
         font-size: 0.85rem;
         line-height: 1.4;
     }
-
-    /* Кнопка назад */
     .back-button {
         margin-top: 20px;
         padding-top: 16px;
         border-top: 1px solid #e5e7eb;
     }
-
     .btn-back {
         display: inline-block;
         padding: 8px 20px;
@@ -424,13 +351,10 @@
         font-size: 0.85rem;
         transition: all 0.2s;
     }
-
     .btn-back:hover {
         background: #5a6268;
         transform: translateY(-1px);
     }
-
-    /* Форма оценки */
     .current-grade {
         display: flex;
         justify-content: space-between;
@@ -440,18 +364,15 @@
         border-radius: 8px;
         margin-bottom: 16px;
     }
-
     .current-grade-label {
         font-weight: 600;
         color: #92400e;
     }
-
     .current-grade-value {
         font-size: 1.2rem;
         font-weight: 700;
         color: #d97706;
     }
-
     .btn-edit {
         width: 100%;
         padding: 10px;
@@ -464,16 +385,11 @@
         transition: all 0.2s;
         margin-bottom: 16px;
     }
-
     .btn-edit:hover {
         background: #cbd5e1;
         transform: translateY(-1px);
     }
-
-    .form-field {
-        margin-bottom: 16px;
-    }
-
+    .form-field { margin-bottom: 16px; }
     .form-label-custom {
         display: block;
         margin-bottom: 6px;
@@ -481,7 +397,6 @@
         font-size: 0.85rem;
         color: #374151;
     }
-
     .form-select-custom {
         width: 100%;
         padding: 10px;
@@ -490,13 +405,11 @@
         font-size: 0.9rem;
         background: white;
     }
-
     .form-select-custom:focus {
         outline: none;
         border-color: #3b82f6;
         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
     }
-
     .form-textarea {
         width: 100%;
         padding: 10px;
@@ -506,19 +419,16 @@
         resize: vertical;
         font-family: inherit;
     }
-
     .form-textarea:focus {
         outline: none;
         border-color: #3b82f6;
         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
     }
-
     .form-buttons {
         display: flex;
         gap: 12px;
         margin-top: 20px;
     }
-
     .btn-submit {
         flex: 1;
         padding: 10px;
@@ -530,12 +440,10 @@
         cursor: pointer;
         transition: all 0.2s;
     }
-
     .btn-submit:hover {
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
     }
-
     .btn-cancel {
         flex: 1;
         padding: 10px;
@@ -547,95 +455,40 @@
         cursor: pointer;
         transition: all 0.2s;
     }
-
     .btn-cancel:hover {
         background: #5a6268;
         transform: translateY(-1px);
     }
-
-    /* Карточка студента */
-    .student-info-card {
-        margin-top: 0;
-    }
-
+    .student-info-card { margin-top: 0; }
     .student-info-row {
         display: flex;
         flex-wrap: wrap;
         padding: 6px 0;
     }
-
     .divider {
         margin: 12px 0;
         border: none;
         border-top: 1px solid #e5e7eb;
     }
-
-    /* Адаптивность */
     @media (max-width: 992px) {
-        .two-column-layout {
-            flex-direction: column;
-        }
-
-        .work-info-column,
-        .grade-column {
-            flex: auto;
-        }
+        .two-column-layout { flex-direction: column; }
+        .work-info-column, .grade-column { flex: auto; }
     }
-
     @media (max-width: 768px) {
-        .lab-detail-container {
-            padding: 12px;
-        }
-
-        .card-body-custom {
-            padding: 16px;
-        }
-
-        .info-label-custom {
-            width: 100%;
-            margin-bottom: 4px;
-        }
-
-        .info-row {
-            flex-direction: column;
-        }
-
-        .student-info-row {
-            flex-direction: column;
-        }
-
-        .file-info {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .btn-file {
-            width: 100%;
-            text-align: center;
-        }
-
-        .form-buttons {
-            flex-direction: column;
-        }
-
-        .card-header-custom {
-            flex-direction: column;
-            text-align: center;
-        }
+        .lab-detail-container { padding: 12px; }
+        .card-body-custom { padding: 16px; }
+        .info-label-custom { width: 100%; margin-bottom: 4px; }
+        .info-row { flex-direction: column; }
+        .student-info-row { flex-direction: column; }
+        .file-info { flex-direction: column; align-items: flex-start; }
+        .btn-file { width: 100%; text-align: center; }
+        .form-buttons { flex-direction: column; }
+        .card-header-custom { flex-direction: column; text-align: center; }
     }
-
     @media (max-width: 480px) {
-        .work-title {
-            font-size: 1.1rem;
-        }
-
-        .section-content {
-            font-size: 0.85rem;
-        }
-
-        .grade-value-custom strong {
-            font-size: 1.1rem;
-        }
+        .work-title { font-size: 1.1rem; }
+        .section-content { font-size: 0.85rem; }
+        .grade-value-custom strong { font-size: 1.1rem; }
     }
 </style>
 

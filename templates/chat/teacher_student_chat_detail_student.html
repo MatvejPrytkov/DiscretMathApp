@@ -117,6 +117,38 @@
         text-align: right;
     }
 
+    /* Кнопка удаления */
+    .delete-message-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: transparent;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 2px 5px;
+        border-radius: 50%;
+        opacity: 0;
+        transition: all 0.2s ease;
+        color: inherit;
+    }
+
+    .message:hover .delete-message-btn {
+        opacity: 0.6;
+    }
+
+    .delete-message-btn:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        transform: scale(1.1);
+        opacity: 1 !important;
+    }
+
+    .message-sent .delete-message-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: #ff9999;
+    }
+
     .chat-input-area {
         padding: 20px;
         background: white;
@@ -396,6 +428,12 @@
         animation: fadeIn 0.3s ease-out;
     }
 
+    /* Сообщение удалено */
+    .message-deleted {
+        font-style: italic;
+        opacity: 0.7;
+    }
+
     @media (max-width: 768px) {
         .chat-container {
             height: calc(100vh - 120px);
@@ -496,6 +534,57 @@
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
+
+    // ========== ФУНКЦИЯ УДАЛЕНИЯ СООБЩЕНИЯ ==========
+    window.deleteMessage = function(messageId) {
+        if (!confirm('Удалить это сообщение? Оно будет скрыто у всех участников чата.')) {
+            return;
+        }
+
+        fetch(`/chat/teacher-student/delete-message/${messageId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const messageDiv = document.querySelector(`.message[data-message-id="${messageId}"]`);
+                if (messageDiv) {
+                    // Обновляем содержимое сообщения
+                    const textDiv = messageDiv.querySelector('.message-text');
+                    if (textDiv) {
+                        textDiv.textContent = 'Сообщение удалено';
+                        textDiv.classList.add('message-deleted');
+                    }
+                    // Убираем реакции
+                    const reactionsDiv = messageDiv.querySelector('.message-reactions');
+                    if (reactionsDiv) {
+                        reactionsDiv.remove();
+                    }
+                    // Убираем кнопку удаления
+                    const deleteBtn = messageDiv.querySelector('.delete-message-btn');
+                    if (deleteBtn) {
+                        deleteBtn.remove();
+                    }
+                    // Убираем файл/голос, если были
+                    const fileDiv = messageDiv.querySelector('.message-file');
+                    if (fileDiv) fileDiv.remove();
+                    const voiceDiv = messageDiv.querySelector('.message-voice');
+                    if (voiceDiv) voiceDiv.remove();
+
+                    messageDiv.classList.add('message-deleted');
+                }
+            } else {
+                alert('Ошибка при удалении: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка при удалении сообщения');
+        });
+    };
 
     // ========== ФУНКЦИИ ДЛЯ РЕАКЦИЙ ==========
 
@@ -616,7 +705,9 @@
             innerHtml += `<div class="message-sender">${escapeHtml(msg.sender_name)}</div>`;
         }
 
-        if (msg.message_type === 'file') {
+        if (msg.is_deleted) {
+            innerHtml += `<div class="message-text message-deleted">Сообщение удалено</div>`;
+        } else if (msg.message_type === 'file') {
             innerHtml += `<div class="message-file">
                             <a href="${msg.file_url}" target="_blank" download="${escapeHtml(msg.file_name)}">
                                 📎 ${escapeHtml(msg.file_name || 'Файл')}
@@ -638,12 +729,27 @@
 
         messageDiv.innerHTML = innerHtml;
 
-        // Добавляем реакции после установки innerHTML
-        const reactionsContainer = document.createElement('div');
-        reactionsContainer.innerHTML = renderReactions(msg.reactions, msg.id);
-        const reactionsElement = reactionsContainer.firstElementChild;
-        if (reactionsElement) {
-            messageDiv.appendChild(reactionsElement);
+        // Добавляем реакции, только если сообщение не удалено
+        if (!msg.is_deleted && msg.reactions) {
+            const reactionsContainer = document.createElement('div');
+            reactionsContainer.innerHTML = renderReactions(msg.reactions, msg.id);
+            const reactionsElement = reactionsContainer.firstElementChild;
+            if (reactionsElement) {
+                messageDiv.appendChild(reactionsElement);
+            }
+        }
+
+        // Добавляем кнопку удаления для своих сообщений (и если не удалено)
+        if (msg.can_delete && !msg.is_deleted) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-message-btn';
+            deleteBtn.innerHTML = '🗑️';
+            deleteBtn.title = 'Удалить сообщение';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                window.deleteMessage(msg.id);
+            };
+            messageDiv.appendChild(deleteBtn);
         }
 
         if (isNew) {

@@ -1,41 +1,169 @@
 {% extends 'student/base_student.html' %}
 {% block student_content %}
 <style>
-    .submissions-scroll,
-    .available-scroll {
-        max-height: 430px;
-        overflow-y: auto;
-        overflow-x: hidden;
-        padding-right: 4px;
-    }
+   /* student_labs.html - уникальные стили */
+.submissions-scroll,
+.available-scroll {
+    max-height: 430px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+}
 
+.submissions-grid,
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: start;
+}
+
+.submissions-grid .card,
+.submissions-grid .clickable-card,
+.cards-grid .card {
+    width: 100%;
+    margin-bottom: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.submitted-badge {
+    background: #10b981;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin-left: 8px;
+}
+
+.clickable-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.clickable-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.card-title-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.card-title-link:hover {
+    color: #6366f1;
+}
+
+/* Статистика по лабораторным */
+.labs-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.labs-stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 20px;
+    flex: 1;
+    min-width: 200px;
+    text-align: center;
+    color: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.labs-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.labs-stat-card:nth-child(2) {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.labs-stat-card:nth-child(3) {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.labs-stat-card:nth-child(4) {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.labs-stat-value {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.labs-stat-label {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.labs-stat-detail {
+    font-size: 12px;
+    margin-top: 8px;
+    opacity: 0.8;
+}
+
+@media (max-width: 768px) {
     .submissions-grid,
     .cards-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem;
-        align-items: start;
+        grid-template-columns: 1fr;
     }
-
-    .submissions-grid .card,
-    .submissions-grid .clickable-card,
-    .cards-grid .card {
-        width: 100%;
-        margin-bottom: 0 !important;
-        max-height: none !important;
-        overflow: visible !important;
+    .labs-stats {
+        flex-direction: column;
     }
-
-    @media (max-width: 768px) {
-        .submissions-grid,
-        .cards-grid {
-            grid-template-columns: 1fr;
-        }
-    }
+}
 </style>
 
 <div class="container">
     <h1> Мои лабораторные работы 🧪</h1>
+
+    <!-- БЛОК СО СРЕДНИМИ БАЛЛАМИ ПО ЛАБОРАТОРНЫМ -->
+    {% if my_submissions %}
+    <div class="labs-stats">
+        <div class="labs-stat-card">
+            <div class="labs-stat-value">
+                {% if average_grade_labs %}
+                    {{ average_grade_labs }}
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+            <div class="labs-stat-label">Средний балл</div>
+            <div class="labs-stat-detail">
+                Всего оценено: {{ graded_labs_count|default:"0" }}
+            </div>
+        </div>
+
+        <div class="labs-stat-card">
+            <div class="labs-stat-value">{{ my_submissions|length }}</div>
+            <div class="labs-stat-label">Всего сдано работ</div>
+            <div class="labs-stat-detail">
+                Из {{ labs.count }} доступных
+            </div>
+        </div>
+
+        <div class="labs-stat-card">
+            <div class="labs-stat-value">
+                {% if graded_labs_count > 0 %}
+                    {{ passed_percent|floatformat:0 }}%
+                {% else %}
+                    0%
+                {% endif %}
+            </div>
+            <div class="labs-stat-label">Процент проверенных</div>
+            <div class="labs-stat-detail">
+                {{ graded_labs_count }} из {{ my_submissions|length }}
+            </div>
+        </div>
+
+
+    </div>
+    {% endif %}
 
     <h3> Доступные работы ({{ labs.count }})</h3>
     <div class="available-scroll">
@@ -65,44 +193,41 @@
     <div class="submissions-scroll">
         <div class="submissions-grid">
             {% for submission in my_submissions %}
-            <!-- В student_labs.html, в блоке my_submissions -->
-<div class="card mb-3 clickable-card">
-    <div class="card-body">
-        <h5>
-            <a href="{% url 'lab' submission.lab_work.id %}" class="card-title-link">
-                {{ submission.lab_work.title }}
-            </a>
-        </h5>
+            <div class="card mb-3 clickable-card">
+                <div class="card-body">
+                    <h5>
+                        <a href="{% url 'lab' submission.lab_work.id %}" class="card-title-link">
+                            {{ submission.lab_work.title }}
+                        </a>
+                    </h5>
 
-        <p>Статус:
-            <span class="badge badge-{{ submission.status }}">
-                {{ submission.get_status_display }}
-            </span>
-        </p>
+                    <p>Статус:
+                        <span class="badge badge-{{ submission.status }}">
+                            {{ submission.get_status_display }}
+                        </span>
+                    </p>
 
-        <!-- Показываем дату последней сдачи -->
-        <small class="text-muted">
-            Последняя сдача: {{ submission.submitted_at|date:"d.m.Y H:i" }}
-        </small>
+                    <small class="text-muted">
+                        Последняя сдача: {{ submission.submitted_at|date:"d.m.Y H:i" }}
+                    </small>
 
-        {% if submission.grade %}
-            <p class="mt-2"><strong>Оценка: {{ submission.grade }}</strong></p>
-            {% if submission.comment %}
-                <p>Комментарий преподавателя: {{ submission.comment }}</p>
-            {% endif %}
-            <p>Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}</p>
-        {% endif %}
+                    {% if submission.grade %}
+                        <p class="mt-2"><strong>Оценка: {{ submission.grade }}</strong></p>
+                        {% if submission.comment %}
+                            <p>Комментарий преподавателя: {{ submission.comment }}</p>
+                        {% endif %}
+                        <p>Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}</p>
+                    {% endif %}
 
-        <div class="d-flex gap-2 mt-3">
-            <a href="{% url 'lab' submission.lab_work.id %}" class="btn btn-sm btn-success">
-                📖 Открыть лабораторную
-            </a>
-            <a href="{{ submission.submitted_file.url }}" class="btn btn-sm btn-info" download>
-                Скачать мою работу
-            </a>
-        </div>
-
-</div>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="{% url 'lab' submission.lab_work.id %}" class="btn btn-sm btn-success">
+                            📖 Открыть лабораторную
+                        </a>
+                        <a href="{{ submission.submitted_file.url }}" class="btn btn-sm btn-info" download>
+                            Скачать мою работу
+                        </a>
+                    </div>
+                </div>
             </div>
             {% empty %}
             <p>Сдач пока нет.</p>

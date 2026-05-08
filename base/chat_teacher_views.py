@@ -253,6 +253,10 @@ def get_teacher_student_messages(request, user_id):
 
     messages_data = []
     for msg in messages:
+        # Пропускаем удалённые сообщения для получателя
+        if msg.is_deleted and msg.sender != current_user:
+            continue
+
         sender_name = msg.sender.profile.full_name or msg.sender.username
         if msg.sender.profile.role == 'teacher':
             sender_name = f"👩‍🏫 {sender_name}"
@@ -261,18 +265,21 @@ def get_teacher_student_messages(request, user_id):
 
         message_data = {
             'id': msg.id,
-            'content': msg.content,
+            'content': msg.content if not msg.is_deleted else 'Сообщение удалено',
             'message_type': msg.message_type,
             'created_at': msg.created_at.strftime("%H:%M %d.%m.%Y"),
             'sender_id': msg.sender_id,
             'sender_name': sender_name,
-            'reactions': msg.reactions or {}
+            'reactions': msg.reactions or {},
+            'is_deleted': msg.is_deleted,
+            'can_delete': msg.sender_id == current_user and not msg.is_deleted
+            # Можно удалить только своё и если ещё не удалено
         }
 
-        if msg.message_type == 'file' and msg.file_attachment:
+        if msg.message_type == 'file' and msg.file_attachment and not msg.is_deleted:
             message_data['file_url'] = msg.file_attachment.url
             message_data['file_name'] = msg.file_name
-        elif msg.message_type == 'voice' and msg.voice_message:
+        elif msg.message_type == 'voice' and msg.voice_message and not msg.is_deleted:
             message_data['voice_url'] = msg.voice_message.url
             message_data['voice_duration'] = msg.voice_duration
 

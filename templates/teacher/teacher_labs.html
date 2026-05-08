@@ -16,7 +16,6 @@
         justify-content: flex-start;
         align-items: flex-start;
     }
-
     .submission-card {
         cursor: pointer;
         transition: transform 0.2s, box-shadow 0.2s;
@@ -28,20 +27,16 @@
         margin-bottom: 20px;
         box-sizing: border-box;
     }
-
     .submission-card:hover {
         transform: translateY(-3px);
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         text-decoration: none;
         color: inherit;
     }
-
     .submission-card .card {
         height: 100%;
         margin-bottom: 0;
     }
-
-    /* Контейнер для лабораторных работ со скроллом */
     .labs-container {
         max-height: 500px;
         overflow-y: auto;
@@ -51,15 +46,12 @@
         background-color: #f8f9fa;
         margin-bottom: 30px;
     }
-
     .labs-container .cards-grid {
         display: flex;
         flex-wrap: wrap;
         gap: 25px;
         justify-content: flex-start;
     }
-
-    /* Карточки лабораторных работ - по 2 в ряд на больших экранах */
     .labs-container .card {
         flex: 0 0 calc(50% - 12.5px);
         min-width: 300px;
@@ -68,13 +60,12 @@
         display: flex;
         flex-direction: column;
         transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
     }
-
     .labs-container .card:hover {
         transform: translateY(-3px);
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-
     .labs-container .card .card-body {
         display: flex;
         flex-direction: column;
@@ -83,271 +74,164 @@
         flex: 1;
         padding: 20px;
     }
-
     .labs-container .card .card-body h5 {
         margin-bottom: 15px;
         font-weight: 600;
         word-break: break-word;
         font-size: 1.25rem;
     }
-
     .labs-container .card .card-body p {
         margin-bottom: 15px;
         width: 100%;
         font-size: 0.95rem;
     }
-
     .labs-container .card .btn-group {
         display: flex;
+        flex-direction: row !important;
+        flex-wrap: wrap;
         gap: 10px;
         justify-content: center;
         width: 100%;
         margin-top: 10px;
     }
-
     .labs-container .card .btn-group .btn {
-        flex: 1;
+        flex: 0 1 auto;
+        min-width: 100px;
         padding: 8px 12px;
         font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    .badge-checked { background-color: #198754; color: white; }
+    .badge-unchecked { background-color: #fd7e14; color: white; }
+    .status-badge { font-size: 0.8em; padding: 4px 8px; }
+
+    /* Стили для кликабельной карточки */
+    .lab-card {
+        cursor: pointer;
+    }
+    .lab-card .btn-group .btn {
+        cursor: pointer;
+        pointer-events: auto;
+    }
+    .lab-card .btn-group form {
+        pointer-events: auto;
     }
 
-    /* Стиль для скроллбара */
-    .labs-container::-webkit-scrollbar,
-    .submissions-container::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+    @media (max-width: 992px) {
+        .submission-card { flex: 0 0 calc(50% - 10px); }
+        .labs-container .card { flex: 0 0 calc(50% - 12.5px); min-width: 280px; }
+    }
+    @media (max-width: 768px) {
+        .filter-row { flex-direction: column; align-items: stretch; }
+        .filter-group select, .filter-group input { width: 100%; }
+        .filter-actions { flex-direction: column; }
+        .btn-filter, .btn-reset { width: 100%; }
+        .labs-container .card { flex: 0 0 100%; max-width: 100%; }
+        .submission-card { flex: 0 0 100%; }
+    }
+    @media (max-width: 480px) {
+        .labs-container .card .btn-group { flex-direction: column !important; }
+        .labs-container .card .btn-group .btn { width: 100%; }
     }
 
-    .labs-container::-webkit-scrollbar-track,
-    .submissions-container::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-
-    .labs-container::-webkit-scrollbar-thumb,
-    .submissions-container::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
-    }
-
-    .labs-container::-webkit-scrollbar-thumb:hover,
-    .submissions-container::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-
+    /* Стили для фильтров */
     .filter-section {
         background: #f8f9fa;
+        border-radius: 12px;
         padding: 20px;
-        border-radius: 8px;
         margin-bottom: 25px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid #dee2e6;
     }
-
     .filter-title {
+        font-size: 18px;
         font-weight: 600;
         margin-bottom: 15px;
-        color: #1f2937;
-        font-size: 14px;
-        border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 8px;
+        color: #333;
     }
-
     .filter-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 20px;
+        gap: 15px;
         align-items: flex-end;
     }
-
     .filter-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+        flex: 1;
+        min-width: 150px;
     }
-
     .filter-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
         font-size: 13px;
-        font-weight: 600;
-        color: #374151;
+        color: #555;
     }
-
     .filter-group select,
     .filter-group input {
+        width: 100%;
         padding: 8px 12px;
-        border-radius: 6px;
-        border: 1px solid #ced4da;
-        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
         font-size: 14px;
-        min-width: 160px;
     }
-
-    .filter-group select:focus,
-    .filter-group input:focus {
-        outline: none;
-        border-color: #2f66ff;
-    }
-
     .filter-actions {
         display: flex;
         gap: 10px;
-        margin-bottom: 0;
+        align-items: center;
     }
-
     .btn-filter, .btn-reset {
         padding: 8px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-        text-decoration: none;
         border: none;
+        border-radius: 8px;
+        cursor: pointer;
         font-weight: 500;
-        transition: all 0.2s;
-        height: 38px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        transition: all 0.3s;
     }
-
     .btn-filter {
         background: #2f66ff;
         color: white;
     }
-
     .btn-filter:hover {
         background: #1d4ed8;
     }
-
     .btn-reset {
         background: #6c757d;
         color: white;
     }
-
     .btn-reset:hover {
         background: #5a6268;
     }
-
     .active-filters {
-        margin-top: 15px;
-        padding-top: 12px;
-        border-top: 1px solid #e5e7eb;
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
         gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #dee2e6;
     }
-
     .active-filters-label {
         font-size: 13px;
-        color: #6c757d;
+        font-weight: 500;
+        color: #555;
     }
-
     .filter-badge {
-        background: #2f66ff;
-        color: white;
+        background: white;
         padding: 4px 12px;
         border-radius: 20px;
         font-size: 12px;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
+        border: 1px solid #dee2e6;
     }
-
     .filter-badge .remove {
         cursor: pointer;
+        color: #dc3545;
         font-weight: bold;
-        margin-left: 4px;
-        text-decoration: none;
-        color: white;
     }
-
     .filter-badge .remove:hover {
-        opacity: 0.8;
+        color: #c82333;
     }
-
-    .badge-checked {
-        background-color: #198754;
-        color: white;
-    }
-
-    .badge-unchecked {
-        background-color: #fd7e14;
-        color: white;
-    }
-
-    .status-badge {
-        font-size: 0.8em;
-        padding: 4px 8px;
-    }
-
-    /* Адаптивность */
-    @media (max-width: 992px) {
-        .submission-card {
-            flex: 0 0 calc(50% - 10px);
-        }
-
-        .labs-container .card {
-            flex: 0 0 calc(50% - 12.5px);
-            min-width: 280px;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .filter-row {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .filter-group select,
-        .filter-group input {
-            width: 100%;
-        }
-
-        .filter-actions {
-            flex-direction: column;
-        }
-
-        .btn-filter, .btn-reset {
-            width: 100%;
-        }
-
-        .labs-container .card {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
-
-        .submission-card {
-            flex: 0 0 100%;
-        }
-    }
-    /* Исправление: кнопки "Подробнее" и "Удалить" в одну строку */
-.labs-container .card .btn-group {
-    display: flex;
-    flex-direction: row !important;  /* Горизонтальное расположение */
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    width: 100%;
-    margin-top: 10px;
-}
-
-.labs-container .card .btn-group .btn {
-    flex: 0 1 auto;  /* Кнопки занимают только нужную ширину */
-    min-width: 100px;
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    white-space: nowrap;  /* Текст не переносится */
-}
-
-/* Для мобильных устройств на маленьких экранах можно оставить вертикально */
-@media (max-width: 480px) {
-    .labs-container .card .btn-group {
-        flex-direction: column !important;
-    }
-
-    .labs-container .card .btn-group .btn {
-        width: 100%;
-    }
-}
 </style>
 
 <div class="container">
@@ -363,13 +247,16 @@
         <div class="labs-container" id="labsContainer">
             <div class="cards-grid" id="labsGrid">
                 {% for lab in labs %}
-                <div class="card lab-card" data-lab-title="{{ lab.title|lower }}" data-lab-theme="{{ lab.theme|lower }}">
+                <div class="card lab-card"
+                     data-lab-title="{{ lab.title|lower }}"
+                     data-lab-theme="{{ lab.theme|lower }}"
+                     onclick="window.location.href='{% url 'lab_detail' lab.id %}'">
                     <div class="card-body">
                         <h5>{{ lab.title }}</h5>
                         <p><strong>Тема:</strong> {{ lab.theme }} | <strong>Сложность:</strong> {{ lab.get_difficulty_display }}</p>
-                        <div class="btn-group" role="group">
+                        <div class="btn-group" role="group" onclick="event.stopPropagation()">
                             <a href="{% url 'lab_detail' lab.id %}" class="btn btn-sm btn-primary">📊 Подробнее</a>
-                            <form method="POST" action="{% url 'delete_lab_work' lab.id %}" style="display: inline; width: 100%;">
+                            <form method="POST" action="{% url 'delete_lab_work' lab.id %}" style="display: inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-danger"
                                         onclick="return confirm('Вы уверены, что хотите удалить лабораторную работу «{{ lab.title }}»? Все связанные сдачи также будут удалены.')">
@@ -387,57 +274,53 @@
     {% endif %}
 
     <!-- Блок фильтрации -->
-    <!-- Блок фильтрации -->
-<div class="filter-section">
-    <div class="filter-title">🔍 Фильтрация сданных работ</div>
+    <div class="filter-section">
+        <div class="filter-title">🔍 Фильтрация сданных работ</div>
 
-    <div class="filter-row">
-        <div class="filter-group">
-            <label for="statusFilter">Статус проверки:</label>
-            <select id="statusFilter">
-                <option value="">Все работы</option>
-                <option value="checked" {% if checked_filter == 'true' %}selected{% endif %}>Только проверенные</option>
-                <option value="unchecked" {% if checked_filter == 'false' %}selected{% endif %}>Только непроверенные</option>
-            </select>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="statusFilter">Статус проверки:</label>
+                <select id="statusFilter">
+                    <option value="">Все работы</option>
+                    <option value="checked" {% if checked_filter == 'true' %}selected{% endif %}>Только проверенные</option>
+                    <option value="unchecked" {% if checked_filter == 'false' %}selected{% endif %}>Только непроверенные</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="groupFilter">Группа:</label>
+                <select id="groupFilter">
+                    <option value="">Все группы</option>
+                    {% for group in available_groups %}
+                    <option value="{{ group }}" {% if group_filter == group %}selected{% endif %}>{{ group }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="courseFilter">Курс:</label>
+                <select id="courseFilter">
+                    <option value="">Все курсы</option>
+                    {% for course in available_courses %}
+                    <option value="{{ course }}" {% if course_filter|stringformat:"s" == course|stringformat:"s" %}selected{% endif %}>{{ course }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="searchNameInput">Поиск по ФИО студента:</label>
+                <input type="text" id="searchNameInput" placeholder="Введите ФИО студента..." value="{{ search_name }}">
+            </div>
+
+            <div class="filter-actions">
+                <button id="resetFiltersBtn" class="btn-reset">✖ Сбросить фильтры</button>
+            </div>
         </div>
 
-        <div class="filter-group">
-            <label for="groupFilter">Группа:</label>
-            <select id="groupFilter">
-                <option value="">Все группы</option>
-                {% for group in available_groups %}
-                <option value="{{ group }}" {% if group_filter == group %}selected{% endif %}>{{ group }}</option>
-                {% endfor %}
-            </select>
+        <div class="active-filters" id="activeFilters" style="display: none;">
+            <span class="active-filters-label">Активные фильтры:</span>
+            <span id="activeFiltersList"></span>
         </div>
-
-        <div class="filter-group">
-            <label for="courseFilter">Курс:</label>
-            <select id="courseFilter">
-                <option value="">Все курсы</option>
-                {% for course in available_courses %}
-                <option value="{{ course }}" {% if course_filter|stringformat:"s" == course|stringformat:"s" %}selected{% endif %}>{{ course }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label for="searchNameInput">Поиск по ФИО студента:</label>
-            <input type="text" id="searchNameInput" placeholder="Введите ФИО студента..." value="{{ search_name }}">
-        </div>
-
-        <div class="filter-actions">
-
-            <button id="resetFiltersBtn" class="btn-reset">✖ Сбросить фильтры</button>
-        </div>
-    </div>
-
-    <div class="active-filters" id="activeFilters" style="display: none;">
-        <span class="active-filters-label">Активные фильтры:</span>
-        <span id="activeFiltersList"></span>
-    </div>
-
-</div>
     </div>
 
     <h3>📥 Сданные работы: <span id="totalSubmissionsCount">{{ total_submissions }}</span></h3>
@@ -445,44 +328,44 @@
     <div class="submissions-container" id="submissionsContainer">
         {% for submission in submissions %}
             <a href="{% url 'submission_detail' submission.id %}" class="submission-card"
-   data-student-name="{{ submission.student.profile.full_name|lower }}"
-   data-status="{% if submission.grade %}checked{% else %}unchecked{% endif %}"
-   data-student-group="{{ submission.student.profile.group|default:'' }}"
-   data-student-course="{{ submission.student.profile.course|default:'' }}">
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <h6 class="card-title mb-1">{{ submission.lab_work.title }}</h6>
-                    <p class="card-text mb-1">
-                        <strong>Студент:</strong> {{ submission.student.profile.full_name }}
-                    </p>
-                    <p class="card-text mb-1">
-                        <strong>Группа:</strong> {{ submission.student_group|default:"—" }} |
-                        <strong>Курс:</strong> {{ submission.student_course|default:"—" }}
-                    </p>
-                    <p class="card-text mb-1">
-                        <strong>Дата сдачи:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}
-                    </p>
-                    {% if submission.grade %}
-                    <p class="card-text mb-1">
-                        <strong>Оценка:</strong> {{ submission.grade }}
-                    </p>
-                    {% endif %}
+               data-student-name="{{ submission.student.profile.full_name|lower }}"
+               data-status="{% if submission.grade %}checked{% else %}unchecked{% endif %}"
+               data-student-group="{{ submission.student.profile.group|default:'' }}"
+               data-student-course="{{ submission.student.profile.course|default:'' }}">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title mb-1">{{ submission.lab_work.title }}</h6>
+                                <p class="card-text mb-1">
+                                    <strong>Студент:</strong> {{ submission.student.profile.full_name }}
+                                </p>
+                                <p class="card-text mb-1">
+                                    <strong>Группа:</strong> {{ submission.student_group|default:"—" }} |
+                                    <strong>Курс:</strong> {{ submission.student_course|default:"—" }}
+                                </p>
+                                <p class="card-text mb-1">
+                                    <strong>Дата сдачи:</strong> {{ submission.submitted_at|date:"d.m.Y H:i" }}
+                                </p>
+                                {% if submission.grade %}
+                                <p class="card-text mb-1">
+                                    <strong>Оценка:</strong> {{ submission.grade }}
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                {% if submission.grade %}
+                                    <span class="badge badge-checked status-badge">✓ Проверено</span>
+                                {% else %}
+                                    <span class="badge badge-unchecked status-badge">✗ Не проверено</span>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted mt-2 d-block">Нажмите для деталей</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="text-end">
-                    {% if submission.grade %}
-                        <span class="badge badge-checked status-badge">✓ Проверено</span>
-                    {% else %}
-                        <span class="badge badge-unchecked status-badge">✗ Не проверено</span>
-                    {% endif %}
-                    <br>
-                    <small class="text-muted mt-2 d-block">Нажмите для деталей</small>
-                </div>
-            </div>
-        </div>
-    </div>
-</a>
+            </a>
         {% empty %}
             <p id="noSubmissionsMsg" style="text-align: center; width: 100%; color: #6c757d;">Нет сданных работ</p>
         {% endfor %}

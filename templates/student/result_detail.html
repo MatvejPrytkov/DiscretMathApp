@@ -210,252 +210,123 @@
 </div>
 
 <style>
-    .result-header {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border-radius: 16px;
-        padding: 25px 30px;
-        margin-bottom: 30px;
-        border: 1px solid rgba(99, 102, 241, 0.15);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
-    }
-    .result-header h1 {
-        margin: 0 0 15px 0;
-        font-size: 28px;
-    }
-    .result-meta {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-    }
-    .result-meta-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        background: white;
-        padding: 10px 18px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .percent-excellent { color: #059669; font-weight: bold; }
-    .percent-good { color: #3b82f6; font-weight: bold; }
-    .percent-average { color: #f59e0b; font-weight: bold; }
-    .percent-poor { color: #ef4444; font-weight: bold; }
+   /* result_detail.html - уникальные стили */
+.grade-checked-info {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
 
-    /* ИСПРАВЛЕНО: стиль для кириллических букв в ответах */
-    .answer-cyrillic {
-        display: inline-block;
-        font-weight: bold;
-        min-width: 30px;
-        padding: 2px 8px;
-        background: #f0f0f0;
-        border-radius: 4px;
-        text-align: center;
-    }
+.grade-checked-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(5, 150, 105, 0.2);
+}
 
-    .grade-checked-info {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
+.grade-checked-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #064e3b;
+}
 
-    .grade-checked-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid rgba(5, 150, 105, 0.2);
-    }
+.grade-checked-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
 
-    .grade-checked-icon {
-        font-size: 20px;
-    }
+.grade-checked-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+}
 
-    .grade-checked-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: #064e3b;
-    }
+.grade-checked-label {
+    font-weight: 600;
+    color: #065f46;
+    min-width: 100px;
+    font-size: 14px;
+}
 
-    .grade-checked-details {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
+.grade-checked-value {
+    color: #064e3b;
+    font-size: 14px;
+}
 
-    .grade-checked-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: 8px;
-    }
+.current-grade-info {
+    background: #fef3c7;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
 
-    .grade-checked-label {
-        font-weight: 600;
-        color: #065f46;
-        min-width: 100px;
-        font-size: 14px;
-    }
+.current-grade-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+}
 
-    .grade-checked-value {
-        color: #064e3b;
-        font-size: 14px;
-    }
+.current-grade-header strong {
+    font-size: 16px;
+    font-weight: 700;
+    color: #92400e;
+}
 
-    .grade-badge-value {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-weight: 700;
-        font-size: 14px;
-    }
+.current-grade-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
 
-    .grade-5 {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-    }
+.current-grade-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+}
 
-    .grade-4 {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-        color: white;
-    }
+.current-grade-label {
+    font-weight: 600;
+    color: #92400e;
+    min-width: 100px;
+    font-size: 14px;
+}
 
-    .grade-3 {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-    }
+.current-grade-value {
+    color: #78350f;
+    font-size: 14px;
+}
 
-    .grade-2 {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
-    }
+.grade-form {
+    margin: 30px 0;
+    padding: 25px;
+    background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
 
-    .current-grade-info {
-        background: #fef3c7;
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 25px;
-    }
+.grade-form select,
+.grade-form textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
 
-    .current-grade-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid rgba(245, 158, 11, 0.2);
-    }
-
-    .current-grade-icon {
-        font-size: 20px;
-    }
-
-    .current-grade-header strong {
-        font-size: 16px;
-        font-weight: 700;
-        color: #92400e;
-    }
-
-    .current-grade-details {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .current-grade-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: 8px;
-    }
-
-    .current-grade-label {
-        font-weight: 600;
-        color: #92400e;
-        min-width: 100px;
-        font-size: 14px;
-    }
-
-    .current-grade-value {
-        color: #78350f;
-        font-size: 14px;
-    }
-
-    .answers-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 25px;
-        margin: 30px 0;
-    }
-    .answers-grid .card {
-        background: white;
-        border: 1px solid rgba(99, 102, 241, 0.15);
-        border-radius: 16px;
-        padding: 20px;
-        transition: all 0.3s;
-    }
-    .answers-grid .card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
-    .answers-grid .ok strong { color: #059669; }
-    .answers-grid .no strong { color: #dc2626; }
-
-    .grade-form {
-        margin: 30px 0;
-        padding: 25px;
-        background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
-        border-radius: 16px;
-        border: 1px solid rgba(245, 158, 11, 0.2);
-    }
-    .grade-form select, .grade-form textarea {
-        width: 100%;
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-    }
-    .grade-form h2 {
-        color: #92400e;
-        margin-top: 0;
-    }
-
-    @media (max-width: 768px) {
-        .answers-grid {
-            grid-template-columns: 1fr;
-        }
-        .result-meta {
-            flex-direction: column;
-        }
-        .result-header {
-            padding: 20px;
-        }
-        .grade-checked-row {
-            flex-direction: column;
-            gap: 4px;
-        }
-        .current-grade-row {
-            flex-direction: column;
-            gap: 4px;
-        }
-        .grade-checked-label {
-            min-width: auto;
-        }
-        .current-grade-label {
-            min-width: auto;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .grade-checked-details {
-            gap: 10px;
-        }
-        .current-grade-details {
-            gap: 10px;
-        }
-    }
+.grade-form h2 {
+    color: #92400e;
+    margin-top: 0;
+}
 </style>
 
 {% endblock %}

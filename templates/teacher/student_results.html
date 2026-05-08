@@ -4,10 +4,24 @@
 
 <style>
     .page { max-width: 1200px; margin: 0 auto; }
-    .page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
-    .page-title { margin: 0; font-size: 24px; font-weight: 700; }
-    .page-subtitle { margin: 6px 0 0; font-size: 13px; color: #6b7280; }
-
+    .page-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    .page-title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+    }
+    .page-subtitle {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: #6b7280;
+    }
     /* Блок фильтрации */
     .filter-section {
         background: #f8f9fa;
@@ -71,20 +85,10 @@
         align-items: center;
         justify-content: center;
     }
-    .btn-filter {
-        background: #2f66ff;
-        color: white;
-    }
-    .btn-filter:hover {
-        background: #1d4ed8;
-    }
-    .btn-reset {
-        background: #6c757d;
-        color: white;
-    }
-    .btn-reset:hover {
-        background: #5a6268;
-    }
+    .btn-filter { background: #2f66ff; color: white; }
+    .btn-filter:hover { background: #1d4ed8; }
+    .btn-reset { background: #6c757d; color: white; }
+    .btn-reset:hover { background: #5a6268; }
     .active-filters {
         margin-top: 15px;
         padding-top: 12px;
@@ -115,22 +119,17 @@
         text-decoration: none;
         color: white;
     }
-    .filter-badge .remove:hover {
-        opacity: 0.8;
-    }
-
-    /* Стили для поиска учеников */
+    .filter-badge .remove:hover { opacity: 0.8; }
+    /* Поиск учеников */
     .student-search-wrapper {
         display: flex;
         gap: 10px;
         align-items: flex-end;
     }
-
     .student-search-container {
         flex: 1;
         position: relative;
     }
-
     .student-search-input {
         width: 100%;
         padding: 8px 12px;
@@ -141,13 +140,11 @@
         transition: all 0.2s;
         box-sizing: border-box;
     }
-
     .student-search-input:focus {
         outline: none;
         border-color: #2f66ff;
         box-shadow: 0 0 0 3px rgba(47, 102, 255, 0.1);
     }
-
     .clear-search-btn {
         position: absolute;
         right: 10px;
@@ -160,11 +157,7 @@
         background: white;
         padding: 0 4px;
     }
-
-    .clear-search-btn:hover {
-        color: #dc3545;
-    }
-
+    .clear-search-btn:hover { color: #dc3545; }
     .panel {
         background: #ffffff;
         border-radius: 12px;
@@ -172,19 +165,13 @@
         border: 1px solid rgba(17, 24, 39, 0.06);
         overflow: hidden;
     }
-    .panel-body {
-        padding: 0;
-    }
-
-    .table-wrap {
-        overflow-x: auto;
-    }
+    .panel-body { padding: 0; }
+    .table-wrap { overflow-x: auto; }
     .table-wrap.table-scroll {
         max-height: 460px;
         overflow-y: auto;
         position: relative;
     }
-
     .results-table {
         width: 100%;
         border-collapse: collapse;
@@ -213,27 +200,18 @@
         font-size: 14px;
         background-color: #fff;
     }
-    .results-table tbody tr:hover {
-        background-color: #f8fafc;
-    }
-    .table-wrap.table-scroll .results-table thead tr {
-        background: #f3f4f6;
-    }
-
-    /* Стили для кликабельных строк */
+    .results-table tbody tr:hover { background-color: #f8fafc; }
+    .table-wrap.table-scroll .results-table thead tr { background: #f3f4f6; }
     .result-row {
         cursor: pointer;
         transition: all 0.2s ease;
         position: relative;
     }
-
     .result-row:hover {
         background-color: #eff6ff !important;
         transform: translateX(2px);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
-
-    /* Стиль для ссылки внутри строки */
     .result-row a {
         text-decoration: none;
         color: #3b82f6;
@@ -243,13 +221,10 @@
         position: relative;
         z-index: 2;
     }
-
     .result-row a:hover {
         text-decoration: underline;
         color: #1d4ed8;
     }
-
-    /* Индикатор кликабельности при наведении */
     .result-row:hover::after {
         content: "🔗";
         position: absolute;
@@ -260,7 +235,6 @@
         font-size: 12px;
         pointer-events: none;
     }
-
     .type-badge {
         display: inline-block;
         padding: 2px 8px;
@@ -270,7 +244,6 @@
     }
     .type-test { background: #e3f2fd; color: #1976d2; }
     .type-lab { background: #e8f5e9; color: #388e3c; }
-
     .badge-score {
         background: rgba(16, 185, 129, 0.12);
         color: #047857;
@@ -291,7 +264,6 @@
         display: inline-flex;
         align-items: center;
     }
-
     .btn-simple {
         display: inline-flex;
         align-items: center;
@@ -303,10 +275,7 @@
         color: #111827;
         font-size: 14px;
     }
-    .btn-simple:hover {
-        background: #f8f9fa;
-    }
-
+    .btn-simple:hover { background: #f8f9fa; }
     .active-student-badge {
         margin-top: 10px;
         padding: 8px 15px;
@@ -315,7 +284,6 @@
         display: inline-block;
         border-left: 4px solid #2f66ff;
     }
-
     .actions-wrapper {
         display: flex;
         justify-content: space-between;
@@ -341,39 +309,19 @@
         transform: translateY(-2px);
         color: white;
     }
-
     .empty-row {
         text-align: center;
         padding: 40px;
         color: #6c757d;
     }
-
     @media (max-width: 768px) {
-        .filter-row {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        .student-search-wrapper {
-            flex-direction: column;
-        }
-        .filter-actions {
-            flex-direction: column;
-        }
-        .btn-filter, .btn-reset {
-            width: 100%;
-        }
-        .actions-wrapper {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        .actions-wrapper .btn-simple,
-        .actions-wrapper .btn-excel {
-            justify-content: center;
-            width: 100%;
-        }
-        .result-row:hover::after {
-            display: none;
-        }
+        .filter-row { flex-direction: column; align-items: stretch; }
+        .student-search-wrapper { flex-direction: column; }
+        .filter-actions { flex-direction: column; }
+        .btn-filter, .btn-reset { width: 100%; }
+        .actions-wrapper { flex-direction: column; align-items: stretch; }
+        .actions-wrapper .btn-simple, .actions-wrapper .btn-excel { justify-content: center; width: 100%; }
+        .result-row:hover::after { display: none; }
     }
 </style>
 

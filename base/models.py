@@ -399,13 +399,27 @@ class Notification(models.Model):
 
 # Добавьте эту модель в конец файла models.py
 
+# В models.py, обновите класс Message:
 class Message(models.Model):
-    """Модель для сообщений между студентами"""
+    MESSAGE_TYPES = [
+        ('text', 'Текст'),
+        ('voice', 'Голосовое сообщение'),
+        ('file', 'Файл'),
+    ]
+
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
-    content = models.TextField(verbose_name="Текст сообщения")
+    content = models.TextField(verbose_name="Текст сообщения", blank=True, null=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False, verbose_name="Удалено")
+    # Новые поля
+    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPES, default='text')
+    file_attachment = models.FileField(upload_to='student_chat_files/', blank=True, null=True)
+    file_name = models.CharField(max_length=255, blank=True, null=True)
+    voice_message = models.FileField(upload_to='student_voice_messages/', blank=True, null=True)
+    voice_duration = models.IntegerField(default=0)
+    reactions = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ['created_at']
@@ -444,7 +458,7 @@ class TeacherStudentMessage(models.Model):
     reactions = models.JSONField(default=dict, blank=True)  # {user_id: '👍'}
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    is_deleted = models.BooleanField(default=False, verbose_name="Удалено")
     class Meta:
         ordering = ['created_at']
 

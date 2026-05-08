@@ -44,281 +44,168 @@
 {% endif %}
 
 <style>
-/* ============================================
-   ПОЛНОСТЬЮ ПЕРЕОПРЕДЕЛЯЕМ СТИЛИ - БЕЗ КОНФЛИКТОВ
-   ============================================ */
-
-/* Отменяем глобальные конфликтующие стили */
-.test-list-container {
-    all: unset !important;
-}
-
-.table, .table-hover, .mb-0 {
-    all: unset !important;
-}
-
-/* Контейнер для заголовка и кнопки */
-.tests-header-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.tests-title {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-}
-
-.create-test-btn {
-    margin: 0;
-    padding: 10px 24px;
-    font-weight: 600;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    text-decoration: none;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    transition: all 0.3s ease;
-    display: inline-block;
-    border: none;
-    cursor: pointer;
-}
-
-.create-test-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-    color: white;
-    text-decoration: none;
-}
-
-/* Основной контейнер таблицы */
-.custom-table-container {
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    background: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-}
-
-/* Обертка для скролла - ТОЛЬКО ЗДЕСЬ СКРОЛЛ */
-.custom-table-wrapper {
-    max-height: 450px;
-    overflow-y: auto;
-    overflow-x: auto;
-}
-
-/* Таблица */
-.custom-tests-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-    margin: 0;
-    padding: 0;
-}
-
-/* Шапка таблицы - ФИКСИРОВАННАЯ */
-.custom-tests-table thead tr th {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    color: white !important;
-    font-weight: 700;
-    padding: 12px 12px;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-align: center;
-    border-bottom: none;
-}
-
-/* Ячейки таблицы */
-.custom-tests-table tbody tr td {
-    padding: 10px 12px;
-    vertical-align: middle;
-    border-bottom: 1px solid #f0f0f0;
-    color: #334155;
-    background: white;
-    text-align: center;
-    transition: all 0.2s ease;
-}
-
-/* Кликабельные строки */
-.clickable-row {
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-/* Подсветка при наведении на строку */
-.clickable-row:hover {
-    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
-    transform: translateX(2px);
-    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);
-}
-
-.clickable-row:hover td {
-    background: transparent;
-}
-
-/* Первая колонка - название теста (жирный шрифт) */
-.custom-tests-table tbody tr td:first-child {
-    font-weight: 600;
-    color: #1e293b;
-}
-
-/* Подсветка первой колонки при наведении */
-.clickable-row:hover td:first-child {
-    color: #0284c7;
-}
-
-/* Последняя строка - без нижней границы */
-.custom-tests-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-/* Группа кнопок действий */
-.action-buttons-group {
-    display: inline-flex;
-    gap: 8px;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-/* Кнопка просмотра */
-.btn-custom-info {
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-    border: none;
-    color: white;
-    padding: 5px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.btn-custom-info:hover {
-    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
-    color: white;
-    text-decoration: none;
-}
-
-/* Кнопка удаления */
-.btn-custom-danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    border: none;
-    color: white;
-    padding: 5px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-custom-danger:hover {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-}
-
-/* Сообщение об отсутствии тестов */
-.no-tests-message {
-    text-align: center;
-    padding: 40px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 16px;
-    border: 1px dashed #cbd5e1;
-    color: #64748b;
-    font-size: 16px;
-    margin: 0;
-}
-
-/* Стили для скроллбара */
-.custom-table-wrapper::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-.custom-table-wrapper::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.custom-table-wrapper::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
-    border-radius: 10px;
-}
-
-.custom-table-wrapper::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
     .tests-header-wrapper {
-        flex-direction: column;
-        align-items: stretch;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
     }
-
+    .tests-title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
     .create-test-btn {
+        margin: 0;
+        padding: 10px 24px;
+        font-weight: 600;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        transition: all 0.3s ease;
+        display: inline-block;
+        border: none;
+        cursor: pointer;
+    }
+    .create-test-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    .custom-table-container {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+    .custom-table-wrapper {
+        max-height: 450px;
+        overflow-y: auto;
+        overflow-x: auto;
+    }
+    .custom-tests-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        margin: 0;
+        padding: 0;
+    }
+    .custom-tests-table thead tr th {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white !important;
+        font-weight: 700;
+        padding: 12px 12px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
         text-align: center;
+        border-bottom: none;
+    }
+    .custom-tests-table tbody tr td {
+        padding: 10px 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f0f0f0;
+        color: #334155;
+        background: white;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    .clickable-row { cursor: pointer; transition: all 0.2s ease; }
+    .clickable-row:hover {
+        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
+        transform: translateX(2px);
+        box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);
+    }
+    .clickable-row:hover td { background: transparent; }
+    .custom-tests-table tbody tr td:first-child {
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .clickable-row:hover td:first-child { color: #0284c7; }
+    .custom-tests-table tbody tr:last-child td { border-bottom: none; }
+    .action-buttons-group {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .btn-custom-info {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        border: none;
+        color: white;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .btn-custom-info:hover {
+        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    .btn-custom-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        color: white;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
     }
-
-    .action-buttons-group {
-        flex-direction: row;
-        gap: 8px;
+    .btn-custom-danger:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
     }
-
-    .action-buttons-group .btn-custom-info,
-    .action-buttons-group .btn-custom-danger {
-        padding: 5px 10px;
-        font-size: 11px;
+    .no-tests-message {
+        text-align: center;
+        padding: 40px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 16px;
+        border: 1px dashed #cbd5e1;
+        color: #64748b;
+        font-size: 16px;
+        margin: 0;
     }
-
-    .custom-table-wrapper {
-        max-height: 350px;
+    @media (max-width: 768px) {
+        .tests-header-wrapper { flex-direction: column; align-items: stretch; }
+        .create-test-btn { text-align: center; justify-content: center; }
+        .action-buttons-group { flex-direction: row; gap: 8px; }
+        .action-buttons-group .btn-custom-info, .action-buttons-group .btn-custom-danger { padding: 5px 10px; font-size: 11px; }
+        .custom-table-wrapper { max-height: 350px; }
+        .custom-tests-table thead tr th, .custom-tests-table tbody tr td { padding: 8px 10px; font-size: 12px; }
     }
-
-    .custom-tests-table thead tr th,
-    .custom-tests-table tbody tr td {
-        padding: 8px 10px;
-        font-size: 12px;
+    @media (max-width: 576px) {
+        .custom-tests-table thead tr th, .custom-tests-table tbody tr td { padding: 8px 8px; font-size: 11px; }
+        .btn-custom-info, .btn-custom-danger { padding: 4px 8px; font-size: 10px; }
     }
-}
-
-@media (max-width: 576px) {
-    .custom-tests-table thead tr th,
-    .custom-tests-table tbody tr td {
-        padding: 8px 8px;
-        font-size: 11px;
-    }
-
-    .btn-custom-info,
-    .btn-custom-danger {
-        padding: 4px 8px;
-        font-size: 10px;
-    }
-}
 </style>
 
 <script>

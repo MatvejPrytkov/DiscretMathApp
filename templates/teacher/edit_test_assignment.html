@@ -121,33 +121,30 @@
 <style>
     .students-list {
         background: #f8f9fa;
+        max-height: 450px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
     }
     .student-item {
         padding: 10px;
         border-bottom: 1px solid #e9ecef;
         transition: background 0.2s;
     }
-    .student-item:hover {
-        background: white;
-    }
-    .student-item:last-child {
-        border-bottom: none;
-    }
+    .student-item:hover { background: white; }
+    .student-item:last-child { border-bottom: none; }
     .student-checkbox {
         transform: scale(1.2);
         margin-right: 15px;
     }
-    .custom-checkbox {
-        padding-left: 1.5rem;
-    }
+    .custom-checkbox { padding-left: 1.5rem; }
     .custom-control-input {
         width: 1.2rem;
         height: 1.2rem;
         margin-top: 0.1rem;
     }
-    .custom-control-label {
-        font-weight: 500;
-    }
+    .custom-control-label { font-weight: 500; }
     .filter-row {
         background: #f8f9fa;
         padding: 12px;
@@ -159,10 +156,7 @@
         font-weight: 600;
         color: #495057;
     }
-    .filter-group select,
-    .filter-group input {
-        background: white;
-    }
+    .filter-group select, .filter-group input { background: white; }
     .selection-tools {
         display: flex;
         gap: 8px;

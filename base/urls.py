@@ -41,7 +41,15 @@ urlpatterns = [
     path('student/chat_with_teacher/', views.student_teacher_chat_list, name='student_chat_with_teacher'),
     path('student/chat/teacher/detail/<int:user_id>/', views.teacher_student_chat_detail,
          name='student_teacher_chat_detail'),
+    path('student/chat/send-file/', views.send_student_file, name='send_student_file'),
+    path('student/chat/send-voice/', views.send_student_voice, name='send_student_voice'),
+    path('student/chat/add-reaction/', views.add_student_message_reaction, name='add_student_message_reaction'),
     path('student/chat/teacher/detail/<int:user_id>/', views.teacher_student_chat_detail, name='student_teacher_chat_detail'),
+
+    path('student/chat/delete-message/<int:message_id>/', views.delete_student_message, name='delete_student_message'),
+
+
+    path('chat/teacher-student/delete-message/<int:message_id>/', views.delete_teacher_student_message, name='delete_teacher_student_message'),
     path('teacher/chat/student/detail/<int:user_id>/', views.teacher_student_chat_detail, name='teacher_student_chat_detail'),
     # ==================== УЧИТЕЛЬСКИЕ МАРШРУТЫ ====================
     path('teacher/', views.teacher_dashboard, name='teacher_dashboard'),
@@ -81,7 +89,7 @@ urlpatterns = [
     path('teacher/tests/<int:test_id>/', views.teacher_test_detail, name='teacher_test_detail'),
     path('teacher/tests/delete/<int:test_id>/', views.delete_teacher_test, name='delete_teacher_test'),
     path('teacher/tests/<int:test_id>/assign/', views.edit_test_assignment, name='edit_test_assignment'),
-path('teacher/tests/edit-question/<int:test_id>/', views.edit_question_in_test, name='edit_question_in_test'),
+    path('teacher/tests/edit-question/<int:test_id>/', views.edit_question_in_test, name='edit_question_in_test'),
     path('teacher/tests/add-question-to-test/<int:test_id>/', views.add_question_to_test, name='add_question_to_test'),
     path('teacher/tests/remove-question/<int:test_id>/', views.remove_question_from_test, name='remove_question_from_test'),
 

@@ -76,16 +76,12 @@
         background: #2f66ff;
         color: white;
     }
-    .btn-filter:hover {
-        background: #1d4ed8;
-    }
+    .btn-filter:hover { background: #1d4ed8; }
     .btn-reset {
         background: #6c757d;
         color: white;
     }
-    .btn-reset:hover {
-        background: #5a6268;
-    }
+    .btn-reset:hover { background: #5a6268; }
     .active-filters {
         margin-top: 15px;
         padding-top: 12px;
@@ -116,9 +112,7 @@
         text-decoration: none;
         color: white;
     }
-    .filter-badge .remove:hover {
-        opacity: 0.8;
-    }
+    .filter-badge .remove:hover { opacity: 0.8; }
 
     /* Сортировка */
     .sortable {
@@ -128,9 +122,7 @@
         position: relative;
         padding-right: 20px !important;
     }
-    .sortable:hover {
-        background-color: #e5e7eb !important;
-    }
+    .sortable:hover { background-color: #e5e7eb !important; }
     .sortable::after {
         content: "↕️";
         position: absolute;
@@ -149,7 +141,7 @@
         opacity: 1;
     }
 
-    /* Кликабельные карточки статистики */
+    /* Карточки статистики */
     .stats-cards {
         display: flex;
         gap: 20px;
@@ -179,20 +171,13 @@
         box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
         border-color: #cbd5e1;
     }
-    .stat-card-mini:active {
-        transform: translateY(-2px);
-        transition: transform 0.05s;
-    }
+    .stat-card-mini:active { transform: translateY(-2px); transition: transform 0.05s; }
     .stat-icon {
         font-size: 42px;
         transition: transform 0.2s;
     }
-    .stat-card-mini:hover .stat-icon {
-        transform: scale(1.05);
-    }
-    .stat-info {
-        flex: 1;
-    }
+    .stat-card-mini:hover .stat-icon { transform: scale(1.05); }
+    .stat-info { flex: 1; }
     .stat-value {
         font-size: 32px;
         font-weight: 800;
@@ -214,32 +199,23 @@
         opacity: 1;
         transform: translateX(0);
     }
-
-    /* Индивидуальные цвета при наведении на карточки */
     .stat-card-mini:first-child:hover {
         border-color: #3b82f6;
         background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
     }
-    .stat-card-mini:first-child:hover .stat-icon {
-        filter: drop-shadow(0 4px 6px rgba(59, 130, 246, 0.3));
-    }
-
+    .stat-card-mini:first-child:hover .stat-icon { filter: drop-shadow(0 4px 6px rgba(59, 130, 246, 0.3)); }
     .stat-card-mini:nth-child(2):hover {
         border-color: #10b981;
         background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);
     }
-    .stat-card-mini:nth-child(2):hover .stat-icon {
-        filter: drop-shadow(0 4px 6px rgba(16, 185, 129, 0.3));
-    }
-
+    .stat-card-mini:nth-child(2):hover .stat-icon { filter: drop-shadow(0 4px 6px rgba(16, 185, 129, 0.3)); }
     .stat-card-mini:nth-child(3):hover {
         border-color: #8b5cf6;
         background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
     }
-    .stat-card-mini:nth-child(3):hover .stat-icon {
-        filter: drop-shadow(0 4px 6px rgba(139, 92, 246, 0.3));
-    }
+    .stat-card-mini:nth-child(3):hover .stat-icon { filter: drop-shadow(0 4px 6px rgba(139, 92, 246, 0.3)); }
 
+    /* Таблица */
     .students-table-wrapper {
         background: white;
         border-radius: 20px;
@@ -247,10 +223,7 @@
         border: 1px solid #e2e8f0;
         overflow: auto;
     }
-    .students-table-wrapper.has-scroll {
-        max-height: 500px;
-        overflow-y: auto;
-    }
+    .students-table-wrapper.has-scroll { max-height: 500px; overflow-y: auto; }
     .students-table {
         width: 100%;
         border-collapse: collapse;
@@ -283,10 +256,7 @@
         background: #f8fafc;
         cursor: pointer;
     }
-    .students-table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
+    .students-table tbody tr:last-child td { border-bottom: none; }
     .student-name-cell {
         display: flex;
         align-items: center;
@@ -318,7 +288,6 @@
         font-size: 12px;
         color: #94a3b8;
     }
-
     .progress-cell { min-width: 120px; }
     .progress-stats {
         display: flex;
@@ -347,7 +316,6 @@
         border-radius: 10px;
         transition: width 0.3s ease;
     }
-
     .grade-cell { text-align: center; }
     .grade-badge {
         display: inline-block;
@@ -361,7 +329,6 @@
     .grade-3 { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
     .grade-2 { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
     .grade-none { background: #f1f5f9; color: #94a3b8; }
-
     .btn-detail {
         display: inline-flex;
         align-items: center;
@@ -385,29 +352,13 @@
         transform: translateX(0);
         box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
     }
-
     .empty-row td { text-align: center; padding: 60px 20px !important; }
     .empty-state { text-align: center; }
     .empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
     .empty-state h3 { font-size: 20px; color: #475569; margin-bottom: 8px; }
     .empty-state p { color: #94a3b8; }
 
-    .students-table-wrapper.has-scroll::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    .students-table-wrapper.has-scroll::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-    }
-    .students-table-wrapper.has-scroll::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #cbd5e1, #94a3b8);
-        border-radius: 10px;
-    }
-    .students-table-wrapper.has-scroll::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #94a3b8, #64748b);
-    }
-
+    /* Адаптивность */
     @media (max-width: 768px) {
         .filter-row { flex-direction: column; align-items: stretch; }
         .filter-actions { flex-direction: column; }

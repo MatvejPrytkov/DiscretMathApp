@@ -2,195 +2,148 @@
 {% block student_content %}
 
 <style>
-    /* Контейнер для сетки тестов */
-    .tests-grid-container {
-        margin-top: 20px;
-    }
+    /* teacher_tests.html - уникальные стили */
+.tests-grid-container {
+    margin-top: 20px;
+}
 
-    /* Горизонтальная сетка карточек */
+.tests-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.test-card {
+    background: white;
+    border-radius: 14px;
+    border: 1px solid rgba(99, 102, 241, 0.12);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    position: relative;
+}
+
+.test-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.test-card.completed {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-left: 4px solid #22c55e;
+}
+
+.test-card-body {
+    padding: 16px;
+}
+
+.test-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.test-card-title h5 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    flex: 1;
+}
+
+.status-badge.completed {
+    background: #22c55e;
+    color: white;
+}
+
+.status-badge.pending {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.test-card-description {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 12px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.test-card-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.test-card-questions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.test-card-questions::before {
+    content: "📋";
+    font-size: 0.7rem;
+}
+
+.test-card-result span {
+    background: rgba(16, 185, 129, 0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.test-card-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.test-card-date::before {
+    content: "📅";
+    font-size: 0.7rem;
+}
+
+@media (min-width: 1400px) {
     .tests-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 20px;
-        margin-bottom: 20px;
+        grid-template-columns: repeat(4, 1fr);
     }
+}
 
-    /* Карточка теста — компактная */
-    .test-card {
-        background: white;
-        border-radius: 14px;
-        border: 1px solid rgba(99, 102, 241, 0.12);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        overflow: hidden;
-        cursor: pointer;
-        text-decoration: none;
-        display: block;
-        position: relative;
+@media (min-width: 1800px) {
+    .tests-grid {
+        grid-template-columns: repeat(5, 1fr);
     }
+}
 
-    .test-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
-        border-color: rgba(99, 102, 241, 0.3);
+@media (max-width: 900px) {
+    .tests-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
+}
 
-    /* Пройденные тесты — зелёный акцент */
-    .test-card.completed {
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        border-left: 4px solid #22c55e;
+@media (max-width: 600px) {
+    .tests-grid {
+        grid-template-columns: 1fr;
     }
-
-    /* Тело карточки */
-    .test-card-body {
-        padding: 16px;
-    }
-
-    /* Заголовок карточки */
-    .test-card-title {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    .test-card-title h5 {
-        margin: 0;
-        font-size: 1rem;
-        font-weight: 700;
-        color: #1e293b;
-        flex: 1;
-    }
-
-    /* Бейджи статуса */
-    .status-badge {
-        font-size: 0.7rem;
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .status-badge.completed {
-        background: #22c55e;
-        color: white;
-    }
-
-    .status-badge.pending {
-        background: #e2e8f0;
-        color: #475569;
-    }
-
-    /* Описание */
-    .test-card-description {
-        font-size: 0.8rem;
-        color: #64748b;
-        margin-bottom: 12px;
-        line-height: 1.4;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    /* Информационная строка */
-    .test-card-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.75rem;
-        color: #94a3b8;
-        margin-top: 8px;
-        padding-top: 8px;
-        border-top: 1px solid #e2e8f0;
-    }
-
-    .test-card-questions {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .test-card-questions::before {
-        content: "📋";
-        font-size: 0.7rem;
-    }
-
-    .test-card-result {
-        font-weight: 600;
-        color: #10b981;
-    }
-
-    .test-card-result span {
-        background: rgba(16, 185, 129, 0.1);
-        padding: 2px 8px;
-        border-radius: 12px;
-    }
-
-    .test-card-date {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .test-card-date::before {
-        content: "📅";
-        font-size: 0.7rem;
-    }
-
-    /* Пустое состояние */
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border-radius: 20px;
-        border: 1px solid rgba(99, 102, 241, 0.1);
-    }
-
-    .empty-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
-    }
-
-    .empty-state h3 {
-        font-size: 1.2rem;
-        color: #1e293b;
-        margin-bottom: 8px;
-    }
-
-    .empty-state p {
-        color: #64748b;
-        font-size: 0.9rem;
-    }
-
-    /* Адаптивность */
-    @media (min-width: 1400px) {
-        .tests-grid {
-            grid-template-columns: repeat(4, 1fr);
-        }
-    }
-
-    @media (min-width: 1800px) {
-        .tests-grid {
-            grid-template-columns: repeat(5, 1fr);
-        }
-    }
-
-    @media (max-width: 900px) {
-        .tests-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    @media (max-width: 600px) {
-        .tests-grid {
-            grid-template-columns: 1fr;
-        }
-    }
+}
 
 </style>
 

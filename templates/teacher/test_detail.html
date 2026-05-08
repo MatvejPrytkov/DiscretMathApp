@@ -4,16 +4,13 @@
 {% block extra_css %}
 {{ block.super }}
 <style>
+    /* Уникальные стили для страницы деталей теста */
     .test-detail-container {
         max-width: 1400px;
         margin: 0 auto;
         padding-bottom: 40px;
     }
-
-    .test-header {
-        margin-bottom: 28px;
-    }
-
+    .test-header { margin-bottom: 28px; }
     .test-title {
         font-size: 32px;
         font-weight: 800;
@@ -26,7 +23,6 @@
         border-bottom: 3px solid #6366f1;
         display: inline-block;
     }
-
     .test-description {
         background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
         padding: 16px 20px;
@@ -34,21 +30,13 @@
         margin-top: 12px;
         border-left: 4px solid #6366f1;
     }
-
-    .test-description p {
-        margin: 0;
-        color: #334155;
-        font-size: 15px;
-        line-height: 1.5;
-    }
-
+    .test-description p { margin: 0; color: #334155; font-size: 15px; line-height: 1.5; }
     .test-detail-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 24px;
         margin-bottom: 28px;
     }
-
     .detail-card {
         background: white;
         border-radius: 20px;
@@ -56,12 +44,10 @@
         overflow: hidden;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-
     .detail-card:hover {
         transform: translateY(-4px);
         box-shadow: 0 20px 35px rgba(0, 0, 0, 0.12);
     }
-
     .card-header-custom {
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         padding: 16px 24px;
@@ -70,11 +56,7 @@
         gap: 12px;
         flex-wrap: wrap;
     }
-
-    .header-icon {
-        font-size: 24px;
-    }
-
+    .header-icon { font-size: 24px; }
     .card-header-custom h3 {
         margin: 0;
         color: white;
@@ -82,7 +64,6 @@
         font-weight: 700;
         letter-spacing: 0.3px;
     }
-
     .item-count {
         background: rgba(99, 102, 241, 0.2);
         color: #a5b4fc;
@@ -91,7 +72,6 @@
         font-size: 12px;
         font-weight: 600;
     }
-
     .btn-edit-test {
         margin-left: auto;
         background: rgba(255, 255, 255, 0.15);
@@ -104,28 +84,17 @@
         cursor: pointer;
         transition: all 0.2s ease;
     }
-
     .btn-edit-test:hover {
         background: rgba(255, 255, 255, 0.25);
         transform: translateY(-1px);
     }
-
     .card-body-custom {
         padding: 0;
         max-height: 550px;
         overflow-y: auto;
     }
-
-    .questions-list {
-        padding-bottom: 20px;
-    }
-
-    .questions-ul {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-
+    .questions-list { padding-bottom: 20px; }
+    .questions-ul { list-style: none; margin: 0; padding: 0; }
     .question-item {
         display: flex;
         align-items: flex-start;
@@ -135,11 +104,7 @@
         transition: background 0.2s ease;
         position: relative;
     }
-
-    .question-item:hover {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    }
-
+    .question-item:hover { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); }
     .question-number {
         display: inline-flex;
         align-items: center;
@@ -153,22 +118,14 @@
         border-radius: 12px;
         flex-shrink: 0;
     }
-
-    .question-content {
-        flex: 1;
-    }
-
-    .question-text-wrapper {
-        margin-bottom: 8px;
-    }
-
+    .question-content { flex: 1; }
+    .question-text-wrapper { margin-bottom: 8px; }
     .question-text-display {
         font-size: 14px;
         color: #334155;
         line-height: 1.5;
         word-break: break-word;
     }
-
     .question-options-display {
         margin-top: 10px;
         padding-left: 20px;
@@ -176,17 +133,12 @@
         color: #475569;
         border-left: 2px solid #e2e8f0;
     }
-
-    .question-options-display div {
-        margin-bottom: 4px;
-    }
-
+    .question-options-display div { margin-bottom: 4px; }
     .correct-answer-badge {
         margin-top: 8px;
         color: #10b981;
         font-weight: 500;
     }
-
     .badge-common {
         display: inline-block;
         background: #e0e7ff;
@@ -197,7 +149,6 @@
         font-weight: 600;
         margin-right: 8px;
     }
-
     .badge-personal {
         display: inline-block;
         background: #fef3c7;
@@ -208,30 +159,22 @@
         font-weight: 600;
         margin-right: 8px;
     }
+    .personal-question-item { background: #fffbeb; }
 
-    .personal-question-item {
-        background: #fffbeb;
-    }
-
-    /* Только личные вопросы могут редактироваться */
-    .personal-question-item .question-actions-edit {
+    /* По умолчанию скрываем кнопки действий */
+    .question-actions-edit {
         display: none;
         gap: 8px;
-        flex-shrink: 0;
+        align-items: center;
+        margin-left: auto;
     }
 
-    /* В режиме редактирования показываем кнопки только для личных вопросов */
-    body.edit-mode-active .personal-question-item .question-actions-edit {
+    /* В режиме редактирования показываем кнопки у всех вопросов */
+    body.edit-mode-active .question-actions-edit {
         display: flex !important;
     }
 
-    /* Общие вопросы не показывают кнопки редактирования никогда */
-    .question-item:not(.personal-question-item) .question-actions-edit {
-        display: none !important;
-    }
-
-    .btn-edit-question,
-    .btn-remove-question {
+    .btn-edit-question, .btn-remove-question {
         background: none;
         border: none;
         font-size: 16px;
@@ -240,20 +183,18 @@
         border-radius: 8px;
         transition: all 0.2s ease;
     }
-
     .btn-edit-question:hover {
         background: #e0e7ff;
         color: #4f46e5;
         transform: scale(1.05);
     }
-
     .btn-remove-question:hover {
         background: #fee2e2;
         color: #dc2626;
         transform: scale(1.05);
     }
 
-    /* Стили для массового добавления вопросов */
+    /* Панели добавления */
     .batch-add-panel {
         margin-top: 20px;
         margin-bottom: 20px;
@@ -262,7 +203,6 @@
         border-radius: 16px;
         border: 2px solid #6366f1;
     }
-
     .batch-add-header {
         display: flex;
         justify-content: space-between;
@@ -270,7 +210,6 @@
         margin-bottom: 16px;
         cursor: pointer;
     }
-
     .batch-add-header h4 {
         margin: 0;
         font-size: 16px;
@@ -280,24 +219,13 @@
         align-items: center;
         gap: 8px;
     }
-
     .batch-add-header .toggle-icon {
         font-size: 20px;
         transition: transform 0.3s;
     }
-
-    .batch-add-header.collapsed .toggle-icon {
-        transform: rotate(-90deg);
-    }
-
-    .batch-questions-container {
-        transition: all 0.3s ease;
-    }
-
-    .batch-questions-container.collapsed {
-        display: none;
-    }
-
+    .batch-add-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+    .batch-questions-container { transition: all 0.3s ease; }
+    .batch-questions-container.collapsed { display: none; }
     .batch-question-block {
         background: white;
         border: 1px solid #e2e8f0;
@@ -306,7 +234,6 @@
         margin-bottom: 16px;
         position: relative;
     }
-
     .batch-question-header {
         display: flex;
         justify-content: space-between;
@@ -315,13 +242,11 @@
         padding-bottom: 8px;
         border-bottom: 1px solid #e2e8f0;
     }
-
     .batch-question-title {
         font-weight: 600;
         color: #1e293b;
         font-size: 14px;
     }
-
     .btn-remove-batch-question {
         background: none;
         border: none;
@@ -332,12 +257,10 @@
         padding: 4px 8px;
         border-radius: 6px;
     }
-
     .btn-remove-batch-question:hover {
         background: #fee2e2;
         color: #ef4444;
     }
-
     .btn-add-batch-question {
         margin-top: 12px;
         padding: 8px 16px;
@@ -352,11 +275,7 @@
         align-items: center;
         gap: 6px;
     }
-
-    .btn-add-batch-question:hover {
-        background: #cbd5e1;
-    }
-
+    .btn-add-batch-question:hover { background: #cbd5e1; }
     .batch-actions {
         display: flex;
         gap: 12px;
@@ -364,7 +283,6 @@
         padding-top: 16px;
         border-top: 1px solid #e2e8f0;
     }
-
     .btn-save-batch {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white;
@@ -379,12 +297,10 @@
         align-items: center;
         gap: 8px;
     }
-
     .btn-save-batch:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
-
     .btn-cancel-batch {
         background: #f1f5f9;
         color: #475569;
@@ -396,15 +312,8 @@
         transition: all 0.2s;
         border: none;
     }
-
-    .btn-cancel-batch:hover {
-        background: #e2e8f0;
-    }
-
-    .batch-question-form-group {
-        margin-bottom: 12px;
-    }
-
+    .btn-cancel-batch:hover { background: #e2e8f0; }
+    .batch-question-form-group { margin-bottom: 12px; }
     .batch-question-form-group label {
         display: block;
         font-size: 12px;
@@ -412,7 +321,6 @@
         margin-bottom: 4px;
         color: #475569;
     }
-
     .batch-question-form-group input,
     .batch-question-form-group textarea,
     .batch-question-form-group select {
@@ -422,17 +330,13 @@
         border-radius: 8px;
         font-size: 13px;
     }
-
     .batch-options-row {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
         margin-bottom: 12px;
     }
-
-    /* Обычная панель добавления */
-    #addQuestionPanel,
-    #addQuestionPanelEmpty {
+    #addQuestionPanel, #addQuestionPanelEmpty {
         margin-top: 20px;
         margin-bottom: 20px;
         padding: 20px;
@@ -440,21 +344,18 @@
         border-radius: 16px;
         border: 2px dashed #cbd5e1;
     }
-
     .add-question-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 16px;
     }
-
     .add-question-header h4 {
         margin: 0;
         font-size: 16px;
         font-weight: 600;
         color: #1e293b;
     }
-
     .close-panel-btn {
         background: none;
         border: none;
@@ -463,11 +364,7 @@
         color: #94a3b8;
         transition: color 0.2s;
     }
-
-    .close-panel-btn:hover {
-        color: #ef4444;
-    }
-
+    .close-panel-btn:hover { color: #ef4444; }
     .option-letter {
         display: inline-flex;
         align-items: center;
@@ -479,28 +376,10 @@
         font-size: 12px;
         margin-right: 6px;
     }
-
-    .option-a-letter {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-    .option-b-letter {
-        background: #dcfce7;
-        color: #166534;
-    }
-
-    .option-c-letter {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .option-d-letter {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    /* Кнопка массового добавления */
+    .option-a-letter { background: #dbeafe; color: #1e40af; }
+    .option-b-letter { background: #dcfce7; color: #166534; }
+    .option-c-letter { background: #fef3c7; color: #92400e; }
+    .option-d-letter { background: #fee2e2; color: #991b1b; }
     .btn-show-batch-add {
         background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
         color: white;
@@ -520,31 +399,20 @@
         margin: 0 auto;
         box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
     }
-
     .btn-show-batch-add:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
         background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
     }
-
-    .btn-show-batch-add i {
-        font-size: 18px;
-    }
-
+    .btn-show-batch-add i { font-size: 18px; }
     .batch-add-button-container {
         margin-top: 16px;
         margin-bottom: 30px;
         text-align: center;
         padding-bottom: 10px;
     }
-
-    /* Стили для студентов */
-    .students-ul {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-
+    /* Студенты */
+    .students-ul { list-style: none; margin: 0; padding: 0; }
     .student-item {
         display: flex;
         align-items: center;
@@ -553,17 +421,12 @@
         border-bottom: 1px solid #f0f0f0;
         transition: all 0.2s ease;
     }
-
-    .student-item.clickable-student {
-        cursor: pointer;
-    }
-
+    .student-item.clickable-student { cursor: pointer; }
     .student-item.clickable-student:hover {
         background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
         transform: translateX(4px);
         padding-left: 24px;
     }
-
     .student-avatar {
         display: inline-flex;
         align-items: center;
@@ -577,29 +440,19 @@
         border-radius: 50%;
         flex-shrink: 0;
     }
-
-    .student-info {
-        flex: 1;
-    }
-
+    .student-info { flex: 1; }
     .student-name {
         font-size: 15px;
         font-weight: 600;
         color: #1f2937;
     }
-
-    .student-email {
-        font-size: 12px;
-        color: #6b7280;
-    }
-
+    .student-email { font-size: 12px; color: #6b7280; }
     .student-group {
         font-size: 11px;
         color: #9ca3af;
         margin-top: 2px;
         display: block;
     }
-
     .student-arrow {
         font-size: 18px;
         color: #cbd5e1;
@@ -607,13 +460,11 @@
         transform: translateX(-10px);
         transition: all 0.2s ease;
     }
-
     .student-item.clickable-student:hover .student-arrow {
         opacity: 1;
         transform: translateX(0);
         color: #10b981;
     }
-
     /* Кнопки действий */
     .test-actions {
         display: flex;
@@ -622,7 +473,6 @@
         margin-top: 8px;
         margin-bottom: 20px;
     }
-
     .btn-secondary-custom {
         background: linear-gradient(135deg, #64748b 0%, #475569 100%);
         color: white;
@@ -638,7 +488,6 @@
         border: none;
         cursor: pointer;
     }
-
     .btn-secondary-custom:hover {
         background: linear-gradient(135deg, #475569 0%, #334155 100%);
         transform: translateY(-2px);
@@ -646,7 +495,6 @@
         color: white;
         text-decoration: none;
     }
-
     .btn-primary-custom {
         background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
         color: white;
@@ -662,7 +510,6 @@
         border: none;
         cursor: pointer;
     }
-
     .btn-primary-custom:hover {
         background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
         transform: translateY(-2px);
@@ -670,7 +517,26 @@
         color: white;
         text-decoration: none;
     }
-
+    .btn-danger-custom {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-danger-custom:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+        color: white;
+    }
     /* Модальное окно */
     .modal {
         display: none;
@@ -683,16 +549,10 @@
         background-color: rgba(0, 0, 0, 0.5);
         animation: fadeIn 0.2s ease;
     }
-
     @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
-
     .modal-content {
         background-color: white;
         margin: 5% auto;
@@ -703,18 +563,10 @@
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
         animation: slideIn 0.3s ease;
     }
-
     @keyframes slideIn {
-        from {
-            transform: translateY(-50px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
     }
-
     .modal-header {
         padding: 20px 24px;
         border-bottom: 1px solid #e2e8f0;
@@ -722,14 +574,12 @@
         justify-content: space-between;
         align-items: center;
     }
-
     .modal-header h3 {
         margin: 0;
         font-size: 20px;
         font-weight: 700;
         color: #1e293b;
     }
-
     .modal-close {
         font-size: 28px;
         font-weight: bold;
@@ -737,17 +587,12 @@
         color: #94a3b8;
         transition: color 0.2s;
     }
-
-    .modal-close:hover {
-        color: #ef4444;
-    }
-
+    .modal-close:hover { color: #ef4444; }
     .modal-body {
         padding: 24px;
         max-height: 500px;
         overflow-y: auto;
     }
-
     .modal-footer {
         padding: 16px 24px;
         border-top: 1px solid #e2e8f0;
@@ -755,11 +600,7 @@
         justify-content: flex-end;
         gap: 12px;
     }
-
-    .modal-body .form-group {
-        margin-bottom: 16px;
-    }
-
+    .modal-body .form-group { margin-bottom: 16px; }
     .modal-body label {
         display: block;
         font-weight: 600;
@@ -767,7 +608,6 @@
         font-size: 13px;
         color: #334155;
     }
-
     .modal-body input,
     .modal-body textarea,
     .modal-body select {
@@ -777,7 +617,6 @@
         border-radius: 10px;
         font-size: 14px;
     }
-
     .modal-body input:focus,
     .modal-body textarea:focus,
     .modal-body select:focus {
@@ -785,7 +624,6 @@
         border-color: #6366f1;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
-
     .btn {
         padding: 10px 20px;
         border-radius: 10px;
@@ -795,34 +633,28 @@
         transition: all 0.2s;
         border: none;
     }
-
     .btn-primary {
         background: linear-gradient(135deg, #6366f1, #4f46e5);
         color: white;
     }
-
     .btn-primary:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
     }
-
     .btn-outline-secondary {
         background: transparent;
         border: 1px solid #cbd5e1;
         color: #475569;
     }
-
     .btn-outline-secondary:hover {
         background: #f8fafc;
         border-color: #94a3b8;
     }
-
     .form-actions {
         display: flex;
         gap: 12px;
         margin-top: 16px;
     }
-
     .empty-message {
         text-align: center;
         padding: 40px 20px;
@@ -831,98 +663,29 @@
         margin: 0;
         background: #fafafa;
     }
-
-    .toast-notification {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: white;
-        border-radius: 12px;
-        padding: 12px 20px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        z-index: 10000;
-        transform: translateX(400px);
-        transition: transform 0.3s ease;
-        border-left: 4px solid;
-    }
-
-    .toast-notification.show {
-        transform: translateX(0);
-    }
-
-    .toast-notification.success {
-        border-left-color: #10b981;
-    }
-
-    .toast-notification.error {
-        border-left-color: #ef4444;
-    }
-
-    .toast-icon {
-        font-size: 20px;
-    }
-
-    .toast-message {
-        font-size: 14px;
-        color: #1e293b;
-    }
-
-    .card-body-custom::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .card-body-custom::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-    }
-
-    .card-body-custom::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
-        border-radius: 10px;
-    }
-
+    /* Адаптивность */
     @media (max-width: 900px) {
         .test-detail-grid {
             grid-template-columns: 1fr;
             gap: 20px;
         }
-        .test-title {
-            font-size: 26px;
-        }
+        .test-title { font-size: 26px; }
     }
-
     @media (max-width: 640px) {
-        .test-title {
-            font-size: 22px;
-        }
-        .card-header-custom {
-            padding: 12px 18px;
-        }
-        .card-header-custom h3 {
-            font-size: 16px;
-        }
-        .question-item,
-        .student-item {
-            padding: 12px 16px;
-        }
-        .question-text-display {
-            font-size: 13px;
-        }
-        .test-actions {
-            flex-direction: column;
-        }
+        .test-title { font-size: 22px; }
+        .card-header-custom { padding: 12px 18px; }
+        .card-header-custom h3 { font-size: 16px; }
+        .question-item, .student-item { padding: 12px 16px; }
+        .question-text-display { font-size: 13px; }
+        .test-actions { flex-direction: column; }
         .test-actions .btn-secondary-custom,
-        .test-actions .btn-primary-custom {
+        .test-actions .btn-primary-custom,
+        .test-actions .btn-danger-custom {
             text-align: center;
             justify-content: center;
             width: 100%;
         }
-        .card-body-custom {
-            max-height: 400px;
-        }
+        .card-body-custom { max-height: 400px; }
         .student-avatar {
             width: 36px;
             height: 36px;
@@ -936,9 +699,7 @@
             grid-template-columns: 1fr;
             gap: 8px;
         }
-        .batch-actions {
-            flex-direction: column;
-        }
+        .batch-actions { flex-direction: column; }
         .btn-save-batch,
         .btn-cancel-batch {
             width: 100%;
@@ -949,9 +710,7 @@
             font-size: 14px;
             max-width: 100%;
         }
-        .batch-add-button-container {
-            margin-bottom: 20px;
-        }
+        .batch-add-button-container { margin-bottom: 20px; }
     }
 </style>
 {% endblock %}
@@ -975,7 +734,7 @@
             <div class="card-header-custom">
                 <div class="header-icon">📋</div>
                 <h3>Вопросы теста</h3>
-                <span class="item-count" id="questionsCount">{{ total_questions }} вопрос(ов)</span>
+                <span class="item-count" id="questionsCount">Вопросов: {{ total_questions }} </span>
                 <button type="button" class="btn-edit-test" id="toggleEditModeBtn">
                     ✏️ Редактировать
                 </button>
@@ -983,7 +742,7 @@
             <div class="card-body-custom questions-list" id="questionsList">
                 {% if test_questions or test_personal_questions %}
                     <ul class="questions-ul" id="questionsUl">
-                        <!-- Общие вопросы (без кнопок редактирования) -->
+                        <!-- Общие вопросы (с кнопкой удаления) -->
                         {% for question in test_questions %}
                         <li class="question-item" data-question-id="{{ question.id }}" data-question-type="common" data-original-data='{
                             "question_text": "{{ question.question_text|escapejs }}",
@@ -1009,11 +768,14 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- У общих вопросов НЕТ кнопок редактирования -->
+                            <!-- Кнопка удаления для общих вопросов -->
+                            <div class="question-actions-edit">
+                                <button type="button" class="btn-remove-question" data-id="{{ question.id }}" data-type="common" title="Удалить из теста">🗑️</button>
+                            </div>
                         </li>
                         {% endfor %}
 
-                        <!-- Личные вопросы (с кнопками редактирования) -->
+                        <!-- Личные вопросы (с кнопками редактирования и удаления) -->
                         {% for question in test_personal_questions %}
                         <li class="question-item personal-question-item" data-question-id="{{ question.id }}" data-question-type="personal" data-original-data='{
                             "question_text": "{{ question.question_text|escapejs }}",
@@ -1039,7 +801,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Только у личных вопросов есть кнопки редактирования -->
                             <div class="question-actions-edit">
                                 <button type="button" class="btn-edit-question" data-id="{{ question.id }}" data-type="personal" title="Редактировать вопрос">✏️</button>
                                 <button type="button" class="btn-remove-question" data-id="{{ question.id }}" data-type="personal" title="Удалить из теста">🗑️</button>
@@ -1301,6 +1062,12 @@
         <a href="{% url 'edit_test_assignment' test.id %}" class="btn btn-primary-custom">
             👥 Назначить учеников
         </a>
+        <form method="POST" action="{% url 'delete_teacher_test' test.id %}" class="delete-test-form" data-test-title="{{ test.title }}" style="display: inline-block; margin: 0;">
+            {% csrf_token %}
+            <button type="button" class="btn btn-danger-custom">
+                🗑️ Удалить тест
+            </button>
+        </form>
     </div>
 </div>
 
@@ -1368,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeAddPanelBtn = document.getElementById('closeAddPanelBtn');
     const cancelNewBtn = document.getElementById('cancelNewQuestionBtn');
     const batchContainer = document.getElementById('batchQuestionsContainer');
-    const editActions = document.querySelectorAll('.personal-question-item .question-actions-edit');
+    const editActions = document.querySelectorAll('.question-item .question-actions-edit');
     const modal = document.getElementById('editQuestionModal');
 
     // Функция для получения CSRF токена
@@ -1405,7 +1172,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleBtn.addEventListener('click', function() {
             editingMode = !editingMode;
 
-            // Показываем/скрываем кнопки только для личных вопросов
+            // Показываем/скрываем кнопки для всех вопросов
             editActions.forEach(el => {
                 el.style.display = editingMode ? 'flex' : 'none';
             });
@@ -1703,13 +1470,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveNewBtnEmpty = document.getElementById('saveNewQuestionBtnEmpty');
     if (saveNewBtnEmpty) saveNewBtnEmpty.addEventListener('click', () => saveNewQuestion(true));
 
-    // Удаление вопроса из теста (только для личных вопросов)
-    document.querySelectorAll('.personal-question-item .btn-remove-question').forEach(btn => {
+    // Удаление вопроса из теста (для личных И общих вопросов)
+    document.querySelectorAll('.question-item .btn-remove-question').forEach(btn => {
         btn.addEventListener('click', async function(e) {
             e.stopPropagation();
             const questionId = this.dataset.id;
             const questionType = this.dataset.type;
-            if (confirm('Удалить этот личный вопрос из теста? Вопрос останется в ваших личных вопросах.')) {
+
+            let confirmMessage = '';
+            if (questionType === 'personal') {
+                confirmMessage = 'Удалить этот вопрос из теста?';
+            } else {
+                confirmMessage = 'Удалить этот вопрос из теста?';
+            }
+
+            if (confirm(confirmMessage)) {
                 try {
                     const response = await fetch(`/teacher/tests/remove-question/{{ test.id }}/`, {
                         method: 'POST',
@@ -1825,6 +1600,57 @@ document.addEventListener('DOMContentLoaded', function() {
             if (studentId) window.location.href = `/teacher/students/student/${studentId}/`;
         });
     });
+
+    // Обработчик для удаления теста
+    const deleteTestForm = document.querySelector('.delete-test-form');
+    if (deleteTestForm) {
+        const deleteTestBtn = deleteTestForm.querySelector('.btn-danger-custom');
+        deleteTestBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const testTitle = deleteTestForm.dataset.testTitle;
+            if (confirm(`Вы уверены, что хотите удалить тест "${testTitle}"?\n\nЭто действие нельзя отменить. Все результаты теста также будут удалены.`)) {
+                deleteTestForm.submit();
+            }
+        });
+    }
 });
 </script>
+
+<style>
+    /* Стили для уведомлений (toast) */
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 12px;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+        z-index: 10000;
+        max-width: 350px;
+        border-left: 4px solid;
+    }
+    .toast-notification.show {
+        transform: translateX(0);
+    }
+    .toast-notification.success {
+        border-left-color: #10b981;
+    }
+    .toast-notification.error {
+        border-left-color: #ef4444;
+    }
+    .toast-notification .toast-icon {
+        font-size: 20px;
+    }
+    .toast-notification .toast-message {
+        font-size: 14px;
+        color: #1e293b;
+    }
+</style>
 {% endblock %}

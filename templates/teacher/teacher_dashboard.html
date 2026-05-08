@@ -95,7 +95,7 @@
                         <th>Ученик</th>
                         <th>Группа</th>
                         <th>Курс</th>
-                        <th>Все тесты</th>
+                        <th style="text-align: center;">Всего тестов пройдено: </th>
                         <th>Тесты от учителя</th>
                         <th>Лабораторные</th>
                         <th>Средний балл</th>
@@ -116,14 +116,9 @@
                         </td>
                         <td>{{ student.profile.group|default:"—" }}</td>
                         <td>{{ student.profile.course|default:"—" }}</td>
-                        <td class="progress-cell">
-                            <div class="progress-stats">
-                                <span class="progress-completed">{{ student.total_tests_passed }}</span>
-                            </div>
-                            <div class="progress-bar-custom">
-                                <div class="progress-fill" style="width: {% widthratio student.total_tests_passed student.total_all_tests_available 100 %}%"></div>
-                            </div>
-                        </td>
+                        <td class="progress-cell text-center">
+    <span class="progress-completed">{{ student.total_tests_passed }}</span>
+</td>
                         <td class="progress-cell">
                             <div class="progress-stats">
                                 <span class="progress-completed">{{ student.teacher_tests_passed }}</span>

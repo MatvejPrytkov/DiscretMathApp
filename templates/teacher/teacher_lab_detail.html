@@ -1,209 +1,337 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Просмотр работы - {{ lab.student.profile.full_name }}</title>
-    <!-- Подключите ваши CSS стили -->
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Просмотр сданной работы</h1>
-            <a href="{% url 'teacher_labs' %}" class="back-btn">← Назад к списку работ</a>
+{% extends 'teacher/base_teacher.html' %}
+{% load static %}
+
+{% block title %}Просмотр работы - {{ submission.student.profile.full_name }}{% endblock %}
+
+{% block teacher_content %}
+<div class="lab-detail-container">
+    <div class="page-header">
+        <h1 class="page-title">Просмотр сданной работы</h1>
+        <a href="{% url 'teacher_labs' %}" class="btn btn-secondary">
+            ← Назад к списку работ
+        </a>
+    </div>
+
+    <div class="info-card">
+        <div class="card-header-custom header-primary">
+            <h5 class="mb-0">📋 Информация о работе</h5>
         </div>
-
-        <div class="lab-details">
-            <div class="student-info">
-                <h2>Информация о студенте</h2>
-                <p><strong>ФИО:</strong> {{ lab.student.profile.full_name }}</p>
-                <p><strong>Группа:</strong> {{ lab.student.profile.group }}</p>
-                <p><strong>Курс:</strong> {{ lab.student.profile.course }}</p>
-                <p><strong>Дата сдачи:</strong> {{ lab.submitted_at|date:"d.m.Y H:i" }}</p>
+        <div class="card-body-custom">
+            <!-- Информация о студенте -->
+            <div class="info-section">
+                <h3 class="section-title">👨‍🎓 Информация о студенте</h3>
+                <div class="info-grid">
+                    <div class="info-row">
+                        <span class="info-label">ФИО:</span>
+                        <span class="info-value">{{ submission.student.profile.full_name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Группа:</span>
+                        <span class="info-value">{{ submission.student.profile.group|default:"—" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Курс:</span>
+                        <span class="info-value">{{ submission.student.profile.course|default:"—" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Дата сдачи:</span>
+                        <span class="info-value">{{ submission.submitted_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="lab-content">
-                <h2>Лабораторная работа №{{ lab.lab_number }}</h2>
-
-                <div class="file-section">
-                    <h3>Прикрепленный файл:</h3>
-                    <div class="file-card">
-                        <div class="file-info">
-                            <span class="file-name">{{ lab.get_file_name }}</span>
-                            <span class="file-size">{{ lab.file.size|filesizeformat }}</span>
-                        </div>
-                        <a href="{{ lab.file.url }}" download class="download-btn">
-                            📥 Скачать файл
-                        </a>
-                    </div>
+            <!-- Информация о лабораторной работе -->
+            <div class="info-section">
+                <h3 class="section-title">🧪 Лабораторная работа</h3>
+                <div class="info-row">
+                    <span class="info-label">Название:</span>
+                    <span class="info-value">{{ submission.lab_work.title }}</span>
                 </div>
-
-                {% if lab.teacher_comment %}
-                <div class="comment-section">
-                    <h3>Ваш комментарий:</h3>
-                    <div class="comment-box">
-                        {{ lab.teacher_comment }}
-                    </div>
+                <div class="info-row">
+                    <span class="info-label">Тема:</span>
+                    <span class="info-value">{{ submission.lab_work.theme|default:"—" }}</span>
                 </div>
+            </div>
+
+            <!-- Прикрепленный файл -->
+            <div class="info-section">
+                <h3 class="section-title">📎 Прикрепленный файл</h3>
+                <div class="file-card">
+                    <div class="file-info">
+                        <span class="file-name">{{ submission.get_file_name }}</span>
+                        <span class="file-size">{{ submission.submitted_file.size|filesizeformat }}</span>
+                    </div>
+                    <a href="{{ submission.submitted_file.url }}" download class="btn btn-success btn-sm">
+                        📥 Скачать файл
+                    </a>
+                </div>
+            </div>
+
+            <!-- Комментарий студента -->
+            {% if submission.comment %}
+            <div class="info-section">
+                <h3 class="section-title">💬 Комментарий студента</h3>
+                <div class="comment-box">
+                    {{ submission.comment|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Комментарий преподавателя -->
+            {% if submission.teacher_comment %}
+            <div class="info-section">
+                <h3 class="section-title">📝 Ваш комментарий</h3>
+                <div class="comment-box teacher-comment">
+                    {{ submission.teacher_comment|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Оценка -->
+            <div class="info-section">
+                <h3 class="section-title">⭐ Оценка</h3>
+                {% if submission.grade %}
+                    <div class="grade-display">
+                        <span class="grade-badge grade-{{ submission.grade|floatformat:0 }}">
+                            {{ submission.grade }}
+                        </span>
+                        {% if submission.graded_at %}
+                            <span class="graded-date">Проверено: {{ submission.graded_at|date:"d.m.Y H:i" }}</span>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="no-grade">
+                        <span class="warning-text">⏳ Оценка не выставлена</span>
+                    </div>
                 {% endif %}
-
-                <div class="grade-section">
-                    <h3>Оценка:</h3>
-                    {% if lab.grade %}
-                        <div class="current-grade">
-                            <span class="grade-badge">{{ lab.grade }}</span>
-                            <span class="grade-text">Баллов</span>
-                        </div>
-                    {% else %}
-                        <div class="no-grade">
-                            <span class="warning">Оценка не выставлена</span>
-                        </div>
-                    {% endif %}
-                </div>
             </div>
 
-            <div class="actions">
-                <a href="{{ lab.file.url }}" target="_blank" class="btn preview-btn">
+            <!-- Кнопки действий -->
+            <div class="action-buttons">
+                <a href="{{ submission.submitted_file.url }}" target="_blank" class="btn btn-info">
                     👁️ Предпросмотр
                 </a>
-                <a href="{% url 'teacher_labs' %}" class="btn back-btn">
-                    Закрыть
+                <a href="{% url 'submission_detail' submission.id %}" class="btn btn-primary">
+                    ✏️ Перейти к проверке
                 </a>
             </div>
         </div>
     </div>
+</div>
 
-    <style>
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
+<style>
+    /* Уникальные стили для страницы просмотра работы */
+    .lab-detail-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+    }
+
+    .card-header-custom {
+        padding: 16px 24px;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+    }
+
+    .card-header-custom h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .card-body-custom {
+        padding: 24px;
+    }
+
+    .info-section {
+        margin-bottom: 28px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .info-section:last-of-type {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 16px 0;
+    }
+
+    .info-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .info-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+    }
+
+    .info-label {
+        width: 120px;
+        font-weight: 600;
+        color: #64748b;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .info-value {
+        flex: 1;
+        color: #1e293b;
+        font-size: 14px;
+    }
+
+    /* Файловая карточка */
+    .file-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 16px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .file-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .file-name {
+        font-weight: 500;
+        color: #1e293b;
+        font-size: 14px;
+        word-break: break-all;
+    }
+
+    .file-size {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+
+    /* Комментарии */
+    .comment-box {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 16px;
+        border-left: 4px solid #6366f1;
+        color: #334155;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .teacher-comment {
+        border-left-color: #10b981;
+        background: #f0fdf4;
+    }
+
+    /* Оценка */
+    .grade-display {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .graded-date {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .no-grade {
+        padding: 12px 16px;
+        background: #fef3c7;
+        border-radius: 10px;
+        display: inline-block;
+    }
+
+    .warning-text {
+        color: #d97706;
+        font-size: 14px;
+    }
+
+    /* Кнопки действий */
+    .action-buttons {
+        display: flex;
+        gap: 16px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+        flex-wrap: wrap;
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .card-body-custom {
             padding: 20px;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
+        .info-label {
+            width: 100%;
+            margin-bottom: 4px;
         }
 
-        .back-btn {
-            color: #007bff;
-            text-decoration: none;
-            padding: 8px 16px;
-            border: 1px solid #007bff;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-
-        .back-btn:hover {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .lab-details {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 30px;
-        }
-
-        .student-info, .lab-content {
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .file-card {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
-            margin: 15px 0;
-        }
-
-        .file-info {
-            display: flex;
+        .info-row {
             flex-direction: column;
         }
 
-        .file-name {
-            font-weight: 500;
-            margin-bottom: 5px;
+        .file-card {
+            flex-direction: column;
+            align-items: flex-start;
         }
 
-        .file-size {
-            color: #6c757d;
-            font-size: 0.9em;
+        .btn-info, .btn-primary, .btn-success {
+            width: 100%;
+            justify-content: center;
         }
 
-        .download-btn {
-            background: #28a745;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 4px;
-            text-decoration: none;
-            transition: background 0.3s;
+        .action-buttons {
+            flex-direction: column;
         }
 
-        .download-btn:hover {
-            background: #218838;
+        .grade-display {
+            flex-direction: column;
+            align-items: flex-start;
         }
-
-        .comment-box {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 6px;
-            padding: 15px;
-            margin-top: 10px;
-        }
-
-        .grade-section {
-            margin-top: 20px;
-        }
-
-        .grade-badge {
-            display: inline-block;
-            background: #17a2b8;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-
-        .no-grade .warning {
-            color: #dc3545;
-            font-style: italic;
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-            justify-content: flex-end;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: 4px;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .preview-btn {
-            background: #ffc107;
-            color: #212529;
-        }
-
-        .preview-btn:hover {
-            background: #e0a800;
-        }
-    </style>
-</body>
-</html>
+    }
+</style>
+{% endblock %}

@@ -4,21 +4,42 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="be9a2357-744f-40ee-abdc-3c06ce9324fa" name="Changes" comment="Teacher_tests_filter">
-      <change afterPath="$PROJECT_DIR$/templates/teacher/edit_personal_question.html" afterDir="false" />
+    <list default="true" id="be9a2357-744f-40ee-abdc-3c06ce9324fa" name="Changes" comment="Final">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/forms.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base/chat_teacher_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/chat_teacher_views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/base/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/base/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/base/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/chat/teacher_student_chat_detail_student.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/chat/teacher_student_chat_detail_student.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/chat/teacher_student_chat_detail_teacher.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/chat/teacher_student_chat_detail_teacher.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/student/Profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/Profile.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/student/base_student.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/base_student.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/student/chat_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/chat_detail.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/student/groupmates.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/groupmates.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/student/lab.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/lab.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/student/result_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/result_detail.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/student/student_labs.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/student_labs.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/student/teacher_chat_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/teacher_chat_list.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/student/teacher_tests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/teacher_tests.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/test_form.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/test_form.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/student/test_results.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/test_results.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/add_personal_question.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/add_personal_question.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/base_teacher.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/base_teacher.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/create_lab.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/create_lab.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/teacher/create_teacher_test.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/create_teacher_test.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/edit_personal_question.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/edit_personal_question.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/edit_test_assignment.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/edit_test_assignment.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/lab_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/lab_detail.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/teacher/manage_personal_questions.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/manage_personal_questions.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/teacher/manage_tests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/manage_tests.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/teacher/result_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/result_detail.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/student_chat_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/student_chat_list.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/student_results.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/student_results.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/students_lab_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/students_lab_detail.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_dashboard.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_lab_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_lab_detail.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_labs.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_labs.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_student_stats.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_student_stats.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_students_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_students_list.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/teacher/test_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/test_detail.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -170,7 +191,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778091299527</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Final">
+      <option name="closed" value="true" />
+      <created>1778156582650</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1778156582650</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -190,24 +219,25 @@
     <MESSAGE value="Chats" />
     <MESSAGE value="Tests" />
     <MESSAGE value="Teacher_tests_filter" />
-    <option name="LAST_COMMIT_MESSAGE" value="Teacher_tests_filter" />
+    <MESSAGE value="Final" />
+    <option name="LAST_COMMIT_MESSAGE" value="Final" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>1341</line>
+          <line>1392</line>
           <option name="timeStamp" value="15" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>1612</line>
+          <line>1687</line>
           <option name="timeStamp" value="16" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>1856</line>
+          <line>1926</line>
           <option name="timeStamp" value="18" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -217,17 +247,17 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>896</line>
+          <line>947</line>
           <option name="timeStamp" value="20" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>2305</line>
+          <line>2375</line>
           <option name="timeStamp" value="21" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/urls.py</url>
-          <line>82</line>
+          <line>90</line>
           <option name="timeStamp" value="22" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -247,13 +277,18 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/models.py</url>
-          <line>415</line>
+          <line>429</line>
           <option name="timeStamp" value="27" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/base/views.py</url>
-          <line>3027</line>
+          <line>3122</line>
           <option name="timeStamp" value="28" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/base/chat_teacher_views.py</url>
+          <line>215</line>
+          <option name="timeStamp" value="29" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

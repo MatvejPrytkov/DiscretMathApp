@@ -44,8 +44,29 @@ from django.core.files.base import ContentFile
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .context_processors import has_final_test
-# Добавьте эту функцию в views.py после импортов
+from django.db.models.functions import Coalesce, Cast
 
+def calculate_average_grade(test_results, lab_submissions):
+    """Расчет среднего балла по тестам и лабораторным"""
+    grades = []
+
+    # Собираем оценки из тестов
+    for result in test_results:
+        if result.grade and result.grade != 0:
+            if result.grade in [2, 3, 4, 5]:
+                grades.append(result.grade)
+
+    # Собираем оценки из лабораторных
+    for submission in lab_submissions:
+        if submission.grade and submission.grade.isdigit():
+            grade_int = int(submission.grade)
+            if grade_int in [2, 3, 4, 5]:
+                grades.append(grade_int)
+
+    # Рассчитываем среднее
+    if grades:
+        return round(sum(grades) / len(grades), 2)
+    return None
 
 def search_teachers_api(request):
     """API для поиска преподавателей по ФИО (для регистрации)"""
@@ -544,6 +565,29 @@ def profile(request):
 
     # Получаем информацию о итоговом тесте через контекстный процессор
     final_test_context = has_final_test(request)
+    all_grades = []
+    for result in test_grades:
+        if result.grade and result.grade != 0:
+            if result.grade in [2, 3, 4, 5]:
+                all_grades.append(result.grade)
+
+        # Оценки из лабораторных
+    for submission in lab_submissions:
+        if submission.grade and submission.grade.isdigit():
+            grade_int = int(submission.grade)
+            if grade_int in [2, 3, 4, 5]:
+                all_grades.append(grade_int)
+
+    average_grade_all = round(sum(all_grades) / len(all_grades), 2) if all_grades else None
+
+    # Расчет среднего балла ТОЛЬКО по тестам
+    test_grades_only = [r.grade for r in test_grades if r.grade and r.grade in [2, 3, 4, 5]]
+    average_grade_tests = round(sum(test_grades_only) / len(test_grades_only), 2) if test_grades_only else None
+
+    # Расчет среднего балла ТОЛЬКО по лабораторным
+    lab_grades_only = [int(s.grade) for s in lab_submissions if
+                       s.grade and s.grade.isdigit() and int(s.grade) in [2, 3, 4, 5]]
+    average_grade_labs = round(sum(lab_grades_only) / len(lab_grades_only), 2) if lab_grades_only else None
 
     # СОЗДАЁМ СЛОВАРЬ КОНТЕКСТА
     context = {
@@ -563,6 +607,13 @@ def profile(request):
         # ДОБАВЛЯЕМ ПЕРЕМЕННЫЕ ДЛЯ ИТОГОВОГО ТЕСТА
         'has_final_test': final_test_context.get('has_final_test', False),
         'final_test_result_obj': final_test_context.get('final_test_result', None),
+        'average_grade_all': average_grade_all,
+        'average_grade_tests': average_grade_tests,
+        'average_grade_labs': average_grade_labs,
+        'test_grades_count': test_grades.count(),
+        'lab_submissions_count': lab_submissions.count(),
+        'total_works_count': test_grades.count() + lab_submissions.count(),
+        'graded_works_count': len([g for g in all_grades]),
     }
 
     return render(request, 'student/Profile.html', context)
@@ -1472,11 +1523,35 @@ def student_labs(request):
 
     # Получаем ID всех лабораторных работ, которые уже сданы
     submitted_lab_ids = set(submission.lab_work_id for submission in my_submissions)
+    lab_grades = []
+    for submission in my_submissions:
+        if submission.grade and submission.grade.isdigit():
+            grade_int = int(submission.grade)
+            if grade_int in [2, 3, 4, 5]:
+                lab_grades.append(grade_int)
 
+    average_grade_labs = round(sum(lab_grades) / len(lab_grades), 2) if lab_grades else None
+
+    # Количество проверенных работ
+    graded_labs_count = len(lab_grades)
+
+    # Подсчет процента проверенных работ
+    total_submissions_count = my_submissions.count()
+    passed_percent = (graded_labs_count / total_submissions_count * 100) if total_submissions_count > 0 else 0
+
+    # Подсчет набранных баллов (максимум 5 за работу)
+    total_points_earned = sum(lab_grades)
+    total_points_possible = total_submissions_count * 5
+    points_percent = (total_points_earned / total_points_possible * 100) if total_points_possible > 0 else 0
     return render(request, 'student/student_labs.html', {
         'labs': teacher_labs,
         'my_submissions': my_submissions,
-        'submitted_lab_ids': submitted_lab_ids  # Новый контекст
+        'submitted_lab_ids': submitted_lab_ids,
+        'average_grade_labs': average_grade_labs,
+        'graded_labs_count': graded_labs_count,
+        'passed_percent': passed_percent,
+        'total_points_earned': total_points_earned,
+        'total_points_possible': total_points_possible,
     })
 @login_required
 @teacher_required
@@ -1818,12 +1893,7 @@ def teacher_test_detail(request, test_id):
         test_questions = list(test.questions.all())
         test_personal_questions = list(test.personal_questions.all())
 
-        # Для отладки (можно удалить после проверки)
-        print(f"=== teacher_test_detail ===")
-        print(f"Test: {test.title}")
-        print(f"Common questions: {len(test_questions)}")
-        print(f"Personal questions: {len(test_personal_questions)}")
-        print(f"Total: {len(test_questions) + len(test_personal_questions)}")
+
 
     except TeacherTest.DoesNotExist:
         messages.error(request, "Тест не найден или у вас нет доступа к нему")
@@ -2701,12 +2771,37 @@ def get_chat_messages(request, user_id):
 
     messages_data = []
     for msg in messages:
-        messages_data.append({
+        # Пропускаем удалённые сообщения для получателя
+        if msg.is_deleted and msg.sender != request.user:
+            continue
+
+        # Получаем имя отправителя
+        sender_name = msg.sender.profile.full_name or msg.sender.username
+
+        # Базовые данные сообщения
+        message_data = {
             'id': msg.id,
-            'content': msg.content,
+            'content': msg.content if not msg.is_deleted else 'Сообщение удалено',
+            'message_type': getattr(msg, 'message_type', 'text'),
             'created_at': msg.created_at.strftime("%H:%M %d.%m.%Y"),
             'sender_id': msg.sender_id,
-        })
+            'sender_name': sender_name,
+            'reactions': getattr(msg, 'reactions', {}) or {},
+            'is_deleted': msg.is_deleted,
+            'can_delete': msg.sender_id == request.user.id and not msg.is_deleted
+        }
+
+        # Добавляем данные для файлов
+        if hasattr(msg, 'message_type') and msg.message_type == 'file' and msg.file_attachment and not msg.is_deleted:
+            message_data['file_url'] = msg.file_attachment.url
+            message_data['file_name'] = msg.file_name or 'Файл'
+
+        # Добавляем данные для голосовых сообщений
+        if hasattr(msg, 'message_type') and msg.message_type == 'voice' and msg.voice_message and not msg.is_deleted:
+            message_data['voice_url'] = msg.voice_message.url
+            message_data['voice_duration'] = getattr(msg, 'voice_duration', 0)
+
+        messages_data.append(message_data)
 
     return JsonResponse({'messages': messages_data})
 
@@ -3236,3 +3331,234 @@ def remove_question_from_test(request, test_id):
 
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@require_http_methods(["POST"])
+@csrf_exempt
+def send_student_file(request):
+    """API для отправки файла между студентами-одногруппниками"""
+    try:
+        recipient_id = request.POST.get('recipient_id')
+        file = request.FILES.get('file')
+
+        if not file:
+            return JsonResponse({'error': 'Файл не выбран'}, status=400)
+
+        recipient = get_object_or_404(User, id=recipient_id)
+        current_user = request.user
+
+        # Проверяем, что это одногруппники
+        user_profile = current_user.profile
+        other_profile = recipient.profile
+        if (user_profile.group != other_profile.group or
+            user_profile.course != other_profile.course or
+            user_profile.teacher != other_profile.teacher):
+            return JsonResponse({'error': 'Вы можете отправлять файлы только одногруппникам'}, status=403)
+
+        # Сохраняем файл
+        file_name = file.name
+        file_path = default_storage.save(f'student_chat_files/{current_user.id}_{recipient.id}_{file_name}',
+                                         ContentFile(file.read()))
+
+        # Создаем сообщение
+        message = Message.objects.create(
+            sender=current_user,
+            recipient=recipient,
+            content=f'📎 {file_name}',
+            message_type='file',
+            file_attachment=file_path,
+            file_name=file_name
+        )
+
+        sender_name = current_user.profile.full_name or current_user.username
+
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'content': message.content,
+                'message_type': 'file',
+                'file_url': message.file_attachment.url,
+                'file_name': file_name,
+                'created_at': message.created_at.strftime("%H:%M %d.%m.%Y"),
+                'sender_id': message.sender_id,
+                'sender_name': sender_name,
+                'reactions': {}
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+@csrf_exempt
+def send_student_voice(request):
+    """API для отправки голосового сообщения между студентами-одногруппниками"""
+    try:
+        recipient_id = request.POST.get('recipient_id')
+        voice_file = request.FILES.get('voice')
+        duration = request.POST.get('duration', 0)
+
+        if not voice_file:
+            return JsonResponse({'error': 'Голосовое сообщение не записано'}, status=400)
+
+        recipient = get_object_or_404(User, id=recipient_id)
+        current_user = request.user
+
+        # Проверяем, что это одногруппники
+        user_profile = current_user.profile
+        other_profile = recipient.profile
+        if (user_profile.group != other_profile.group or
+            user_profile.course != other_profile.course or
+            user_profile.teacher != other_profile.teacher):
+            return JsonResponse({'error': 'Доступ запрещен'}, status=403)
+
+        # Сохраняем голосовое сообщение
+        voice_path = default_storage.save(f'student_voice_messages/{current_user.id}_{recipient.id}_{voice_file.name}',
+                                          ContentFile(voice_file.read()))
+
+        message = Message.objects.create(
+            sender=current_user,
+            recipient=recipient,
+            content='🎤 Голосовое сообщение',
+            message_type='voice',
+            voice_message=voice_path,
+            voice_duration=int(duration)
+        )
+
+        sender_name = current_user.profile.full_name or current_user.username
+
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'content': message.content,
+                'message_type': 'voice',
+                'voice_url': message.voice_message.url,
+                'voice_duration': message.voice_duration,
+                'created_at': message.created_at.strftime("%H:%M %d.%m.%Y"),
+                'sender_id': message.sender_id,
+                'sender_name': sender_name,
+                'reactions': {}
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+@csrf_exempt
+def add_student_message_reaction(request):
+    """API для добавления реакции на сообщение в чате одногруппников"""
+    try:
+        data = json.loads(request.body)
+        message_id = data.get('message_id')
+        reaction = data.get('reaction')
+
+        message = get_object_or_404(Message, id=message_id)
+
+        # Проверяем права доступа к сообщению
+        current_user = request.user
+        if current_user not in [message.sender, message.recipient]:
+            return JsonResponse({'error': 'Нет доступа к этому сообщению'}, status=403)
+
+        # Обновляем реакции
+        reactions = message.reactions or {}
+        user_id_str = str(current_user.id)
+
+        if reaction and reactions.get(user_id_str) == reaction:
+            del reactions[user_id_str]
+        elif reaction:
+            reactions[user_id_str] = reaction
+
+        message.reactions = reactions
+        message.save()
+
+        return JsonResponse({
+            'success': True,
+            'reactions': reactions
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
+@login_required
+@require_http_methods(["POST"])
+@csrf_exempt
+def delete_student_message(request, message_id):
+    """API для удаления сообщения в чате одногруппников"""
+    try:
+        message = get_object_or_404(Message, id=message_id)
+
+        # Только отправитель может удалить своё сообщение
+        if message.sender != request.user:
+            return JsonResponse({'error': 'Вы можете удалять только свои сообщения'}, status=403)
+
+        # Помечаем сообщение как удалённое
+        message.is_deleted = True
+        message.content = 'Сообщение удалено'
+        message.message_type = 'text'
+        # Очищаем вложения
+        if message.file_attachment:
+            # Удаляем файл с диска
+            if os.path.isfile(message.file_attachment.path):
+                os.remove(message.file_attachment.path)
+            message.file_attachment = None
+        if message.voice_message:
+            # Удаляем голосовой файл с диска
+            if os.path.isfile(message.voice_message.path):
+                os.remove(message.voice_message.path)
+            message.voice_message = None
+        message.file_name = None
+        message.voice_duration = 0
+        message.reactions = {}
+        message.save()
+
+        return JsonResponse({'success': True, 'message_id': message_id})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+@csrf_exempt
+def delete_teacher_student_message(request, message_id):
+    """API для удаления сообщения в чате учитель-ученик"""
+    try:
+        message = get_object_or_404(TeacherStudentMessage, id=message_id)
+
+        # Только отправитель может удалить своё сообщение
+        if message.sender != request.user:
+            return JsonResponse({'error': 'Вы можете удалять только свои сообщения'}, status=403)
+
+        # Помечаем сообщение как удалённое
+        message.is_deleted = True
+        message.content = 'Сообщение удалено'
+        message.message_type = 'text'
+        # Очищаем вложения
+        if message.file_attachment:
+            # Удаляем файл с диска
+            if os.path.isfile(message.file_attachment.path):
+                os.remove(message.file_attachment.path)
+            message.file_attachment = None
+        if message.voice_message:
+            # Удаляем голосовой файл с диска
+            if os.path.isfile(message.voice_message.path):
+                os.remove(message.voice_message.path)
+            message.voice_message = None
+        message.file_name = None
+        message.voice_duration = 0
+        message.reactions = {}
+        message.save()
+
+        return JsonResponse({'success': True, 'message_id': message_id})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
