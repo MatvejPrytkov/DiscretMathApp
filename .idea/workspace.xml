@@ -4,43 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="be9a2357-744f-40ee-abdc-3c06ce9324fa" name="Changes" comment="Final">
+    <list default="true" id="be9a2357-744f-40ee-abdc-3c06ce9324fa" name="Changes" comment="Chats">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/chat_teacher_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/chat_teacher_views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/base/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/chat/teacher_student_chat_detail_student.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/chat/teacher_student_chat_detail_student.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/chat/teacher_student_chat_detail_teacher.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/chat/teacher_student_chat_detail_teacher.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/Profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/Profile.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/base_student.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/base_student.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/student/chat_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/chat_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/groupmates.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/groupmates.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/lab.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/lab.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/result_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/result_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/student_labs.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/student_labs.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/teacher_chat_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/teacher_chat_list.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/teacher_tests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/teacher_tests.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/student/test_results.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/student/test_results.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/add_personal_question.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/add_personal_question.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/base_teacher.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/base_teacher.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/create_lab.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/create_lab.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/create_teacher_test.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/create_teacher_test.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/edit_personal_question.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/edit_personal_question.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/edit_test_assignment.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/edit_test_assignment.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/lab_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/lab_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/manage_personal_questions.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/manage_personal_questions.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/manage_tests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/manage_tests.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/result_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/result_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/student_chat_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/student_chat_list.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/student_results.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/student_results.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/students_lab_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/students_lab_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_dashboard.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_lab_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_lab_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_labs.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_labs.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_student_stats.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_student_stats.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/teacher_students_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/teacher_students_list.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/teacher/test_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teacher/test_detail.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -199,7 +167,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778156582650</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Chats">
+      <option name="closed" value="true" />
+      <created>1778258726888</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1778258726889</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -216,11 +192,11 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Add_DataBase" />
     <MESSAGE value="requirements.txt" />
-    <MESSAGE value="Chats" />
     <MESSAGE value="Tests" />
     <MESSAGE value="Teacher_tests_filter" />
     <MESSAGE value="Final" />
-    <option name="LAST_COMMIT_MESSAGE" value="Final" />
+    <MESSAGE value="Chats" />
+    <option name="LAST_COMMIT_MESSAGE" value="Chats" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

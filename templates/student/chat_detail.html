@@ -424,21 +424,30 @@
         }
     }
     /* Стили для кнопки удаления */
-.delete-message-btn {
-    background: transparent;
-    border: none;
-    font-size: 14px;
-    cursor: pointer;
-    padding: 2px 5px;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-}
+    .delete-message-btn {
+        background: transparent;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 2px 5px;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        opacity: 0;
+    }
 
-.delete-message-btn:hover {
-    background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
-    transform: scale(1.1);
-}
+    .message:hover .delete-message-btn {
+        opacity: 0.6;
+    }
+
+    .delete-message-btn:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        transform: scale(1.1);
+        opacity: 1 !important;
+    }
 </style>
 {% endblock %}
 
@@ -468,7 +477,7 @@
             <div class="chat-controls">
                 <button id="emoji-btn" class="chat-control-btn" title="Смайлики">😊</button>
                 <button id="file-upload-btn" class="chat-control-btn" title="Прикрепить файл">📎</button>
-                <button id="voice-record-btn" class="chat-control-btn" title="Голосовое сообщение">🎤</button>
+                <button id="voice-record-btn" class="chat-control-btn" title="Голосовое сообщение (зажмите и говорите)">🎤</button>
             </div>
             <textarea class="chat-input" id="message-input" rows="1" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)"></textarea>
             <button class="send-btn" id="send-btn">📤 Отправить</button>
@@ -634,127 +643,112 @@
         }, 100);
     };
 
+    // ========== ФУНКЦИЯ УДАЛЕНИЯ СООБЩЕНИЯ ==========
+
+    window.deleteMessage = function(messageId) {
+        if (!confirm('Удалить это сообщение? Оно будет скрыто у всех участников чата.')) {
+            return;
+        }
+
+        fetch(`/student/chat/delete-message/${messageId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const messageDiv = document.querySelector(`.message[data-message-id="${messageId}"]`);
+                if (messageDiv) {
+                    const textDiv = messageDiv.querySelector('.message-text');
+                    if (textDiv) {
+                        textDiv.textContent = 'Сообщение удалено';
+                    }
+                    const reactionsDiv = messageDiv.querySelector('.message-reactions');
+                    if (reactionsDiv) reactionsDiv.remove();
+                    const deleteBtn = messageDiv.querySelector('.delete-message-btn');
+                    if (deleteBtn) deleteBtn.remove();
+                    const fileDiv = messageDiv.querySelector('.message-file');
+                    if (fileDiv) fileDiv.remove();
+                    const voiceDiv = messageDiv.querySelector('.message-voice');
+                    if (voiceDiv) voiceDiv.remove();
+                }
+            } else {
+                alert('Ошибка при удалении: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка при удалении сообщения');
+        });
+    };
+
     // ========== ОСНОВНАЯ ФУНКЦИЯ РЕНДЕРИНГА ==========
 
+    function renderMessage(msg, isNew = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${msg.sender_id === currentUserId ? 'message-sent' : 'message-received'}`;
+        messageDiv.setAttribute('data-message-id', msg.id);
 
-window.deleteMessage = function(messageId) {
-    if (!confirm('Удалить это сообщение? Оно будет скрыто у всех участников чата.')) {
-        return;
-    }
+        let innerHtml = '';
 
-    fetch(`/student/chat/delete-message/${messageId}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
+        if (msg.sender_id !== currentUserId && msg.sender_name) {
+            innerHtml += `<div class="message-sender">${escapeHtml(msg.sender_name)}</div>`;
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const messageDiv = document.querySelector(`.message[data-message-id="${messageId}"]`);
-            if (messageDiv) {
-                // Обновляем содержимое сообщения
-                const textDiv = messageDiv.querySelector('.message-text');
-                if (textDiv) {
-                    textDiv.textContent = 'Сообщение удалено';
-                }
-                // Убираем реакции
-                const reactionsDiv = messageDiv.querySelector('.message-reactions');
-                if (reactionsDiv) {
-                    reactionsDiv.remove();
-                }
-                // Убираем кнопку удаления
-                const deleteBtn = messageDiv.querySelector('.delete-message-btn');
-                if (deleteBtn) {
-                    deleteBtn.remove();
-                }
-                // Убираем файл/голос, если были
-                const fileDiv = messageDiv.querySelector('.message-file');
-                if (fileDiv) fileDiv.remove();
-                const voiceDiv = messageDiv.querySelector('.message-voice');
-                if (voiceDiv) voiceDiv.remove();
-            }
+
+        if (msg.is_deleted) {
+            innerHtml += `<div class="message-text message-deleted">Сообщение удалено</div>`;
+        } else if (msg.message_type === 'file') {
+            innerHtml += `<div class="message-file">
+                            <a href="${msg.file_url}" target="_blank" download="${escapeHtml(msg.file_name)}">
+                                📎 ${escapeHtml(msg.file_name || 'Файл')}
+                            </a>
+                          </div>`;
+        } else if (msg.message_type === 'voice') {
+            innerHtml += `<div class="message-voice">
+                            <audio controls preload="none">
+                                <source src="${msg.voice_url}" type="audio/webm">
+                                Ваш браузер не поддерживает аудио.
+                            </audio>
+                            <span class="voice-duration">${formatDuration(msg.voice_duration)}</span>
+                          </div>`;
         } else {
-            alert('Ошибка при удалении: ' + data.error);
+            innerHtml += `<div class="message-text">${escapeHtml(msg.content)}</div>`;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Ошибка при удалении сообщения');
-    });
-};
 
-// Обновите функцию renderMessage, добавьте кнопку удаления
-function renderMessage(msg, isNew = false) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${msg.sender_id === currentUserId ? 'message-sent' : 'message-received'}`;
-    messageDiv.setAttribute('data-message-id', msg.id);
+        innerHtml += `<div class="message-time">${formatDate(msg.created_at)}</div>`;
 
-    let innerHtml = '';
+        messageDiv.innerHTML = innerHtml;
 
-    if (msg.sender_id !== currentUserId && msg.sender_name) {
-        innerHtml += `<div class="message-sender">${escapeHtml(msg.sender_name)}</div>`;
-    }
-
-    if (msg.message_type === 'file' && !msg.is_deleted) {
-        innerHtml += `<div class="message-file">
-                        <a href="${msg.file_url}" target="_blank" download="${escapeHtml(msg.file_name)}">
-                            📎 ${escapeHtml(msg.file_name || 'Файл')}
-                        </a>
-                      </div>`;
-    } else if (msg.message_type === 'voice' && !msg.is_deleted) {
-        innerHtml += `<div class="message-voice">
-                        <audio controls preload="none">
-                            <source src="${msg.voice_url}" type="audio/webm">
-                            Ваш браузер не поддерживает аудио.
-                        </audio>
-                        <span class="voice-duration">${formatDuration(msg.voice_duration)}</span>
-                      </div>`;
-    } else {
-        innerHtml += `<div class="message-text">${escapeHtml(msg.content)}</div>`;
-    }
-
-    innerHtml += `<div class="message-time">${formatDate(msg.created_at)}</div>`;
-
-    messageDiv.innerHTML = innerHtml;
-
-    // Добавляем реакции, только если сообщение не удалено
-    if (!msg.is_deleted) {
-        const reactionsContainer = document.createElement('div');
-        reactionsContainer.innerHTML = renderReactions(msg.reactions || {}, msg.id);
-        const reactionsElement = reactionsContainer.firstElementChild;
-        if (reactionsElement) {
-            messageDiv.appendChild(reactionsElement);
+        if (!msg.is_deleted && msg.reactions) {
+            const reactionsContainer = document.createElement('div');
+            reactionsContainer.innerHTML = renderReactions(msg.reactions, msg.id);
+            const reactionsElement = reactionsContainer.firstElementChild;
+            if (reactionsElement) {
+                messageDiv.appendChild(reactionsElement);
+            }
         }
+
+        // Кнопка удаления для своих сообщений
+        if (msg.sender_id === currentUserId && !msg.is_deleted) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-message-btn';
+            deleteBtn.innerHTML = '🗑️';
+            deleteBtn.title = 'Удалить сообщение';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                window.deleteMessage(msg.id);
+            };
+            messageDiv.appendChild(deleteBtn);
+        }
+
+        if (isNew) {
+            messageDiv.classList.add('message-new');
+        }
+
+        return messageDiv;
     }
-
-    // Добавляем кнопку удаления для своих сообщений (и если не удалено)
-    if (msg.can_delete) {
-        const deleteBtn = document.createElement('div');
-        deleteBtn.className = 'delete-message-btn';
-        deleteBtn.innerHTML = '🗑️';
-        deleteBtn.title = 'Удалить сообщение';
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation();
-            window.deleteMessage(msg.id);
-        };
-        deleteBtn.style.cssText = 'position: absolute; top: 5px; right: 5px; cursor: pointer; opacity: 0; transition: opacity 0.2s; font-size: 14px;';
-        messageDiv.appendChild(deleteBtn);
-
-        messageDiv.addEventListener('mouseenter', () => {
-            deleteBtn.style.opacity = '0.6';
-        });
-        messageDiv.addEventListener('mouseleave', () => {
-            deleteBtn.style.opacity = '0';
-        });
-    }
-
-    if (isNew) {
-        messageDiv.classList.add('message-new');
-    }
-
-    return messageDiv;
-}
 
     // ========== ЗАГРУЗКА И ОТПРАВКА СООБЩЕНИЙ ==========
 
@@ -922,33 +916,65 @@ function renderMessage(msg, isNew = false) {
         fileInput.click();
     }
 
-    // ========== ГОЛОСОВЫЕ СООБЩЕНИЯ ==========
+    // ========== ГОЛОСОВЫЕ СООБЩЕНИЯ (ИСПРАВЛЕННЫЕ) ==========
 
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
     let recordingStartTime = null;
+    let currentStream = null;
 
     function startVoiceRecording() {
         if (isRecording) return;
 
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
+                currentStream = stream;
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
 
                 mediaRecorder.ondataavailable = event => {
-                    audioChunks.push(event.data);
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
                 };
 
                 mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     const duration = Math.floor((Date.now() - recordingStartTime) / 1000);
+
+                    // Минимальная длительность 1 секунда
+                    if (duration < 1) {
+                        console.log('Запись слишком короткая, отменяем');
+                        const voiceBtn = document.getElementById('voice-record-btn');
+                        if (voiceBtn) {
+                            voiceBtn.textContent = '🎤';
+                            voiceBtn.classList.remove('recording');
+                        }
+                        if (currentStream) {
+                            currentStream.getTracks().forEach(track => track.stop());
+                            currentStream = null;
+                        }
+                        // Показываем сообщение пользователю
+                        alert('Голосовое сообщение слишком короткое. Зажмите кнопку и говорите, затем отпустите.');
+                        return;
+                    }
+
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     sendVoiceMessage(audioBlob, duration);
-                    stream.getTracks().forEach(track => track.stop());
+
+                    if (currentStream) {
+                        currentStream.getTracks().forEach(track => track.stop());
+                        currentStream = null;
+                    }
+
+                    const voiceBtn = document.getElementById('voice-record-btn');
+                    if (voiceBtn) {
+                        voiceBtn.textContent = '🎤';
+                        voiceBtn.classList.remove('recording');
+                    }
                 };
 
-                mediaRecorder.start();
+                mediaRecorder.start(100); // Собираем данные каждые 100мс
                 isRecording = true;
                 recordingStartTime = Date.now();
 
@@ -958,26 +984,21 @@ function renderMessage(msg, isNew = false) {
                     voiceBtn.classList.add('recording');
                 }
 
+                // Авто-остановка через 60 секунд
                 setTimeout(() => {
                     if (isRecording) stopVoiceRecording();
                 }, 60000);
             })
             .catch(error => {
                 console.error('Microphone error:', error);
-                alert('Не удалось получить доступ к микрофону');
+                alert('Не удалось получить доступ к микрофону. Проверьте разрешения.');
             });
     }
 
     function stopVoiceRecording() {
-        if (mediaRecorder && isRecording) {
+        if (mediaRecorder && isRecording && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
             isRecording = false;
-
-            const voiceBtn = document.getElementById('voice-record-btn');
-            if (voiceBtn) {
-                voiceBtn.textContent = '🎤';
-                voiceBtn.classList.remove('recording');
-            }
         }
     }
 
